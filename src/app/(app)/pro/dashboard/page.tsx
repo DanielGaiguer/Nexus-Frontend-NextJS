@@ -1,18 +1,42 @@
 "use client";
 
-import { Award, Handshake, ThumbsUp, TrendingUp } from "lucide-react";
+import {
+  Award,
+  Bell,
+  Briefcase,
+  Handshake,
+  MailOpen,
+  Map,
+  Sparkles,
+  TrendingUp,
+  User,
+} from "lucide-react";
+import Link from "next/link";
 
 import { MonthlyMatchesBars } from "@/components/dashboard/monthly-matches-bars";
 import { StatCard } from "@/components/dashboard/stat-card";
+import { EmptyState } from "@/components/shared/empty-state";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useMatchInvites, useMatches } from "@/hooks/queries/useMatches";
+import { usePreviousProjects } from "@/hooks/queries/usePreviousProjects";
 import { useProfessionalDashboard } from "@/hooks/queries/useProfessionalDashboard";
 import { useProfessionalProfile } from "@/hooks/queries/useProfessionalProfile";
+import { useProfessionalStats } from "@/hooks/queries/useProfessionalStats";
 
 export default function ProDashboardPage() {
   const profile = useProfessionalProfile();
   const dashboard = useProfessionalDashboard();
+  const invites = useMatchInvites();
+  const allMatches = useMatches();
+  const previousProjects = usePreviousProjects();
+  const stats = useProfessionalStats();
+
+  const confirmed = (allMatches.data ?? []).filter(
+    (m) => m.status === "MATCHED"
+  );
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
@@ -25,108 +49,257 @@ export default function ProDashboardPage() {
           )}
         </h1>
         <p className="text-muted-foreground text-sm">
-          Bem-vindo de volta ao Nexus.
+          {invites.data && invites.data.length > 0
+            ? `Você tem ${invites.data.length} convite(s) aguardando sua resposta.`
+            : "Bem-vindo de volta ao Nexus."}
         </p>
       </div>
 
-      {dashboard.isLoading && <DashboardSkeleton />}
+      {profile.data && profile.data.available === false && (
+        <div className="bg-info/10 flex flex-wrap items-center justify-between gap-2 rounded-md p-3 text-sm">
+          <span className="text-foreground">
+            Sua conta está marcada como indisponível. Vá em Meu Perfil pra ficar
+            disponível e entrar no cálculo de compatibilidade com as
+            oportunidades.
+          </span>
+          <Link
+            href="/pro/profile"
+            className="text-primary shrink-0 font-medium hover:underline"
+          >
+            Meu Perfil
+          </Link>
+        </div>
+      )}
 
-      {dashboard.isError && (
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatCard
+          icon={Bell}
+          label="Convites pendentes"
+          value={String(invites.data?.length ?? 0)}
+          accent="accent"
+        />
+        <StatCard
+          icon={Handshake}
+          label="Matches confirmados"
+          value={String(confirmed.length)}
+          accent="success"
+        />
+        <StatCard
+          icon={Briefcase}
+          label="Vagas disponíveis"
+          value={String(stats.data?.availableOpportunitiesCount ?? 0)}
+        />
+        <StatCard
+          icon={Award}
+          label="Projetos no portfólio"
+          value={String(previousProjects.data?.length ?? 0)}
+          accent="secondary"
+        />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
         <Card>
-          <CardContent className="text-destructive text-sm">
-            Não foi possível carregar seus dados agora. Tente recarregar a
-            página.
+          <CardHeader className="flex-row items-center justify-between">
+            <CardTitle className="text-sm">Últimos convites</CardTitle>
+            <Link
+              href="/pro/matches"
+              className="text-primary text-xs font-semibold hover:underline"
+            >
+              Ver todos
+            </Link>
+          </CardHeader>
+          <CardContent>
+            {invites.isLoading ? (
+              <Skeleton className="h-24" />
+            ) : !invites.data || invites.data.length === 0 ? (
+              <EmptyState
+                icon={MailOpen}
+                title="Nenhum convite ainda"
+                className="py-6"
+              />
+            ) : (
+              <div className="divide-y">
+                {invites.data.slice(0, 3).map((match) => (
+                  <div
+                    key={match.id}
+                    className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
+                  >
+                    <Avatar className="size-10 shrink-0">
+                      <AvatarImage
+                        src={
+                          match.project.company?.profilePhotoUrl ?? undefined
+                        }
+                        alt=""
+                      />
+                      <AvatarFallback>
+                        {match.project.companyName.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-medium">
+                        {match.project.title}
+                      </div>
+                      <div className="text-muted-foreground truncate text-xs">
+                        {match.project.companyName}
+                      </div>
+                    </div>
+                    {match.scoreBreakdown && (
+                      <Badge variant="secondary" className="tabular-nums">
+                        {Math.round(match.scoreBreakdown.finalScore)}%
+                      </Badge>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
-      )}
+
+        <Card>
+          <CardHeader className="flex-row items-center justify-between">
+            <CardTitle className="text-sm">Matches confirmados</CardTitle>
+            <Link
+              href="/pro/matches"
+              className="text-primary text-xs font-semibold hover:underline"
+            >
+              Ver todos
+            </Link>
+          </CardHeader>
+          <CardContent>
+            {allMatches.isLoading ? (
+              <Skeleton className="h-24" />
+            ) : confirmed.length === 0 ? (
+              <EmptyState
+                icon={Handshake}
+                title="Nenhum match confirmado ainda"
+                className="py-6"
+              />
+            ) : (
+              <div className="divide-y">
+                {confirmed.slice(0, 3).map((match) => (
+                  <div
+                    key={match.id}
+                    className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
+                  >
+                    <Avatar className="size-10 shrink-0">
+                      <AvatarImage
+                        src={
+                          match.project.company?.profilePhotoUrl ?? undefined
+                        }
+                        alt=""
+                      />
+                      <AvatarFallback>
+                        {match.project.companyName.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-medium">
+                        {match.project.title}
+                      </div>
+                      <div className="text-muted-foreground truncate text-xs">
+                        {match.project.companyName}
+                      </div>
+                    </div>
+                    <Badge className="bg-success/15 text-success">
+                      Confirmado
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {dashboard.data && (
-        <>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <StatCard
-              icon={Handshake}
-              label="Total de matches"
-              value={String(dashboard.data.matchSummary.totalMatches)}
-            />
-            <StatCard
-              icon={ThumbsUp}
-              label="Matches confirmados"
-              value={String(dashboard.data.matchSummary.confirmedMatches)}
-              accent="success"
-            />
-            <StatCard
-              icon={TrendingUp}
-              label="Taxa de aceitação"
-              value={`${dashboard.data.matchSummary.overallAcceptanceRate.toFixed(0)}%`}
-              accent="accent"
-            />
-            <StatCard
-              icon={Award}
-              label="Reputação geral"
-              value={
-                dashboard.data.reputationSummary.overallReputation != null
-                  ? dashboard.data.reputationSummary.overallReputation.toFixed(
-                      1
-                    )
-                  : "—"
-              }
-              accent="secondary"
-            />
-          </div>
-
-          <div className="grid gap-4 lg:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Matches por mês</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {dashboard.data.matchesPerMonth.length > 0 ? (
-                  <MonthlyMatchesBars data={dashboard.data.matchesPerMonth} />
-                ) : (
-                  <p className="text-muted-foreground text-sm">
-                    Ainda sem histórico suficiente.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Skills mais requisitadas</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-wrap gap-2">
-                {dashboard.data.mostRequiredSkills.length > 0 ? (
-                  dashboard.data.mostRequiredSkills.map((skill) => (
-                    <Badge key={skill.skillName} variant="secondary">
-                      {skill.skillName} · {skill.projectCount}
-                    </Badge>
-                  ))
-                ) : (
-                  <p className="text-muted-foreground text-sm">
-                    Nenhum dado de demanda ainda.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <TrendingUp className="size-4" />
+                Matches por mês
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {dashboard.data.matchesPerMonth.length > 0 ? (
+                <MonthlyMatchesBars data={dashboard.data.matchesPerMonth} />
+              ) : (
+                <p className="text-muted-foreground text-sm">
+                  Ainda sem histórico suficiente.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">
+                Skills mais requisitadas
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-2">
+              {dashboard.data.mostRequiredSkills.length > 0 ? (
+                dashboard.data.mostRequiredSkills.map((skill) => (
+                  <Badge key={skill.skillName} variant="secondary">
+                    {skill.skillName} · {skill.projectCount}
+                  </Badge>
+                ))
+              ) : (
+                <p className="text-muted-foreground text-sm">
+                  Nenhum dado de demanda ainda.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       )}
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <QuickLink
+          href="/pro/profile"
+          icon={User}
+          title="Atualizar perfil"
+          description="Mantenha skills e disponibilidade em dia"
+        />
+        <QuickLink
+          href="/pro/portfolio"
+          icon={Briefcase}
+          title="Ver portfólio"
+          description="Adicione projetos anteriores pro seu score"
+        />
+        <QuickLink
+          href="/pro/opportunities"
+          icon={Sparkles}
+          title="Ver oportunidades"
+          description="Vagas e projetos compatíveis com você"
+        />
+      </div>
     </div>
   );
 }
 
-function DashboardSkeleton() {
+function QuickLink({
+  href,
+  icon: Icon,
+  title,
+  description,
+}: {
+  href: string;
+  icon: typeof Map;
+  title: string;
+  description: string;
+}) {
   return (
-    <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-20" />
-        ))}
+    <Link
+      href={href}
+      className="hover:border-primary/40 flex items-center gap-3 rounded-lg border p-4 transition-colors"
+    >
+      <div className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-full">
+        <Icon className="size-4" />
       </div>
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Skeleton className="h-48" />
-        <Skeleton className="h-48" />
+      <div className="min-w-0">
+        <div className="text-sm font-medium">{title}</div>
+        <div className="text-muted-foreground text-xs">{description}</div>
       </div>
-    </div>
+    </Link>
   );
 }

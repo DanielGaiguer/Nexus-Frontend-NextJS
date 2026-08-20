@@ -18,14 +18,14 @@ const PHONE_REGEX = /^\(?\d{2}\)?[\s-]?\d{4,5}-?\d{4}$/;
 const CEP_REGEX = /^\d{5}-?\d{3}$/;
 const CNPJ_REGEX = /^\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}$/;
 
-const phoneField = z
+export const phoneField = z
   .string()
   .trim()
   .refine((value) => value === "" || PHONE_REGEX.test(value), {
     message: "Telefone inválido. Use o formato (11) 99999-9999.",
   });
 
-const cepField = z
+export const cepField = z
   .string()
   .trim()
   .refine((value) => value === "" || CEP_REGEX.test(value), {
@@ -39,7 +39,7 @@ const taxIdField = z
     message: "CNPJ inválido. Use o formato 00.000.000/0001-00.",
   });
 
-const moneyField = z
+export const moneyField = z
   .string()
   .trim()
   .refine(
@@ -49,6 +49,13 @@ const moneyField = z
       message: "Valor inválido.",
     }
   );
+
+export const urlField = z
+  .string()
+  .trim()
+  .refine((value) => value === "" || /^https?:\/\/.+/.test(value), {
+    message: "Informe uma URL válida (começando com http:// ou https://).",
+  });
 
 /** string vazia/whitespace → null; senão o valor trimado (é assim que os *RequestDTO esperam "sem valor"). */
 export function toNullable(value: string): string | null {
@@ -120,3 +127,70 @@ export const registerCompanyLinkedInSchema = z.object({
 export type RegisterCompanyLinkedInFormValues = z.infer<
   typeof registerCompanyLinkedInSchema
 >;
+
+// ── pro-profile.html :: #editModal ──────────────────────────────────────
+
+export const professionalProfileEditSchema = z.object({
+  name: z.string().trim().min(2, "Informe seu nome completo."),
+  phone: phoneField,
+  cep: cepField,
+  experienceLevel: z.enum([
+    "",
+    "INTERNSHIP",
+    "TRAINEE",
+    "JUNIOR",
+    "PLENO",
+    "SENIOR",
+  ]),
+  preferredTypes: z.array(z.enum(["FREELANCE", "FULL_TIME", "PART_TIME"])),
+  preferredOpportunityTypes: z.array(z.enum(["JOB", "PROJECT"])),
+  expectedSalaryCLT: moneyField,
+  expectedSalaryPJ: moneyField,
+  freelanceMinExpectation: moneyField,
+  freelanceMaxExpectation: moneyField,
+  linkedinUrl: urlField,
+  githubUrl: urlField,
+});
+
+export type ProfessionalProfileEditFormValues = z.infer<
+  typeof professionalProfileEditSchema
+>;
+
+// ── pro-portfolio.html — CRUD de PreviousProject ────────────────────────
+
+export const previousProjectSchema = z.object({
+  title: z.string().trim().min(2, "Informe o título do projeto."),
+  description: z.string().trim(),
+  technologies: z.string().trim(),
+  yearOfCompletion: z
+    .string()
+    .trim()
+    .refine(
+      (value) =>
+        value === "" ||
+        (/^\d{4}$/.test(value) &&
+          Number(value) >= 1990 &&
+          Number(value) <= 2100),
+      { message: "Informe um ano válido (ex: 2024)." }
+    ),
+});
+
+export type PreviousProjectFormValues = z.infer<typeof previousProjectSchema>;
+
+// ── pro-profile.html :: #certificatesModal / #eventsModal ───────────────
+
+export const credentialSchema = z.object({
+  name: z.string().trim().min(2, "Informe um nome."),
+  color: z.enum([
+    "NEXUS",
+    "SLATE",
+    "CIANO",
+    "VIOLETA",
+    "TEAL",
+    "AMBAR",
+    "ROSA",
+    "ESMERALDA",
+  ]),
+});
+
+export type CredentialFormValues = z.infer<typeof credentialSchema>;

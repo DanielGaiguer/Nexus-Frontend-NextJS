@@ -1,6 +1,7 @@
 "use client";
 
 import { LogOut, User } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -69,13 +70,22 @@ export function AppHeader({ session }: { session: SessionClaims }) {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem disabled>
-            <User />
-            Meu perfil
-            <span className="text-muted-foreground ml-auto text-xs">
-              em breve
-            </span>
-          </DropdownMenuItem>
+          {session.role === "PROFESSIONAL" ? (
+            <DropdownMenuItem asChild>
+              <Link href="/pro/profile">
+                <User />
+                Meu perfil
+              </Link>
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem disabled>
+              <User />
+              Meu perfil
+              <span className="text-muted-foreground ml-auto text-xs">
+                em breve
+              </span>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem
             variant="destructive"

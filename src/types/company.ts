@@ -17,3 +17,61 @@ export interface CompanyProfileDTO {
   profilePhotoUrl: string | null;
   linkedinUrl: string | null;
 }
+
+/** Espelha com.main.nexus.dto.ReputationExplanationDTO. */
+export interface ReputationExplanationDTO {
+  overallScore: number | null;
+  confidencePercent: number | null;
+  totalReviews: number | null;
+  technicalCompetence: number | null;
+  communication: number | null;
+  reliability: number | null;
+  punctuality: number | null;
+  professionalism: number | null;
+  satisfactionAverage: number | null;
+  recommendationRate: number | null;
+}
+
+/** Espelha com.main.nexus.dto.CompanyPreviousProjectDTO. */
+export interface CompanyPreviousProjectDTO {
+  id: number;
+  projectTitle: string;
+  completedAt: string;
+}
+
+/**
+ * Espelha com.main.nexus.dto.PublicCompanyDTO — o perfil de empresa como
+ * qualquer outro papel enxerga (embutido em ProjectResponseDTO.company,
+ * usado no diretório e na página pública de empresa).
+ */
+export interface PublicCompanyDTO {
+  id: number;
+  companyName: string;
+  description: string | null;
+  city: string | null;
+  uf: string | null;
+  reputation: number | null;
+  profilePhotoUrl: string | null;
+  reputationDetails: ReputationExplanationDTO | null;
+  taxId: string | null;
+  status: string;
+  previousProjects: CompanyPreviousProjectDTO[];
+  contactEmail: string | null;
+}
+
+/** Espelha com.main.nexus.dto.CompanyDirectoryItemDTO. */
+export interface CompanyDirectoryItemDTO {
+  id: number;
+  companyName: string;
+  city: string | null;
+  uf: string | null;
+  reputation: number | null;
+  profilePhotoUrl: string | null;
+  description: string | null;
+}
+
+/** Espelha com.main.nexus.dto.CompanyDirectoryPageDTO. */
+export interface CompanyDirectoryPageDTO {
+  content: CompanyDirectoryItemDTO[];
+  hasMore: boolean;
+}

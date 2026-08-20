@@ -172,3 +172,77 @@ Faltam: as próprias telas atrás de cada item de navegação, perfil do
 usuário (o menu "Meu perfil" está desabilitado de propósito), e o
 dashboard "operacional" (convites/matches recentes) do antigo
 pro-dashboard.html — isso é trabalho dos próximos prompts.
+
+## Estado desta etapa (Prompt 2 — Onda Profissional, núcleo)
+
+Sequenciamento combinado com o usuário (Prompt 2 é bem maior que os
+anteriores): núcleo primeiro — perfil, portfólio, oportunidades, matches,
+dashboard operacional. Diretório de empresas, analytics (recharts) e mapa
+(react-leaflet) ficam para a continuação.
+
+- **`/pro/profile`**: view + edição completa (`Dialog`, não modal Bootstrap)
+  — dados pessoais, CEP→cidade/UF resolvido pelo backend no PUT, nível de
+  experiência, tipos de oportunidade, pretensão salarial, LinkedIn/GitHub
+  (como campo de URL simples — sem o fluxo de "salvar e já disparar o OAuth"
+  do app antigo, que não fecha o ciclo aqui mesmo). Skills via combobox
+  (`Command`+`Popover`) contra o catálogo completo
+  (`GET /api/professional/skills`), cruzando por nome com o perfil pra saber
+  o que já está selecionado — mesma técnica que o controller Spring MVC
+  antigo usava. Certificados/eventos como CRUD completo. Reputação detalhada
+  vem de `GET /api/public/professional/{id}` (o `ProfessionalProfileDTO`
+  "privado" só tem a nota geral, não o breakdown).
+  - **Simplificação deliberada**: upload de foto sem o corte client-side
+    (cropperjs) que o app antigo tinha — envia o arquivo selecionado direto,
+    o backend não exige proporção quadrada.
+  - Score simulado (widget do modal de edição) é um porte 1:1 de
+    `nexus-score-simulator.js` (`src/lib/score-simulator.ts`) — uma
+    estimativa client-side com pesos fixos, não a fórmula real de matching;
+    nunca é enviada pra API.
+- **`/pro/portfolio`**: CRUD de `PreviousProject` (`Dialog` de
+  criar/editar, `AlertDialog` de excluir). Tecnologias como campo de texto
+  separado por vírgula, em vez do widget de chips dinâmico do app antigo.
+- **`/pro/opportunities`**: lista de `MatchResponseDTO` em `WAITING`, busca
+  por título/empresa + filtro de tipo (vaga/projeto) client-side, botão
+  "Demonstrar interesse". **Simplificação**: só isso — o painel de 9 filtros
+  do app antigo (modalidade, faixa salarial, skills, data, ...) não foi
+  portado nesta passada.
+- **`/pro/matches`**: 5 abas (Convites, Enviados, Confirmados, Anteriores,
+  Recusados). Aceitar é direto; recusar é sempre via `AlertDialog` com
+  motivo obrigatório (nunca `confirm()`) — grid de checkboxes
+  (`ProfessionalRejectionReason`) + descrição opcional, botão de confirmar
+  só habilita com ≥1 motivo marcado. Contato da empresa (matches
+  confirmados) é revelado sob demanda (`GET /api/company/{id}/contact`).
+  "Ver histórico" (timeline de status cross-changed) do app antigo não foi
+  portado nesta passada.
+- **`/pro/dashboard`** upgrade: além do dashboard analítico do Prompt 1,
+  ganhou os cards operacionais do `pro-dashboard.html` original — convites
+  pendentes, matches confirmados, vagas disponíveis (`/api/professional/stats`),
+  projetos no portfólio, e as listas de "últimos convites"/"matches
+  confirmados".
+- Menu "Meu perfil" no header agora linka pra `/pro/profile` (só para
+  `PROFESSIONAL` — `COMPANY` continua desabilitado até `/company/profile`
+  existir).
+
+### Bug de backend encontrado (não corrigido — fora do escopo deste projeto)
+
+`PUT /api/professional/projects/{id}` (editar item do portfólio) devolve
+**500** sempre: `PreviousProjectService.update()` (linha 81) lança
+`UnsupportedOperationException` dentro do merge do Hibernate
+(`CollectionType.replaceElements` tentando `.clear()` numa lista imutável
+associada ao campo `technologies`). Confirmado batendo direto no backend
+(`curl` sem passar pelo Next) — não é um problema de contrato/formato vindo
+do frontend. `POST`/`DELETE` de portfólio e todo o CRUD de
+credentials (`/api/professional/credentials/{id}`) funcionam normalmente; só
+a edição de um `PreviousProject` já existente quebra. A UI do
+`/pro/portfolio` já está pronta pra quando isso for corrigido no backend —
+o botão de editar existe e monta o payload certo, só vai receber o toast de
+erro (`error.message` do 500) até lá.
+
+### Validado ponta a ponta contra o backend real
+
+`GET`/`PUT` de perfil, `PUT` de skills, `POST`/`DELETE` de previous
+project, `POST`/`PUT`/`DELETE` de credentials, `GET` de
+opportunities/matches (invites/sent/previous/all), `POST` de demonstrar
+interesse e `POST` de cancelar match (ciclo completo: interesse →
+aparece em "sent" → cancela → some) — tudo via `curl` autenticado com
+cookie real, mais `build`/`lint`/`typecheck` limpos.

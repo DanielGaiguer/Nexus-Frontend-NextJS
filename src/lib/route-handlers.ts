@@ -8,6 +8,46 @@ import {
 import { getSessionToken } from "@/lib/session";
 
 /**
+ * Como proxyToBackend, mas pra respostas binárias (PDF do currículo, export
+ * de perfil) — não dá pra passar por `backendFetch`/`parseResponse`, que só
+ * sabem lidar com JSON/texto.
+ */
+export async function proxyBinary(
+  path: string,
+  contentType: string
+): Promise<NextResponse> {
+  const token = await getSessionToken();
+  if (!token) {
+    return NextResponse.json(
+      { message: "Sessão inválida ou expirada." },
+      { status: 401 }
+    );
+  }
+
+  const backendUrl = process.env.BACKEND_URL ?? "http://localhost:8081";
+  const response = await fetch(`${backendUrl}${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    return NextResponse.json(
+      { message: message || "Não foi possível obter o arquivo." },
+      { status: response.status }
+    );
+  }
+
+  return new NextResponse(response.body, {
+    headers: {
+      "Content-Type": contentType,
+      "Content-Disposition":
+        response.headers.get("content-disposition") ?? "inline",
+    },
+  });
+}
+
+/**
  * Fábrica de Route Handlers "proxy puro" — GET/POST que só repassam pro
  * Spring Boot (opcionalmente com o Bearer token da sessão) e traduzem
  * `ApiError` numa resposta JSON no mesmo formato de erro. Existe pra não

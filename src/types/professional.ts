@@ -65,3 +65,8 @@ export interface ProfessionalProfileDTO {
 
   credentials: ProfessionalCredentialDTO[];
 }
+
+/** Espelha com.main.nexus.dto.ProfessionalStatsDTO. */
+export interface ProfessionalStatsDTO {
+  availableOpportunitiesCount: number;
+}

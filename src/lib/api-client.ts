@@ -56,15 +56,22 @@ export async function backendFetch<T>(
   { body, token, headers, ...init }: BackendFetchOptions = {}
 ): Promise<T> {
   const backendUrl = process.env.BACKEND_URL ?? "http://localhost:8081";
+  // FormData (upload de foto/currículo) monta seu próprio Content-Type com
+  // boundary — jamais sobrescrever, e nunca JSON.stringify um FormData.
+  const isFormData = body instanceof FormData;
 
   const response = await fetch(`${backendUrl}${path}`, {
     ...init,
     headers: {
-      "Content-Type": "application/json",
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...headers,
     },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: isFormData
+      ? body
+      : body !== undefined
+        ? JSON.stringify(body)
+        : undefined,
     // Servidor-a-servidor, por request de um usuário específico — nunca faz
     // sentido o Next cachear isso entre usuários diferentes.
     cache: "no-store",
@@ -87,13 +94,19 @@ export async function apiFetch<T>(
   path: string,
   { body, headers, ...init }: ApiFetchOptions = {}
 ): Promise<T> {
+  const isFormData = body instanceof FormData;
+
   const response = await fetch(path, {
     ...init,
     headers: {
-      "Content-Type": "application/json",
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
       ...headers,
     },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: isFormData
+      ? body
+      : body !== undefined
+        ? JSON.stringify(body)
+        : undefined,
     credentials: "same-origin",
   });
 
