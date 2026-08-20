@@ -17,6 +17,7 @@ import { ProfilePhoto } from "@/components/professional/profile-photo";
 import { ReputationCard } from "@/components/professional/reputation-card";
 import { ResumeCard } from "@/components/professional/resume-card";
 import { SkillsEditorDialog } from "@/components/professional/skills-editor-dialog";
+import { ReviewsPreviewCard } from "@/components/reviews/reviews-preview-card";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -212,6 +213,11 @@ export default function ProProfilePage() {
 
           <ReputationCard
             reputation={publicProfile?.reputationDetails ?? null}
+          />
+          <ReviewsPreviewCard
+            entityType="professional"
+            entityId={profile.id}
+            viewAllHref="/pro/reviews"
           />
         </div>
 

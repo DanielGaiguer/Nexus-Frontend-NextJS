@@ -1,6 +1,7 @@
 "use client";
 
-import { Handshake, Search, Sparkles } from "lucide-react";
+import { Eye, Handshake, Search, Sparkles } from "lucide-react";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -126,14 +127,22 @@ export default function OpportunitiesPage() {
               match={match}
               mySkills={profile?.skills}
               actions={
-                <Button
-                  size="sm"
-                  disabled={alreadySent || showInterest.isPending}
-                  onClick={() => handleInterest(match.project.id)}
-                >
-                  <Handshake className="size-4" />
-                  {alreadySent ? "Interesse enviado" : "Demonstrar interesse"}
-                </Button>
+                <>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href={`/public/opportunity/${match.project.id}`}>
+                      <Eye className="size-4" />
+                      Ver detalhes
+                    </Link>
+                  </Button>
+                  <Button
+                    size="sm"
+                    disabled={alreadySent || showInterest.isPending}
+                    onClick={() => handleInterest(match.project.id)}
+                  >
+                    <Handshake className="size-4" />
+                    {alreadySent ? "Interesse enviado" : "Demonstrar interesse"}
+                  </Button>
+                </>
               }
             />
           );

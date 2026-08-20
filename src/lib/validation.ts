@@ -337,3 +337,14 @@ export const projectFormSchema = z
   });
 
 export type ProjectFormValues = z.infer<typeof projectFormSchema>;
+
+// ── matches/review.html — avaliação pós-match ───────────────────────────
+
+export const reviewFormSchema = z.object({
+  rating: z.number().min(1, "Selecione uma nota.").max(5),
+  comment: z.string(),
+  positiveReasons: z.array(z.string()),
+  negativeReasons: z.array(z.string()),
+});
+
+export type ReviewFormValues = z.infer<typeof reviewFormSchema>;

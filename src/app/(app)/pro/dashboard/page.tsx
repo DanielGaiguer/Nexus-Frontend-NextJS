@@ -15,6 +15,7 @@ import Link from "next/link";
 
 import { MonthlyMatchesBars } from "@/components/dashboard/monthly-matches-bars";
 import { StatCard } from "@/components/dashboard/stat-card";
+import { PendingReviewDialog } from "@/components/matches/pending-review-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +41,7 @@ export default function ProDashboardPage() {
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
+      <PendingReviewDialog role="professional" active />
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
           {profile.data ? (

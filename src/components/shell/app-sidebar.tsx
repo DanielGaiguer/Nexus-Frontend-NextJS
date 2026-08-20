@@ -12,9 +12,11 @@ import {
   SidebarGroupContent,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { useChatUnreadTotal } from "@/hooks/queries/useChat";
 import { useDisplayName } from "@/hooks/queries/useDisplayName";
 import type { SessionClaims } from "@/types/auth";
 
@@ -22,6 +24,7 @@ export function AppSidebar({ session }: { session: SessionClaims }) {
   const pathname = usePathname();
   const sections = navByRole[session.role];
   const displayName = useDisplayName(session.role);
+  const unreadChat = useChatUnreadTotal();
 
   return (
     <Sidebar collapsible="icon">
@@ -50,6 +53,13 @@ export function AppSidebar({ session }: { session: SessionClaims }) {
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
+                    {item.href === "/chat" &&
+                      !!unreadChat.data &&
+                      unreadChat.data > 0 && (
+                        <SidebarMenuBadge>
+                          {unreadChat.data > 99 ? "99+" : unreadChat.data}
+                        </SidebarMenuBadge>
+                      )}
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>

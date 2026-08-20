@@ -6,6 +6,7 @@ import Link from "next/link";
 import {
   Briefcase,
   Building2,
+  Eye,
   Pencil,
   PlayCircle,
   RotateCcw,
@@ -112,6 +113,12 @@ export function ProjectCard({ project }: { project: ProjectResponseDTO }) {
         )}
 
         <div className="flex flex-wrap justify-end gap-2 border-t pt-3">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href={`/public/opportunity/${project.id}`}>
+              <Eye className="size-3.5" />
+              Ver oportunidade
+            </Link>
+          </Button>
           <Button variant="ghost" size="sm" asChild>
             <Link href={`/company/projects/${project.id}/ranking`}>
               <Users className="size-3.5" />

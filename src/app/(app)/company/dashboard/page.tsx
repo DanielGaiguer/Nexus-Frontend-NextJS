@@ -13,6 +13,8 @@ import Link from "next/link";
 
 import { MonthlyMatchesBars } from "@/components/dashboard/monthly-matches-bars";
 import { StatCard } from "@/components/dashboard/stat-card";
+import { PendingReviewDialog } from "@/components/matches/pending-review-dialog";
+import { PendingStatusCheckDialog } from "@/components/matches/pending-status-check-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +25,7 @@ import { useCompanyDashboardSummary } from "@/hooks/queries/useCompanyDashboardS
 import { useCompanyProfile } from "@/hooks/queries/useCompanyProfile";
 import { useMyProjects } from "@/hooks/queries/useMyProjects";
 import { useReceivedInterests } from "@/hooks/queries/useCompanyMatches";
+import { usePendingStatusCheck } from "@/hooks/queries/useReviews";
 
 export default function CompanyDashboardPage() {
   const profile = useCompanyProfile();
@@ -30,11 +33,16 @@ export default function CompanyDashboardPage() {
   const dashboard = useCompanyDashboard();
   const projects = useMyProjects();
   const received = useReceivedInterests();
+  // Só uma janela por vez — status check tem prioridade por ser mais urgente
+  // (match ainda ativo), igual ao app antigo.
+  const pendingStatusCheck = usePendingStatusCheck(true);
 
   const openProjects = (projects.data ?? []).filter((p) => p.status === "OPEN");
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
+      <PendingStatusCheckDialog />
+      <PendingReviewDialog role="company" active={!pendingStatusCheck.data} />
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
           {profile.data ? (

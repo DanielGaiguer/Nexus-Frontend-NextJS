@@ -5,6 +5,7 @@ import { AlertTriangle, Link2, Mail, MapPin, Phone, Star } from "lucide-react";
 import { CompanyPhoto } from "@/components/company/company-photo";
 import { CompanyProfileEditDialog } from "@/components/company/company-profile-edit-dialog";
 import { ReputationCard } from "@/components/professional/reputation-card";
+import { ReviewsPreviewCard } from "@/components/reviews/reviews-preview-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCompanyProfile } from "@/hooks/queries/useCompanyProfile";
@@ -134,6 +135,11 @@ export default function CompanyProfilePage() {
 
           <ReputationCard
             reputation={publicProfile?.reputationDetails ?? null}
+          />
+          <ReviewsPreviewCard
+            entityType="company"
+            entityId={profile.id}
+            viewAllHref="/company/reviews"
           />
         </div>
 

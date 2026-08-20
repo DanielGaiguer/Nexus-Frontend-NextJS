@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 
 import { ReputationCard } from "@/components/professional/reputation-card";
+import { ReviewsPreviewCard } from "@/components/reviews/reviews-preview-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -133,6 +134,11 @@ export default function CompanyViewPage() {
           </Card>
 
           <ReputationCard reputation={company.reputationDetails} />
+          <ReviewsPreviewCard
+            entityType="company"
+            entityId={id}
+            viewAllHref={`/public/company/${id}/reviews`}
+          />
         </div>
 
         <div className="flex flex-col gap-4">

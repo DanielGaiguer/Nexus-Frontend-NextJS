@@ -2,12 +2,16 @@
 
 import {
   Check,
+  CircleCheck,
   HeartHandshake,
   History,
   Mail,
+  MessageCircle,
   Send,
+  Star,
   ThumbsDown,
 } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -30,8 +34,42 @@ import {
   useSentInterests,
 } from "@/hooks/queries/useMatches";
 import { useProfessionalProfile } from "@/hooks/queries/useProfessionalProfile";
+import { useReviewedMatchIds } from "@/hooks/queries/useReviews";
 import { ApiError } from "@/lib/api-client";
 import type { MatchResponseDTO } from "@/types/match";
+
+function ChatAndReviewActions({
+  matchId,
+  reviewedMatchIds,
+}: {
+  matchId: number;
+  reviewedMatchIds: number[] | undefined;
+}) {
+  const reviewed = reviewedMatchIds?.includes(matchId) ?? false;
+  return (
+    <>
+      <Button size="sm" variant="outline" asChild>
+        <Link href={`/chat/${matchId}`}>
+          <MessageCircle className="size-4" />
+          Chat
+        </Link>
+      </Button>
+      {reviewed ? (
+        <Button size="sm" variant="ghost" disabled>
+          <CircleCheck className="size-4" />
+          Avaliado
+        </Button>
+      ) : (
+        <Button size="sm" variant="ghost" asChild>
+          <Link href={`/matches/${matchId}/review`}>
+            <Star className="size-4" />
+            Avaliar
+          </Link>
+        </Button>
+      )}
+    </>
+  );
+}
 
 export default function MatchesPage() {
   const { data: profile } = useProfessionalProfile();
@@ -39,6 +77,7 @@ export default function MatchesPage() {
   const sent = useSentInterests();
   const allMatches = useMatches();
   const previous = usePreviousMatches();
+  const { data: reviewedMatchIds } = useReviewedMatchIds("professional");
 
   const confirmed = (allMatches.data ?? []).filter(
     (m) => m.status === "MATCHED"
@@ -98,6 +137,7 @@ export default function MatchesPage() {
             matches={confirmed}
             isLoading={allMatches.isLoading}
             mySkills={profile?.skills}
+            reviewedMatchIds={reviewedMatchIds}
           />
         </TabsContent>
 
@@ -109,6 +149,7 @@ export default function MatchesPage() {
             emptyTitle="Nenhuma oportunidade anterior"
             emptyDescription="Matches confirmados que já se encerraram aparecem aqui."
             emptyIcon={History}
+            reviewedMatchIds={reviewedMatchIds}
           />
         </TabsContent>
 
@@ -246,10 +287,12 @@ function ConfirmedList({
   matches,
   isLoading,
   mySkills,
+  reviewedMatchIds,
 }: {
   matches: MatchResponseDTO[];
   isLoading: boolean;
   mySkills: string[] | undefined;
+  reviewedMatchIds: number[] | undefined;
 }) {
   if (isLoading) return <Loading />;
   if (matches.length === 0) {
@@ -263,16 +306,23 @@ function ConfirmedList({
   }
 
   return matches.map((match) => (
-    <ConfirmedMatchCard key={match.id} match={match} mySkills={mySkills} />
+    <ConfirmedMatchCard
+      key={match.id}
+      match={match}
+      mySkills={mySkills}
+      reviewedMatchIds={reviewedMatchIds}
+    />
   ));
 }
 
 function ConfirmedMatchCard({
   match,
   mySkills,
+  reviewedMatchIds,
 }: {
   match: MatchResponseDTO;
   mySkills: string[] | undefined;
+  reviewedMatchIds: number[] | undefined;
 }) {
   const [revealed, setRevealed] = useState(false);
   const contact = useCompanyContact(match.project.companyId, revealed);
@@ -283,26 +333,36 @@ function ConfirmedMatchCard({
       mySkills={mySkills}
       showScore={false}
       actions={
-        <div className="flex flex-col items-end gap-1">
-          <Button size="sm" variant="outline" onClick={() => setRevealed(true)}>
-            <Mail className="size-4" />
-            Ver contato
-          </Button>
-          {revealed && contact.isLoading && (
-            <span className="text-muted-foreground text-xs">Carregando…</span>
-          )}
-          {revealed && contact.data && (
-            <div className="text-muted-foreground text-right text-xs">
-              <div>{contact.data.email}</div>
-              {contact.data.phone && <div>{contact.data.phone}</div>}
-            </div>
-          )}
-          {revealed && contact.isError && (
-            <span className="text-destructive text-xs">
-              Não foi possível carregar o contato.
-            </span>
-          )}
-        </div>
+        <>
+          <div className="flex flex-col items-end gap-1">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setRevealed(true)}
+            >
+              <Mail className="size-4" />
+              Ver contato
+            </Button>
+            {revealed && contact.isLoading && (
+              <span className="text-muted-foreground text-xs">Carregando…</span>
+            )}
+            {revealed && contact.data && (
+              <div className="text-muted-foreground text-right text-xs">
+                <div>{contact.data.email}</div>
+                {contact.data.phone && <div>{contact.data.phone}</div>}
+              </div>
+            )}
+            {revealed && contact.isError && (
+              <span className="text-destructive text-xs">
+                Não foi possível carregar o contato.
+              </span>
+            )}
+          </div>
+          <ChatAndReviewActions
+            matchId={match.id}
+            reviewedMatchIds={reviewedMatchIds}
+          />
+        </>
       }
     />
   );
@@ -315,6 +375,7 @@ function PlainList({
   emptyTitle,
   emptyDescription,
   emptyIcon,
+  reviewedMatchIds,
 }: {
   matches: MatchResponseDTO[] | undefined;
   isLoading: boolean;
@@ -322,6 +383,8 @@ function PlainList({
   emptyTitle: string;
   emptyDescription?: string;
   emptyIcon: typeof Mail;
+  /** Só passado pra aba "anteriores" — a "recusados" não tem chat nem avaliação. */
+  reviewedMatchIds?: number[];
 }) {
   if (isLoading) return <Loading />;
   if (!matches || matches.length === 0) {
@@ -340,6 +403,14 @@ function PlainList({
       match={match}
       mySkills={mySkills}
       showScore={false}
+      actions={
+        reviewedMatchIds !== undefined ? (
+          <ChatAndReviewActions
+            matchId={match.id}
+            reviewedMatchIds={reviewedMatchIds}
+          />
+        ) : undefined
+      }
     />
   ));
 }

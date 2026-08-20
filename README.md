@@ -412,3 +412,133 @@ perfil público de profissional, contato bloqueado por match não confirmado
 `curl` autenticado com cookie real. `build`/`lint`/`typecheck` limpos, mais
 verificação visual via Playwright (mobile 360px + desktop 1440px) em todas
 as telas novas.
+
+## Estado desta etapa (Prompt 4 — fluxos transversais)
+
+Chat, avaliações/status-check e páginas públicas — tudo que atravessa os
+dois papéis em vez de pertencer só a `/pro/**` ou `/company/**`.
+
+### Chat — mecanismo (investigado antes de portar, ver explicação completa
+dada ao usuário no chat desta sessão)
+
+O backend real usa **STOMP sobre WebSocket/SockJS** (`/ws`), não REST puro:
+listar conversas, histórico e contagem de não lidas são `GET`s normais
+(`/api/chat/**`, proxyados como sempre), mas **enviar mensagem** é um
+`SEND` STOMP (`/app/chat/{matchId}/send`) e **receber em tempo real** é uma
+`SUBSCRIBE` em `/topic/chat/{matchId}` (broadcast — o próprio remetente
+também está inscrito, então o "eco" da própria mensagem enviada chega pela
+mesma assinatura, sem precisar de append otimista local) e
+`/user/queue/chat-notification` (fila pessoal, só um sinal leve de "nova
+mensagem" pra atualizar o badge do menu quando não se está na tela do chat).
+A autenticação do WebSocket é seu próprio mecanismo — o `WebSocketAuthInterceptor`
+lê um header nativo `Authorization` só no frame `CONNECT`, nada de
+cookie/sessão.
+
+Isso importa porque nosso JWT vive num cookie **httpOnly** — nunca visível
+a JS do browser, de propósito. Mas o handshake STOMP *precisa* que o JS
+defina esse header na mão. O próprio `nexus-frontend` (Thymeleaf) atual
+já esbarra na mesma parede — ele guarda o JWT numa `HttpSession` do
+servidor, e resolve expondo o token ao client **só sob demanda**, via um
+endpoint dedicado (`ChatBffController#getWsToken`). Repliquei exatamente
+esse padrão: `GET /api/chat/ws-token` (Route Handler, não passa pelo
+`proxyToBackend` — não fala com o Spring, só lê o cookie httpOnly no
+servidor e devolve `{ token, wsBaseUrl }`) — mesma superfície de exposição
+que o app em produção já tem hoje, não é uma regressão de segurança.
+`useChatSocket(matchId, active)` (conexão por chat aberto) e
+`useChatNotifications()` (conector global, montado uma vez no `AppShell`,
+liga o badge "Conversas" da sidebar) usam `@stomp/stompjs` + `sockjs-client`
+(deps novas). Validado ponta a ponta com um script Node standalone que abre
+a conexão, manda uma mensagem via `/app/chat/{id}/send` e recebe de volta
+via `/topic/chat/{id}` — mesmo protocolo que o hook do browser usa.
+
+- **`/chat`**: lista de conversas, busca por nome/projeto, badge de não
+  lidas, "Encerrado" pra match inativo, "Encerra em N dia(s)" se
+  `daysUntilExpiration <= 7`. **Simplificação**: sem o polling de 30s
+  duplicado em cima do reordenamento client-side do app antigo — a lista já
+  vem ordenada do backend, só uso o `refetchInterval` do TanStack Query.
+- **`/chat/[matchId]`**: histórico + composer (2000 caracteres, Enter
+  envia, Shift+Enter quebra linha), banner de "encerra em N dias" ou "só
+  leitura" pra match inativo (composer desabilitado nesse caso — mesma
+  regra do backend: `ChatService#validateChatAccess` exige `MATCHED` +
+  `active`, mas a leitura do histórico não tem essa exigência).
+  **Correção deliberada**: o app antigo rotulava qualquer mensagem de dias
+  anteriores como "ontem HH:mm", mesmo semanas atrás — aqui uma mensagem
+  fora de hoje mostra `dd/MM HH:mm`.
+
+### Avaliações e status check
+
+- **`/matches/[matchId]/review`**: fonte única de verdade pro fluxo de
+  avaliação — o app antigo tinha DOIS caminhos pra isso
+  (`/pro/matches/{id}/review` e `/company/matches/{id}/review`, via
+  `shared/review-form.html`, mais um terceiro `/matches/{id}/review` com os
+  banners de bloqueio). Consolidei nessa única rota role-agnóstica (resolve
+  `authorType` a partir da sessão num Server Component, repassa pro client)
+  com os banners **needsStatusCheck**/**noContact** do backend real
+  (`ReviewService#save`): nota 1-5 obrigatória, motivos positivos/negativos
+  (`PositiveReason`/`NegativeReason`, rótulos em pt-BR já vêm resolvidos do
+  backend — `ReviewReasonMapper`), comentário opcional. Testado via `curl`:
+  empresa tentando avaliar sem responder o status check primeiro recebe
+  exatamente `"Please answer the match status check before reviewing."` e
+  a UI troca o form inteiro pelo banner "Responder agora" (não um toast).
+- **`/matches/[matchId]/status-check`**: só empresa responde (o backend
+  rejeita qualquer outro papel). 4 desfechos (`WORKING_TOGETHER`,
+  `PROJECT_COMPLETED`, `DID_NOT_WORK_OUT`, `NO_CONTACT_YET`) — os dois
+  primeiros disparam efeito colateral no backend (adiciona o projeto ao
+  portfólio do profissional automaticamente), daí o aviso "✨" na UI.
+- **Dialogs automáticos nos dashboards**: `PendingReviewDialog` (os dois
+  papéis) e `PendingStatusCheckDialog` (só empresa, com prioridade — igual
+  ao app antigo, só uma janela por vez).
+- **`/pro/reviews` e `/company/reviews`**: "minhas avaliações", mesmo
+  componente (`ReviewsListView`) que as páginas públicas usam, só que
+  resolvendo o próprio id via perfil em vez de vir da URL.
+- Botões **Chat**/**Avaliar**/**Avaliado** nas abas "Confirmados" e
+  "Anteriores" de `/pro/matches` e `/company/matches` — a aba "Recusados"
+  não ganhou esses botões porque o `company-matches.html`/`pro-matches.html`
+  original também não tinha lá (confirmado no template).
+
+### Páginas públicas
+
+- **`/public/opportunity/[id]`**: tela genuinamente nova (não existia
+  equivalente por papel). No app antigo é servida **fora** do shell
+  autenticado, num layout de marketing sem exigir login — este projeto
+  ainda não tem site público (todo mundo entra por `/login` primeiro),
+  então hospedei dentro do shell autenticado por consistência com o resto
+  do port; simplificação registrada aqui, não escondida. Mostra o score de
+  compatibilidade + botão "Demonstrar interesse" só quando o viewer é
+  `PROFESSIONAL` com match `WAITING` pra essa oportunidade. Reconectada a
+  partir de `company-projects` (o link "Ver oportunidade" removido no
+  Prompt 3 por falta desta página) e de `pro-opportunities` ("Ver
+  detalhes").
+- **`/public/professional/[id]` e `/public/company/[id]`**: não são telas
+  novas de verdade — o profissional já tem `/pro/companies/[id]` e a
+  empresa já tem `/company/professionals/[id]` com o mesmo dado (mais
+  ações específicas de papel). Essas rotas só resolvem o link neutro
+  (ex.: "voltar ao perfil" saindo da página de avaliações) — Server
+  Component que redireciona pro destino certo conforme `session.role`.
+  Sem duplicar a tela de perfil uma terceira vez.
+- **`/public/professional/[id]/reviews` e `/public/company/[id]/reviews`**:
+  telas de avaliações dedicadas (filtro por estrela, `ReviewsListView`
+  compartilhado com `/pro/reviews`/`/company/reviews`). Linkadas a partir
+  de um novo card `ReviewsPreviewCard` (top 3 + "ver todas") adicionado em
+  `/pro/companies/[id]`, `/company/professionals/[id]`, `/pro/profile` e
+  `/company/profile` — mesmo `#reviews-preview-mount` do app antigo, em
+  todo perfil (próprio ou de terceiro).
+- Não portado: `company-opportunities.html` continua fora de escopo (ver
+  nota do Prompt 3) — é o único item de navegação que ainda leva a 404
+  esperado.
+
+### Validado ponta a ponta contra o backend real
+
+Ciclo completo de match confirmado (interesse → aceite) pra ter um match
+`MATCHED` de teste; REST de chat (matches/messages/unread-total/ws-token);
+**WebSocket STOMP de verdade** (script Node isolado, conecta com o token
+do `ws-token`, manda mensagem via `/app/chat/{id}/send`, recebe de volta
+via `/topic/chat/{id}` — prova que o mecanismo funciona igual ao hook do
+browser); avaliação bloqueada por status check pendente (400 real);
+resposta ao status check + avaliação liberada depois; duplicar resposta ao
+status check (409 real); avaliação do lado profissional (sem o gate de
+status check, como esperado); contagem/top3/all de avaliações dos dois
+lados, com rótulos em pt-BR vindos prontos do backend; oportunidade
+pública. `build`/`lint`/`typecheck` limpos, mais verificação visual via
+Playwright (360px + 1440px) em todas as telas novas — nenhuma regressão
+nas telas de Prompts anteriores.
