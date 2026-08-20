@@ -39,11 +39,17 @@ export function NexusMap({
   companies,
   opportunities,
   visibleTypes,
+  companyHref = (id) => `/pro/companies/${id}`,
+  professionalHref,
 }: {
   professionals: MapProfessionalDTO[];
   companies: MapCompanyDTO[];
   opportunities: MapOpportunityDTO[];
   visibleTypes: Set<MapEntityType>;
+  /** Pra onde o "Ver empresa →" do popup aponta — cada papel enxerga empresas num caminho diferente. */
+  companyHref?: (id: number) => string;
+  /** Se informado, mostra um link "Ver profissional →" no popup (só faz sentido pro lado empresa). */
+  professionalHref?: (id: number) => string;
 }) {
   return (
     <MapContainer
@@ -78,6 +84,14 @@ export function NexusMap({
                     {p.skills.slice(0, 4).join(", ")}
                   </div>
                 )}
+                {professionalHref && (
+                  <Link
+                    href={professionalHref(p.id)}
+                    className="text-primary text-xs font-medium"
+                  >
+                    Ver profissional →
+                  </Link>
+                )}
               </div>
             </Popup>
           </Marker>
@@ -103,7 +117,7 @@ export function NexusMap({
                   {c.openProjects} vaga(s)/projeto(s) aberto(s)
                 </div>
                 <Link
-                  href={`/pro/companies/${c.id}`}
+                  href={companyHref(c.id)}
                   className="text-primary text-xs font-medium"
                 >
                   Ver empresa →

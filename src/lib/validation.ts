@@ -194,3 +194,146 @@ export const credentialSchema = z.object({
 });
 
 export type CredentialFormValues = z.infer<typeof credentialSchema>;
+
+// ── company-profile.html :: #editModal ──────────────────────────────────
+
+export const companyProfileEditSchema = z.object({
+  companyName: z.string().trim().min(2, "Informe o nome da empresa."),
+  taxId: taxIdField,
+  phone: phoneField,
+  cep: cepField,
+  description: z.string(),
+  linkedinUrl: urlField,
+});
+
+export type CompanyProfileEditFormValues = z.infer<
+  typeof companyProfileEditSchema
+>;
+
+// ── company-project-form.html — validação condicional PROJECT vs JOB,
+// espelhando 1:1 ProjectService#validateByType do backend. Além de checar
+// aqui (feedback antes mesmo de submeter), o Route Handler ainda repassa o
+// 400 real do backend se algo escapar — dupla checagem, fonte da verdade é
+// sempre o Spring.
+
+const todayIsoDate = () => new Date().toISOString().slice(0, 10);
+
+export const projectFormSchema = z
+  .object({
+    opportunityType: z.enum(["PROJECT", "JOB"]),
+    title: z.string().trim().min(2, "Informe o título."),
+    description: z.string().trim().min(5, "Descreva a oportunidade."),
+    workMode: z.enum(["", "REMOTE", "ONSITE", "HYBRID"]),
+    type: z.enum(["", "FREELANCE", "FULL_TIME", "PART_TIME"]),
+    experienceLevel: z.enum([
+      "",
+      "INTERNSHIP",
+      "TRAINEE",
+      "JUNIOR",
+      "PLENO",
+      "SENIOR",
+    ]),
+    maxPositions: z
+      .string()
+      .trim()
+      .refine((v) => Number(v) >= 1, { message: "Informe ao menos 1 vaga." }),
+    cep: cepField,
+    skillIds: z
+      .array(z.number())
+      .min(1, "Selecione ao menos uma skill.")
+      .max(15, "Máximo de 15 skills."),
+
+    // PROJECT
+    minimumBudget: moneyField,
+    maximumBudget: moneyField,
+    deadline: z.string(),
+
+    // JOB
+    contractType: z.enum([
+      "",
+      "CLT",
+      "PJ",
+      "INTERNSHIP",
+      "TEMPORARY",
+      "FREELANCER",
+    ]),
+    monthlySalaryMin: moneyField,
+    monthlySalaryMax: moneyField,
+    workloadHoursPerWeek: z.string(),
+    startDate: z.string(),
+    benefits: z.string(),
+
+    visibleToCompanies: z.boolean(),
+    salaryVisibleToProfessionals: z.boolean(),
+    salaryVisibleToCompanies: z.boolean(),
+  })
+  .superRefine((values, ctx) => {
+    if (values.workMode === "") {
+      ctx.addIssue({
+        code: "custom",
+        message: "Selecione a modalidade.",
+        path: ["workMode"],
+      });
+    }
+    if (values.type === "") {
+      ctx.addIssue({
+        code: "custom",
+        message: "Selecione o regime de trabalho.",
+        path: ["type"],
+      });
+    }
+    if (values.opportunityType === "PROJECT") {
+      if (!values.minimumBudget || !values.maximumBudget) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            "Orçamento mínimo e máximo são obrigatórios para um Projeto.",
+          path: ["maximumBudget"],
+        });
+      } else if (Number(values.maximumBudget) < Number(values.minimumBudget)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "O orçamento máximo deve ser maior ou igual ao mínimo.",
+          path: ["maximumBudget"],
+        });
+      }
+      if (!values.deadline) {
+        ctx.addIssue({
+          code: "custom",
+          message: "O prazo de entrega é obrigatório para um Projeto.",
+          path: ["deadline"],
+        });
+      } else if (values.deadline < todayIsoDate()) {
+        ctx.addIssue({
+          code: "custom",
+          message: "O prazo deve ser uma data futura.",
+          path: ["deadline"],
+        });
+      }
+    } else {
+      if (!values.contractType) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Selecione o tipo de contrato.",
+          path: ["contractType"],
+        });
+      }
+      if (!values.monthlySalaryMin || !values.monthlySalaryMax) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Salário mínimo e máximo são obrigatórios para uma Vaga.",
+          path: ["monthlySalaryMax"],
+        });
+      } else if (
+        Number(values.monthlySalaryMax) < Number(values.monthlySalaryMin)
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message: "O salário máximo deve ser maior ou igual ao mínimo.",
+          path: ["monthlySalaryMax"],
+        });
+      }
+    }
+  });
+
+export type ProjectFormValues = z.infer<typeof projectFormSchema>;

@@ -70,3 +70,21 @@ export interface ProfessionalProfileDTO {
 export interface ProfessionalStatsDTO {
   availableOpportunitiesCount: number;
 }
+
+/** Espelha com.main.nexus.dto.ProfessionalDirectoryItemDTO. */
+export interface ProfessionalDirectoryItemDTO {
+  id: number;
+  name: string;
+  city: string | null;
+  uf: string | null;
+  reputation: number | null;
+  profilePhotoUrl: string | null;
+  experienceLevel: string | null;
+  skills: string[];
+}
+
+/** Espelha com.main.nexus.dto.ProfessionalDirectoryPageDTO. */
+export interface ProfessionalDirectoryPageDTO {
+  content: ProfessionalDirectoryItemDTO[];
+  hasMore: boolean;
+}

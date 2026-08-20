@@ -145,3 +145,52 @@ export interface ContactInfoDTO {
   phone: string | null;
   email: string;
 }
+
+/** Espelha com.main.nexus.model.enums.CompanyRejectionReason. */
+export type CompanyRejectionReason =
+  | "MISSING_REQUIRED_SKILLS"
+  | "INSUFFICIENT_EXPERIENCE"
+  | "OVERQUALIFIED"
+  | "TECHNOLOGY_MISMATCH"
+  | "ROLE_EXPECTATION_MISMATCH"
+  | "INCOMPLETE_PROFILE"
+  | "POOR_QUALITY_PORTFOLIO"
+  | "NO_RELEVANT_PROJECTS"
+  | "FAILED_INTERVIEW_STAGE"
+  | "NO_RESPONSE_FROM_CANDIDATE"
+  | "ANOTHER_CANDIDATE_SELECTED"
+  | "POSITION_FILLED"
+  | "DEADLINE_TOO_SHORT"
+  | "COST_BENEFIT_INADEQUATE"
+  | "OTHER";
+
+/** Opções que a empresa pode marcar ao recusar um interesse (company-matches.html :: #rejectModal). */
+export const companyRejectionReasonOptions: {
+  value: CompanyRejectionReason;
+  label: string;
+}[] = [
+  { value: "MISSING_REQUIRED_SKILLS", label: "Faltam skills exigidas" },
+  { value: "INSUFFICIENT_EXPERIENCE", label: "Experiência insuficiente" },
+  { value: "OVERQUALIFIED", label: "Superqualificado para a vaga" },
+  { value: "TECHNOLOGY_MISMATCH", label: "Tecnologia não combina" },
+  {
+    value: "ROLE_EXPECTATION_MISMATCH",
+    label: "Expectativa de papel não combina",
+  },
+  { value: "INCOMPLETE_PROFILE", label: "Perfil incompleto" },
+  { value: "POOR_QUALITY_PORTFOLIO", label: "Portfólio de baixa qualidade" },
+  { value: "NO_RELEVANT_PROJECTS", label: "Sem projetos relevantes" },
+  { value: "FAILED_INTERVIEW_STAGE", label: "Não passou na entrevista" },
+  { value: "NO_RESPONSE_FROM_CANDIDATE", label: "Sem resposta do candidato" },
+  { value: "ANOTHER_CANDIDATE_SELECTED", label: "Outro candidato selecionado" },
+  { value: "POSITION_FILLED", label: "Vaga já preenchida" },
+  { value: "DEADLINE_TOO_SHORT", label: "Prazo muito curto" },
+  { value: "COST_BENEFIT_INADEQUATE", label: "Custo-benefício inadequado" },
+  { value: "OTHER", label: "Outro motivo" },
+];
+
+/** Espelha com.main.nexus.dto.CompanyRejectRequestDTO. */
+export interface CompanyRejectRequestDTO {
+  reasons: CompanyRejectionReason[];
+  description: string | null;
+}

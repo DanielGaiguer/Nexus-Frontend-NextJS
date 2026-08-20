@@ -18,6 +18,13 @@ export interface CompanyProfileDTO {
   linkedinUrl: string | null;
 }
 
+/** Espelha com.main.nexus.dto.CompanyDashboardDTO. */
+export interface CompanyDashboardDTO {
+  company: CompanyProfileDTO;
+  totalProjects: number;
+  totalMatches: number;
+}
+
 /** Espelha com.main.nexus.dto.ReputationExplanationDTO. */
 export interface ReputationExplanationDTO {
   overallScore: number | null;

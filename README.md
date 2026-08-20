@@ -300,3 +300,115 @@ que confirmei via `curl` que `/pro/portfolio` edita normalmente agora.
 oportunidades fechadas, contato (incluindo o caso 403 sem match
 confirmado), e os três endpoints de mapa — tudo via `curl` autenticado.
 `build`/`lint`/`typecheck` limpos.
+
+## Estado desta etapa (Prompt 3 — Onda Empresa)
+
+As 9 telas da área de empresa (`company-dashboard`, `company-profile`,
+`company-project-form`, `company-projects`, `company-ranking`,
+`company-matches`, `company-professionals`/`company-professional-view`,
+`company-companies`, `company-analytics`, `company-map`).
+
+- **`/company/dashboard`**: além do card analítico do Prompt 1, ganhou cards
+  operacionais (interesses recebidos, matches confirmados, oportunidades
+  abertas, total de oportunidades — via `useCompanyDashboardSummary`, novo
+  endpoint `GET /api/company/dashboard` que devolve `CompanyDashboardDTO`,
+  distinto do `GET /api/analytics/company/dashboard` já existente) e uma
+  prévia dos últimos interesses recebidos.
+- **`/company/profile`**: igual ao `/pro/profile` em estrutura, com uma
+  diferença deliberada: **CNPJ (`taxId`) é mostrado desabilitado** no dialog
+  de edição, replicando o rótulo "CNPJ (não editável)" do app antigo — o
+  backend tecnicamente aceita alterar o campo, mas a UI antiga nunca
+  permitia, então reenviamos o valor original sem input editável.
+- **`/company/projects` + `/new` + `/[id]/edit`**: CRUD completo de
+  oportunidades (`ProjectRequestDTO`). O formulário (`project-form.tsx`)
+  espelha 1:1 as regras condicionais de `ProjectService#validateByType` do
+  backend — campos de orçamento/prazo obrigatórios só pra `PROJECT`,
+  contrato/salário só pra `JOB` — validadas no client via um
+  `.superRefine()` no zod (`projectFormSchema`) **e** o 400 real do backend
+  ainda é repassado pela Route Handler se algo escapar (validado via `curl`:
+  omitir `minimumBudget`/`maximumBudget` num `PROJECT` devolve
+  `"Fields 'minimumBudget' and 'maximumBudget' are required for a PROJECT."`
+  do Spring, sem tratamento especial no Next). Tabs por status
+  (Todas/Abertas/Pausadas/Encerradas — sem aba "Cancelada": o enum
+  `ProjectStatus` não tem esse valor). `project-card.tsx` só mostra
+  editar/excluir/fechar/reabrir quando a oportunidade é da própria empresa
+  — o backend já garante isso via ownership check, a UI reforça pra nunca
+  nem oferecer o botão numa oportunidade alheia.
+- **`/company/projects/[id]/ranking`**: candidatos ordenados por
+  compatibilidade (mesmo `ScoreBreakdownDTO` do lado profissional), convite
+  (`POST .../company-interest`) quando o match está `WAITING`, seleção via
+  checkbox pra comparar 2+ candidatos.
+- **`/company/projects/[id]/compare`**: consome
+  `POST /api/comparison/candidates` (`CandidateComparisonRequestDTO` →
+  `CandidateComparisonResponseDTO`, conferido contra o DTO real do backend
+  antes de tipar) — grid de cards lado a lado com score, reputação,
+  disponibilidade, projetos anteriores, pretensão salarial e skills
+  compatíveis/faltando. Dispara a mutation uma única vez na montagem (guard
+  via `useRef`) e a página é `<Suspense>` porque lê `matchIds` da query
+  string com `useSearchParams`.
+- **`/company/matches`**: 5 abas (recebidos/enviados/confirmados/
+  anteriores/recusados), mesmo padrão de revelação de contato sob demanda
+  do lado profissional (`useProfessionalContact` com `enabled` controlado
+  por um `useState`).
+- **`/company/professionals` + `/[id]`**: diretório paginado de
+  profissionais (`useProfessionalDirectory`, já existia desde o Prompt 2 —
+  só não tinha consumidor) e a página de perfil público, espelhando
+  `/pro/companies/[id]` na estrutura (`ReputationCard` reaproveitado,
+  contato sob demanda, certificados/eventos, projetos anteriores).
+- **`/company/companies`**: diretório de empresas reaproveitando
+  `useCompanyDirectory` (mesmo hook do Prompt 2). **Sem página de
+  detalhe** — confirmado no `company-companies.html` original: os cards não
+  têm link nenhum, é só um diretório informativo.
+- **`/company/analytics`**: reaproveita os componentes de chart do Prompt 2
+  (`MatchesTrendChart`, `ScoreDistributionChart`, `SkillDemandChart`,
+  `ReputationRadarChart`, `SoftSkillFeedbackChart`) direto do namespace
+  `components/professional/*` — os dados (`MonthlyMatchDTO[]`,
+  `ScoreDistributionDTO[]` etc.) já eram genéricos, sem nada específico de
+  profissional. Só dois componentes novos porque o
+  `CompanyDashboardAnalyticsDTO` difere do `ProfessionalDashboardAnalyticsDTO`:
+  `ProjectAcceptanceRateList` (taxa de aceitação por *oportunidade*, não por
+  empresa) e `ProjectStatusChart` (distribuição de status das
+  oportunidades — não existe no lado profissional).
+- **`/company/map`**: mesmo `NexusMap` do Prompt 2. O componente ganhou dois
+  props novos (`companyHref`, `professionalHref`) pra generalizar o link do
+  popup — antes apontava fixo pra `/pro/companies/{id}`, agora cada papel
+  passa seu próprio destino (`/company/companies` e
+  `/company/professionals/{id}` aqui).
+- Não portado nesta fatia: `company-opportunities.html` (feed de
+  "oportunidades da plataforma" publicadas por outras empresas, com filtros
+  e link pra `/public/opportunity/{id}` e `/public/company/{id}`) — depende
+  de páginas públicas de oportunidade/empresa que ainda não existem
+  (escopo do Prompt 4, junto com o resto de "public pages"). O item de menu
+  fica como 404 esperado até lá, igual o padrão já usado pros outros itens
+  de navegação não portados ainda.
+
+### Bug de layout encontrado e corrigido (não era específico do Prompt 3)
+
+Ao testar `/company/analytics` em 360px veio scroll horizontal. Rastreei até
+`Card` (`components/ui/card.tsx`): é um item de **grid** (`grid gap-4
+lg:grid-cols-2`) e, por padrão, um item de grid/flex tem `min-width: auto`,
+que resolve pro tamanho de conteúdo mínimo dos filhos — e o SVG que o
+`recharts` desenha dentro do `ChartContainer` não conta como "encolhível"
+nesse cálculo, então o card crescia pra caber o gráfico em vez de encolher
+pra caber no card. Adicionei `min-w-0` no `Card` (fix de uma linha, seguro
+em qualquer contexto de uso). Confirmei que o mesmo bug já existia em
+**`/pro/analytics`** desde o Prompt 2 — nunca tinha sido testado em 360px
+até agora — e o fix resolveu os dois. Reteste completo (mobile 360px +
+desktop 1440px) em todas as telas do Prompt 3 e em todas as do Prompt 1/2
+pra garantir que não sobrou regressão: nenhuma tela ficou com
+`scrollWidth` maior que o viewport.
+
+### Validado ponta a ponta contra o backend real
+
+Registro de empresa nova + aprovação via conta seed `admin@gmail.com`
+(seedada pelo próprio `NexusApplication.java`, não fui eu que criei),
+login, `GET`/`PUT` de perfil e dashboard, criação de oportunidade `PROJECT`
+completa (skills, orçamento, prazo), `GET` do ranking (matches
+auto-gerados), `POST` de interesse (`company-interest`), `POST` de
+comparação de candidatos, fechar/reabrir oportunidade, 400 real do backend
+pro caso de validação inválida (`PROJECT` sem orçamento), diretório e
+perfil público de profissional, contato bloqueado por match não confirmado
+(403), diretório de empresas, todos os três endpoints de mapa — tudo via
+`curl` autenticado com cookie real. `build`/`lint`/`typecheck` limpos, mais
+verificação visual via Playwright (mobile 360px + desktop 1440px) em todas
+as telas novas.

@@ -62,3 +62,37 @@ export interface ProjectResponseDTO {
 
   company: PublicCompanyDTO | null;
 }
+
+/**
+ * Espelha com.main.nexus.dto.ProjectRequestDTO. Campos de PROJECT e de JOB
+ * coexistem, mas são mutuamente exclusivos na validação do backend
+ * (ProjectService#validateByType) — replicada em src/lib/validation.ts.
+ */
+export interface ProjectRequestDTO {
+  title: string;
+  description: string;
+  workMode: Modality;
+  type: ProjectType;
+  experienceLevel: ExperienceLevel | null;
+  maxPositions: number | null;
+  opportunityType: OpportunityType;
+  skillIds: number[];
+  cep: string | null;
+
+  // PROJECT
+  minimumBudget: number | null;
+  maximumBudget: number | null;
+  deadline: string | null;
+
+  // JOB
+  monthlySalaryMin: number | null;
+  monthlySalaryMax: number | null;
+  contractType: ContractType | null;
+  benefits: string | null;
+  startDate: string | null;
+  workloadHoursPerWeek: number | null;
+
+  visibleToCompanies: boolean | null;
+  salaryVisibleToProfessionals: boolean | null;
+  salaryVisibleToCompanies: boolean | null;
+}
