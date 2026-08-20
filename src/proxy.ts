@@ -2,6 +2,13 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/session";
+import type { UserRole } from "@/types/auth";
+
+const roleHome: Record<UserRole, string> = {
+  PROFESSIONAL: "/pro/dashboard",
+  COMPANY: "/company/dashboard",
+  ADMIN: "/admin/dashboard",
+};
 
 /**
  * Substitui o antigo `middleware.ts` — no Next 16 o file convention foi
@@ -19,10 +26,16 @@ import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/session";
  */
 const PUBLIC_PATHS = ["/", "/login", "/register", "/theme-test"];
 
+// Rotas de auth (/login, /register/**) que não fazem sentido revisitar já
+// logado — manda direto pro dashboard do papel em vez de mostrar o form de novo.
+const AUTH_ONLY_PATHS = ["/login", "/register"];
+
+function matchesPath(pathname: string, path: string) {
+  return pathname === path || pathname.startsWith(`${path}/`);
+}
+
 function isPublicPath(pathname: string) {
-  return PUBLIC_PATHS.some(
-    (path) => pathname === path || pathname.startsWith(`${path}/`)
-  );
+  return PUBLIC_PATHS.some((path) => matchesPath(pathname, path));
 }
 
 export async function proxy(request: NextRequest) {
@@ -30,8 +43,8 @@ export async function proxy(request: NextRequest) {
   const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
   const session = await verifySessionToken(token);
 
-  if (pathname === "/login" && session) {
-    return NextResponse.redirect(new URL("/", request.url));
+  if (session && AUTH_ONLY_PATHS.some((path) => matchesPath(pathname, path))) {
+    return NextResponse.redirect(new URL(roleHome[session.role], request.url));
   }
 
   if (!isPublicPath(pathname) && !session) {

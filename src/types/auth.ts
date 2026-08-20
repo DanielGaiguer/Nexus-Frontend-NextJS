@@ -1,10 +1,13 @@
 /**
  * Espelha 1:1 os DTOs reais do backend
- * (nexus/src/main/java/com/main/nexus/dto/{LoginRequestDTO,LoginResponseDTO,UserDTO}.java).
- * Não adicione campo aqui sem checar o DTO Java correspondente.
+ * (nexus/src/main/java/com/main/nexus/dto/*.java). Não adicione campo aqui
+ * sem checar o DTO Java correspondente.
  */
 
 export type UserRole = "PROFESSIONAL" | "COMPANY" | "ADMIN";
+
+/** Espelha com.main.nexus.model.enums.OpportunityType. */
+export type OpportunityType = "PROJECT" | "JOB";
 
 export interface LoginRequestDTO {
   email: string;
@@ -24,4 +27,58 @@ export interface SessionClaims {
   id: number;
   email: string;
   role: UserRole;
+}
+
+/**
+ * O que POST /api/auth/login devolve pro client — LoginResponseDTO menos o
+ * `token` (esse fica só no cookie httpOnly, nunca chega no browser).
+ */
+export interface SessionSummary {
+  userId: number;
+  email: string;
+  name: string;
+  role: UserRole;
+}
+
+/**
+ * Espelha com.main.nexus.dto.RegisterProfessionalRequestDTO. Só email,
+ * password e name são obrigatórios no backend (ver
+ * AuthService#registerProfessional) — o resto é opcional, completável depois
+ * no perfil.
+ */
+export interface RegisterProfessionalRequestDTO {
+  email: string;
+  password: string;
+  name: string;
+  phone: string | null;
+  cep: string | null;
+  preferredOpportunityTypes: OpportunityType[] | null;
+  expectedSalaryCLT: number | null;
+  expectedSalaryPJ: number | null;
+  freelanceMinExpectation: number | null;
+  freelanceMaxExpectation: number | null;
+}
+
+/**
+ * Espelha com.main.nexus.dto.RegisterCompanyRequestDTO. Só email, password e
+ * companyName são obrigatórios (ver AuthService#registerCompany).
+ */
+export interface RegisterCompanyRequestDTO {
+  email: string;
+  password: string;
+  companyName: string;
+  taxId: string | null;
+  phone: string | null;
+  cep: string | null;
+  description: string | null;
+}
+
+/** Espelha com.main.nexus.dto.RegisterCompanyLinkedInRequestDTO. */
+export interface RegisterCompanyLinkedInRequestDTO {
+  ticket: string;
+  companyName: string;
+  taxId: string | null;
+  phone: string | null;
+  cep: string | null;
+  description: string | null;
 }

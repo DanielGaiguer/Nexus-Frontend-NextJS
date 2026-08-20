@@ -26,10 +26,16 @@ export default function Home() {
 
         <div className="flex flex-wrap items-center justify-center gap-3">
           <Button asChild>
-            <Link href="/theme-test">Ver design system</Link>
+            <Link href="/login">Entrar</Link>
           </Button>
           <Button variant="outline" asChild>
-            <Link href="/dashboard">Testar rota protegida</Link>
+            <Link href="/register/professional">Sou profissional</Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/register/company">Sou empresa</Link>
+          </Button>
+          <Button variant="ghost" asChild>
+            <Link href="/theme-test">Design system</Link>
           </Button>
         </div>
       </main>

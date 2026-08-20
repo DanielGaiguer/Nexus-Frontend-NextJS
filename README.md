@@ -127,6 +127,48 @@ verificar assinatura sem bater no backend a cada navegação.
 Feito: projeto rodando, shadcn inicializado, ESLint/Prettier passando,
 TanStack Query plugado, dark/light com paletas completas e toggle
 funcional, mecânica de auth (login/logout/proxy) validada ponta a ponta
-contra o backend real. Faltam as telas de negócio de verdade (auth com
-campos completos, app shell com sidebar/header, dashboard com dado real) —
-isso é o próximo prompt desta mesma migração.
+contra o backend real.
+
+## Estado desta etapa (Prompt 1)
+
+Fatia fina completa: auth + shell + tema + responsivo + dado real, numa
+área pequena, pra validar o padrão antes de replicar pras dezenas de telas
+restantes.
+
+- **Auth completo**: `/login`, `/register/professional`, `/register/company`,
+  `/register/company/linkedin` (alcançável hoje só via link direto — o
+  callback do LinkedIn ainda aponta pro `nexus-frontend` antigo, ver seção
+  Auth acima) e `/register/success`, todos em `Form`/`Input`/`Card` do
+  shadcn, `react-hook-form` + `zod`, toasts de erro com a mensagem exata que
+  o backend devolve (e-mail duplicado, CNPJ duplicado, credencial inválida).
+  Zero `alert()`/reload — cada form é uma `useMutation`.
+- **App shell**: `src/app/(app)/layout.tsx` (route group) monta
+  `AppShell` (`SidebarProvider` + `Sidebar` do shadcn — colapsa em `Sheet`
+  no mobile automaticamente) com navegação condicionada a
+  `session.role` (`src/components/shell/nav-config.ts`, espelhando
+  `fragments/app-shell.html`). Header com toggle de tema e menu de usuário
+  (avatar, e-mail, papel, logout).
+- **Dashboard real**: `/pro/dashboard` e `/company/dashboard` consomem
+  `/api/analytics/professional|company/dashboard` (dado real, via hook de
+  query — `useProfessionalDashboard`/`useCompanyDashboard`), com `Skeleton`
+  durante o carregamento. **Não é** o mesmo dashboard do `pro-dashboard.html`
+  antigo (que compõe várias chamadas — convites, matches confirmados,
+  portfólio, review pendente — sem endpoint único hoje); é o dashboard
+  analítico (`ProfessionalDashboardAnalyticsDTO`/
+  `CompanyDashboardAnalyticsDTO`), decisão tomada explicitamente nesta etapa
+  para manter a fatia fina a um hook por página.
+- `/admin/dashboard` é um placeholder — só prova que o gate de sessão e a
+  navegação por papel também funcionam para ADMIN; a área de admin em si
+  ainda não foi portada.
+- Redirecionamento por papel: login (e o `proxy`, para quem já está
+  autenticado e tenta voltar em `/login`/`/register/**`) manda
+  `PROFESSIONAL` → `/pro/dashboard`, `COMPANY` → `/company/dashboard`,
+  `ADMIN` → `/admin/dashboard`.
+- Itens de navegação da sidebar que ainda não têm página própria (Matches,
+  Oportunidades, Chat, Portfólio, ...) aparecem porque são a navegação real
+  do produto — cada um vira 404 esperado até o prompt que o portar.
+
+Faltam: as próprias telas atrás de cada item de navegação, perfil do
+usuário (o menu "Meu perfil" está desabilitado de propósito), e o
+dashboard "operacional" (convites/matches recentes) do antigo
+pro-dashboard.html — isso é trabalho dos próximos prompts.

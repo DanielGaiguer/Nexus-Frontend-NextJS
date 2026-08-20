@@ -1,4 +1,5 @@
 import { jwtVerify } from "jose";
+import { cookies } from "next/headers";
 
 import type { SessionClaims } from "@/types/auth";
 
@@ -53,4 +54,14 @@ export async function verifySessionToken(
   } catch {
     return null;
   }
+}
+
+/** Lê o cookie de sessão da request atual (Server Component/Route Handler). */
+export async function getSessionToken(): Promise<string | undefined> {
+  return (await cookies()).get(SESSION_COOKIE_NAME)?.value;
+}
+
+/** `getSessionToken` + `verifySessionToken` num só passo. */
+export async function getSession(): Promise<SessionClaims | null> {
+  return verifySessionToken(await getSessionToken());
 }
