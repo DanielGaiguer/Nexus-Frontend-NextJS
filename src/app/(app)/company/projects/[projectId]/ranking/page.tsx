@@ -1,6 +1,13 @@
 "use client";
 
-import { ArrowLeft, GitCompare, Handshake, Users } from "lucide-react";
+import {
+  ArrowLeft,
+  FileText,
+  GitCompare,
+  Handshake,
+  User,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -135,6 +142,30 @@ export default function ProjectRankingPage() {
                         <Handshake className="size-4" />
                         Convidar
                       </Button>
+                    ) : match.status === "MATCHED" ? (
+                      <>
+                        <Button variant="outline" size="sm" asChild>
+                          <Link
+                            href={`/company/professionals/${match.professional.id}`}
+                          >
+                            <User className="size-4" />
+                            Ver perfil completo
+                          </Link>
+                        </Button>
+                        <Button variant="outline" size="sm" asChild>
+                          <a
+                            href={`/api/professional/${match.professional.id}/resume`}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            <FileText className="size-4" />
+                            Currículo
+                          </a>
+                        </Button>
+                        {badge && (
+                          <Badge variant={badge.variant}>{badge.label}</Badge>
+                        )}
+                      </>
                     ) : badge ? (
                       <Badge variant={badge.variant}>{badge.label}</Badge>
                     ) : null

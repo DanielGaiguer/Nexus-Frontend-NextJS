@@ -11,6 +11,14 @@ export type StatusMatch =
   | "MATCHED"
   | "REJECTED";
 
+/** Espelha com.main.nexus.dto.MatchHistoryDTO — linha da timeline de mudanças de status. */
+export interface MatchHistoryDTO {
+  fromStatus: string | null;
+  toStatus: string;
+  changedBy: string | null;
+  changedAt: string;
+}
+
 /** Espelha com.main.nexus.dto.ProfessionalSummaryDTO. */
 export interface ProfessionalSummaryDTO {
   id: number;

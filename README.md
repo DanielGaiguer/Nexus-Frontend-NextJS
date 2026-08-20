@@ -674,3 +674,168 @@ perfil profissional com `professionalId` (retorna `%PDF-1.7` genuíno);
 dashboard admin com métricas reais; analytics por id (profissional e
 empresa) reusando os mesmos componentes de gráfico do Prompt 2/3.
 `build`/`lint`/`typecheck` limpos, sem estado stray no `git status`.
+
+## Estado desta etapa (Prompt 6 — Auditoria de paridade e corte)
+
+Fim da migração tela-a-tela. Auditoria rota a rota do `nexus-frontend`
+original contra o que existe hoje, revisão de consistência visual e do
+middleware de auth, antes do usuário decidir sobre o corte de produção.
+
+### Checklist de paridade — lacunas encontradas e fechadas
+
+Comparação rota a rota contra os `@RequestMapping`/`@GetMapping` reais de
+todos os controllers do `nexus-frontend` (não só os nomes de template).
+Achados, todos corrigidos nesta etapa:
+
+- **`/` (home pública)**: ainda era o placeholder do Prompt 0 ("Fundação
+  do novo frontend..."), nunca substituído pela landing page de verdade
+  do app antigo (`home.html`, ~1000 linhas de Thymeleaf: hero com
+  visualizador de score, faixa de logos, "como funciona", métricas,
+  "para quem", depoimentos, CTA final, footer). Reconstruída inteira em
+  `src/app/page.tsx` com os mesmos textos/seções, componentes shadcn e os
+  tokens de tema — nada de CSS/JS solto. Nav com sessão ciente do papel
+  (`HomeNav`, client component: Dashboard/Sair se logado, Entrar/Criar
+  conta se não) e contador animado (`AnimatedCounter`,
+  `IntersectionObserver`, respeita `prefers-reduced-motion`) espelhando
+  `animateCount` do JS antigo.
+- **`/pro/professionals` e `/pro/professional/[id]`**: item já
+  autodocumentado como pendência no comentário do redirect
+  `/public/professional/[id]` desde o Prompt 2 ("não há
+  `/pro/professionals/[id]` construído ainda") — o item de menu já
+  existia em `nav-config.ts` apontando pra um 404. `pro-professionals.html`
+  é o diretório de profissionais visto por outro profissional (mesmo
+  `/api/public/professionals` que `company/professionals` e
+  `admin/professionals` já usam) e `public-profile.html` é o perfil
+  somente-leitura correspondente — sem card de Contato (não existe match
+  entre dois profissionais) nem o CTA que no app antigo só aparecia pra
+  `session.userRole == 'COMPANY'`.
+- **Sino de notificações**: `NotificationController` (`/notifications` no
+  app antigo, `/api/notifications` no backend real — resumo + contagem de
+  não lidas, marcar uma/todas como lidas) nunca tinha sido portado em
+  nenhum prompt anterior — só o badge de chat (`useChatNotifications`)
+  existia. É uma feature transversal (aparece em toda tela autenticada,
+  não só uma), por isso só apareceu nesta auditoria final. Implementado
+  como `NotificationBell` (Popover no topbar, polling de 60s, ícone por
+  `NotificationType`, clique marca como lida e navega pro `actionUrl`).
+  Populado com eventos reais do backend (convite, match confirmado,
+  projeto adicionado ao portfólio, etc.) — validado com dado de verdade
+  via curl.
+  - Vários `actionUrl` de notificação (`MATCH_CONFIRMED`, `NEW_INVITE`)
+    apontam pra `/matches/{id}` sem sufixo. No app antigo isso sempre
+    redireciona incondicionalmente pra `/company/matches`
+    (`MatchStatusCheckController`), inclusive quando quem clica é
+    profissional — aí o `AuthInterceptor` barra `/company/**` e joga pra
+    `/`, um beco sem saída que era bug, não intenção. Criada
+    `/matches/[matchId]/page.tsx` que resolve pelo papel de quem está de
+    fato logado.
+- **"Baixar currículo"**: o app antigo libera download do currículo
+  (upload real de PDF, distinto do "exportar perfil") pra empresa com
+  match confirmado, em dois lugares — `company-professional-view.html`
+  (card de Contato) e `company-ranking.html` (candidatos com status
+  `MATCHED`). O upload/download do **próprio** currículo (profissional)
+  já existia desde o Prompt 2 (`ResumeCard`); faltava só esses dois
+  pontos do lado empresa, que reaproveitam a mesma rota BFF
+  (`/api/professional/{id}/resume`) que já existia sem estar ligada a
+  nenhum botão.
+- **"Ver histórico"**: timeline de mudança de status do match
+  (`GET /api/matches/{id}/history` → `MatchHistoryDTO[]`, existe no
+  backend real) nunca tinha sido portado — o app antigo mostra em
+  Confirmados/Anteriores/Recusados nas duas telas de matches.
+  `MatchHistoryDialog` (busca só ao abrir, `enabled` condicional) somado
+  às três abas de `/pro/matches` e `/company/matches`.
+- **"Meu perfil" desabilitado pro papel Empresa**: bug isolado, não uma
+  lacuna de rota — o dropdown do header (`AppHeader`) ainda tinha o
+  `disabled ... em breve` do Prompt 1 (quando só existia perfil de
+  profissional), nunca atualizado quando `/company/profile` chegou no
+  Prompt 3. Corrigido pra linkar pro perfil certo por papel; some de vez
+  pra ADMIN (não tem perfil próprio nesta fatia).
+- **Gráfico "Matches por mês" virando um bloco sólido de cor**: achado
+  ao revisar consistência visual (item 2 do prompt), não uma lacuna de
+  rota. Dois componentes distintos tinham o mesmo sintoma com causas
+  diferentes:
+  - `MatchesTrendChart` (Recharts `AreaChart`, usado nos 6 dashboards de
+    analytics): com um único mês de dado não há o que interpolar, o
+    Recharts desenha uma área preenchendo a largura toda. Não dá pra
+    corrigir com styling — trocado por um estado vazio
+    ("Ainda não há tendência para mostrar") quando `data.length < 2`,
+    já que uma "tendência" de verdade exige pelo menos 2 pontos.
+  - `MonthlyMatchesBars` (barras artesanais sem lib, usado nos dois
+    dashboards — comentário no próprio arquivo já dizia que uma lib de
+    charts de verdade entraria só no analytics completo): com um único
+    mês, a única barra ocupa 100% da largura do container flex e parece
+    um retângulo de cor sólida em vez de uma barra. Adicionado
+    `max-w-12` na barra pra ela ler como "uma barra" independente de
+    quantos meses existem.
+  Achado por acidente numa captura de tela deste prompt — vale registrar
+  o método: a primeira leitura pareceu bug (chart "quebrado"), a segunda
+  captura com mais tempo de espera mostrou que era só timing de
+  carregamento: o app estava certo, o script de verificação que não
+  esperava o bastante. Só depois de isolar caso a caso é que a
+  `MatchesTrendChart` se confirmou como bug de verdade (mesmo com tempo
+  de sobra, o bloco sólido persistia) — não vale corrigir a partir da
+  primeira impressão de uma screenshot sem investigar a causa raiz.
+
+### Confirmado como decisão já documentada, não lacuna nova
+
+- `company-opportunities.html` — fora de escopo desde o Prompt 3, item de
+  menu aponta pro 404 esperado, já registrado no README daquele prompt.
+- `/public/**` exigindo login — decisão do Prompt 4 (o produto ainda não
+  tem site público de verdade, todo mundo entra por `/login` primeiro);
+  não é regressão, só não colocado em `PUBLIC_PATHS` do `proxy.ts` de
+  propósito (comentário adicionado lá pra próxima pessoa não reabrir essa
+  dúvida).
+
+### Consistência visual
+
+Paleta: nenhuma cor hexadecimal solta fora dos tokens de tema, exceto três
+exceções deliberadas e já eram assim antes desta auditoria (cores de pino
+do mapa, azul de marca do LinkedIn, fundo fixo do gráfico de contribuições
+do GitHub — este último só funciona com fundo escuro fixo, a imagem em si
+não tem variante clara). `alert()`/`confirm()`/`location.reload()` nativos:
+zero ocorrências em todo o `src/`. Bloco `Alert` estático do shadcn: nunca
+usado no projeto inteiro (toda mensagem passa por toast, `EmptyState` ou
+banner condicional de verdade). Dark e light testados via Playwright
+(`localStorage` com a chave que o `next-themes` usa, já que o app tem
+`enableSystem={false}` — o toggle é claro/escuro manual, não "seguir o
+sistema", decisão do Prompt 0) nas telas novas desta etapa e nas telas
+tocadas pelos fixes, nos dois viewports.
+
+### Middleware de auth — gap real encontrado e corrigido
+
+O `nexus-frontend` antigo tem um `AuthInterceptor` que, além de exigir
+sessão, também checa o **papel**: `/pro/**` só pra `PROFESSIONAL`,
+`/company/**` só pra `COMPANY`, `/admin/**` só pra `ADMIN`, e
+`/status-check` só pra `COMPANY` — redirecionando pra `/` caso contrário.
+O `proxy.ts` do Next só tinha a primeira parte (sessão válida), sem checar
+o papel — nenhuma rota administrativa vazava **dado** de verdade (o
+`SecurityConfig` do backend real já protege `/api/admin/**` com
+`hasRole("ADMIN")`, `/api/company/**` com `hasRole("COMPANY")` etc. —
+verificado com curl: um token `PROFESSIONAL` toma `403` genuíno batendo
+direto no BFF `/api/admin/dashboard`), mas a **página** em si renderizava
+pra qualquer papel logado antes de as chamadas de API tomarem 403 —
+exatamente a checagem que o prompt pediu pra verificar. Corrigido
+adicionando a mesma tabela de papel-por-prefixo ao `proxy.ts`, com o mesmo
+comportamento de redirecionar pro dashboard do próprio papel (mais amigável
+que o `/` do app antigo, igualmente seguro). Validado com Playwright:
+token de cada um dos três papéis tentando entrar na área dos outros dois
+(6 combinações) + o caso especial de `status-check` — todos bloqueados,
+nenhum vazamento.
+
+### Validado ponta a ponta contra o backend real
+
+Sino de notificações com dado real (`GET /api/notifications` retornando
+eventos genuínos: convite, match confirmado, projeto no portfólio);
+`GET /api/matches/{id}/history` retornando a timeline real de um match de
+teste; download de currículo; role-gate das 6 combinações de papel ×
+área restrita + o caso `status-check`; 44 rotas autenticadas (14 pro + 12
+company + 12 admin + a home pública) × 2 viewports com `scrollWidth`
+batendo com `docWidth` em todas. `build`/`lint`/`typecheck` limpos, sem
+estado stray no `git status`.
+
+### Pronto para decisão de corte
+
+Checklist limpo: paridade de rotas fechada, consistência visual revisada,
+`lint`/`build` de produção sem erros nem warnings, middleware de auth
+cobrindo página **e** papel em todas as três áreas. Decisão de trocar o
+domínio de produção e desligar o `nexus-frontend` antigo fica com o
+usuário — nada foi decomissionado nesta etapa.

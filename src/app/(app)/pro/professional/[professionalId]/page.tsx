@@ -1,17 +1,6 @@
 "use client";
 
-import {
-  ArrowLeft,
-  Briefcase,
-  Code2,
-  FileText,
-  History,
-  Lock,
-  LockOpen,
-  Mail,
-  Phone,
-  Star,
-} from "lucide-react";
+import { ArrowLeft, Briefcase, Code2, History, Star } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
@@ -19,10 +8,8 @@ import { ReputationCard } from "@/components/professional/reputation-card";
 import { ReviewsPreviewCard } from "@/components/reviews/reviews-preview-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useProfessionalContact } from "@/hooks/queries/useProfessionalContact";
 import { usePublicProfessional } from "@/hooks/queries/usePublicProfessional";
 
 const experienceLabels: Record<string, string> = {
@@ -48,15 +35,18 @@ function formatMoney(value: number | null) {
   });
 }
 
-export default function CompanyProfessionalViewPage() {
+/**
+ * `public-profile.html` visto por outro profissional (peer) — mesmo dado
+ * público de `/company/professionals/[id]`, mas sem o card de Contato (não
+ * existe "match" entre dois profissionais, então não há liberação de
+ * contato) nem o CTA que no app antigo só aparecia pra `session.userRole ==
+ * 'COMPANY'`.
+ */
+export default function PeerProfessionalViewPage() {
   const { professionalId } = useParams<{ professionalId: string }>();
   const id = Number(professionalId);
 
   const { data: professional, isLoading } = usePublicProfessional(id);
-  // O backend só libera o contato de fato se houver match confirmado — aqui
-  // só chutamos "true" pra tentar; um 403 vira "contato bloqueado" na UI.
-  const contact = useProfessionalContact(id, true);
-  const hasContact = !!contact.data;
 
   if (isLoading || !professional) {
     return (
@@ -70,7 +60,7 @@ export default function CompanyProfessionalViewPage() {
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
       <Link
-        href="/company/professionals"
+        href="/pro/professionals"
         className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm"
       >
         <ArrowLeft className="size-4" />
@@ -144,55 +134,6 @@ export default function CompanyProfessionalViewPage() {
                   <Code2 className="size-3.5" />
                   {professional.githubLogin ?? "GitHub"}
                 </a>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-sm">
-                {hasContact ? (
-                  <LockOpen className="text-success size-4" />
-                ) : (
-                  <Lock className="text-muted-foreground size-4" />
-                )}
-                Contato
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {hasContact ? (
-                <div className="space-y-2 text-sm">
-                  {contact.data!.phone && (
-                    <div className="text-muted-foreground flex items-center gap-2">
-                      <Phone className="text-primary size-4" />
-                      {contact.data!.phone}
-                    </div>
-                  )}
-                  <div className="text-muted-foreground flex items-center gap-2">
-                    <Mail className="text-primary size-4" />
-                    {contact.data!.email}
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-1 w-full"
-                    asChild
-                  >
-                    <a
-                      href={`/api/professional/${id}/resume`}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      <FileText className="size-3.5" />
-                      Baixar currículo
-                    </a>
-                  </Button>
-                </div>
-              ) : (
-                <p className="text-muted-foreground text-sm">
-                  Os dados de contato deste profissional são liberados
-                  automaticamente após a confirmação de um match.
-                </p>
               )}
             </CardContent>
           </Card>

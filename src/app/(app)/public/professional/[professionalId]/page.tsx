@@ -4,15 +4,12 @@ import { getSession } from "@/lib/session";
 
 /**
  * `/public/professional/{id}` no app antigo é a página neutra de perfil,
- * vista tanto pela empresa quanto por qualquer outro papel. No Next, a
- * empresa já tem uma versão própria com ações específicas
- * (`/company/professionals/[id]` — revelar contato, ver skills etc.),
+ * vista tanto pela empresa quanto por qualquer outro papel. No Next, cada
+ * papel tem sua própria versão com ações específicas
+ * (`/company/professionals/[id]` — revelar contato; `/pro/professional/[id]`
+ * — visão entre pares, sem contato; `/admin/professional/[id]` — Prompt 5),
  * então essa rota só existe pra resolver o link neutro (ex.: "voltar ao
- * perfil" a partir da página de avaliações) — redireciona pra lá quando o
- * viewer é COMPANY, ou pro `/admin/professional/[id]` (Prompt 5) quando é
- * ADMIN. Não há um `/pro/professionals/[id]` construído ainda (fora de
- * escopo — pro-professionals.html não fazia parte do Prompt 2 original),
- * então PROFESSIONAL cai num 404 esperado por enquanto.
+ * perfil" a partir da página de avaliações).
  */
 export default async function PublicProfessionalRedirectPage({
   params,
@@ -27,6 +24,5 @@ export default async function PublicProfessionalRedirectPage({
   if (session.role === "ADMIN") {
     redirect(`/admin/professional/${professionalId}`);
   }
-  // PROFESSIONAL vendo outro profissional: sem página dedicada ainda.
-  redirect("/pro/dashboard");
+  redirect(`/pro/professional/${professionalId}`);
 }

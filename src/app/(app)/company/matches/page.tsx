@@ -17,6 +17,7 @@ import { toast } from "sonner";
 
 import { CandidateCard } from "@/components/company/candidate-card";
 import { RejectInterestDialog } from "@/components/company/reject-interest-dialog";
+import { MatchHistoryDialog } from "@/components/matches/match-history-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -330,6 +331,7 @@ function ConfirmedCandidateCard({
               </span>
             )}
           </div>
+          <MatchHistoryDialog matchId={match.id} />
           <ChatAndReviewActions
             matchId={match.id}
             reviewedMatchIds={reviewedMatchIds}
@@ -373,12 +375,15 @@ function PlainList({
       match={match}
       showScore={false}
       actions={
-        reviewedMatchIds !== undefined ? (
-          <ChatAndReviewActions
-            matchId={match.id}
-            reviewedMatchIds={reviewedMatchIds}
-          />
-        ) : undefined
+        <>
+          <MatchHistoryDialog matchId={match.id} />
+          {reviewedMatchIds !== undefined && (
+            <ChatAndReviewActions
+              matchId={match.id}
+              reviewedMatchIds={reviewedMatchIds}
+            />
+          )}
+        </>
       }
     />
   ));

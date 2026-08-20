@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { roleLabel } from "@/components/shell/nav-config";
+import { NotificationBell } from "@/components/shell/notification-bell";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -51,6 +52,7 @@ export function AppHeader({ session }: { session: SessionClaims }) {
       <SidebarTrigger />
       <Separator orientation="vertical" className="h-5" />
       <div className="flex-1" />
+      <NotificationBell />
       <ThemeToggle />
       <DropdownMenu>
         <DropdownMenuTrigger className="flex items-center gap-2 rounded-md p-1 pr-2 text-sm outline-none">
@@ -69,22 +71,22 @@ export function AppHeader({ session }: { session: SessionClaims }) {
               </span>
             </div>
           </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {session.role === "PROFESSIONAL" ? (
-            <DropdownMenuItem asChild>
-              <Link href="/pro/profile">
-                <User />
-                Meu perfil
-              </Link>
-            </DropdownMenuItem>
-          ) : (
-            <DropdownMenuItem disabled>
-              <User />
-              Meu perfil
-              <span className="text-muted-foreground ml-auto text-xs">
-                em breve
-              </span>
-            </DropdownMenuItem>
+          {session.role !== "ADMIN" && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link
+                  href={
+                    session.role === "PROFESSIONAL"
+                      ? "/pro/profile"
+                      : "/company/profile"
+                  }
+                >
+                  <User />
+                  Meu perfil
+                </Link>
+              </DropdownMenuItem>
+            </>
           )}
           <DropdownMenuSeparator />
           <DropdownMenuItem

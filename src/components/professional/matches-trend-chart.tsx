@@ -1,7 +1,9 @@
 "use client";
 
+import { TrendingUp } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 
+import { EmptyState } from "@/components/shared/empty-state";
 import {
   ChartContainer,
   ChartLegend,
@@ -19,6 +21,20 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function MatchesTrendChart({ data }: { data: MonthlyMatchDTO[] }) {
+  // Um AreaChart com um único ponto não tem o que interpolar — o Recharts
+  // acaba desenhando um bloco sólido preenchendo a largura toda, o que
+  // parece quebrado (comum em conta nova, com só um mês de atividade).
+  // Uma tendência de verdade precisa de pelo menos 2 pontos.
+  if (data.length < 2) {
+    return (
+      <EmptyState
+        icon={TrendingUp}
+        title="Ainda não há tendência para mostrar"
+        description="Volte aqui depois de alguns meses de atividade para ver a evolução dos seus matches."
+      />
+    );
+  }
+
   return (
     <ChartContainer config={chartConfig} className="h-64 w-full">
       <AreaChart data={data} margin={{ left: 12, right: 12 }}>

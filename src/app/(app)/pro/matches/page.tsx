@@ -15,6 +15,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { MatchHistoryDialog } from "@/components/matches/match-history-dialog";
 import { MatchCard } from "@/components/professional/match-card";
 import { RejectMatchDialog } from "@/components/professional/reject-match-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -358,6 +359,7 @@ function ConfirmedMatchCard({
               </span>
             )}
           </div>
+          <MatchHistoryDialog matchId={match.id} />
           <ChatAndReviewActions
             matchId={match.id}
             reviewedMatchIds={reviewedMatchIds}
@@ -404,12 +406,15 @@ function PlainList({
       mySkills={mySkills}
       showScore={false}
       actions={
-        reviewedMatchIds !== undefined ? (
-          <ChatAndReviewActions
-            matchId={match.id}
-            reviewedMatchIds={reviewedMatchIds}
-          />
-        ) : undefined
+        <>
+          <MatchHistoryDialog matchId={match.id} />
+          {reviewedMatchIds !== undefined && (
+            <ChatAndReviewActions
+              matchId={match.id}
+              reviewedMatchIds={reviewedMatchIds}
+            />
+          )}
+        </>
       }
     />
   ));

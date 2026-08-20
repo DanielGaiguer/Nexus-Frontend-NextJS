@@ -16,7 +16,8 @@ export function MonthlyMatchesBars({ data }: { data: MonthlyMatchDTO[] }) {
           key={`${month.year}-${month.month}`}
           className="flex flex-1 flex-col items-center gap-1.5"
         >
-          <div className="flex h-24 w-full items-end">
+          {/* max-w evita que um único mês vire um bloco sólido preenchendo a largura toda */}
+          <div className="flex h-24 w-full max-w-12 items-end justify-center">
             <div
               className="bg-primary w-full rounded-t-sm"
               style={{ height: `${(month.totalMatches / max) * 100}%` }}
