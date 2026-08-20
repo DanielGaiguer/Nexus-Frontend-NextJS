@@ -9,9 +9,10 @@ import { getSession } from "@/lib/session";
  * (`/company/professionals/[id]` — revelar contato, ver skills etc.),
  * então essa rota só existe pra resolver o link neutro (ex.: "voltar ao
  * perfil" a partir da página de avaliações) — redireciona pra lá quando o
- * viewer é COMPANY. Não há um `/pro/professionals/[id]` construído ainda
- * (fora de escopo — pro-professionals.html não fazia parte do Prompt 2
- * original), então PROFESSIONAL/ADMIN cai num 404 esperado por enquanto.
+ * viewer é COMPANY, ou pro `/admin/professional/[id]` (Prompt 5) quando é
+ * ADMIN. Não há um `/pro/professionals/[id]` construído ainda (fora de
+ * escopo — pro-professionals.html não fazia parte do Prompt 2 original),
+ * então PROFESSIONAL cai num 404 esperado por enquanto.
  */
 export default async function PublicProfessionalRedirectPage({
   params,
@@ -24,7 +25,7 @@ export default async function PublicProfessionalRedirectPage({
     redirect(`/company/professionals/${professionalId}`);
   }
   if (session.role === "ADMIN") {
-    redirect("/admin/dashboard");
+    redirect(`/admin/professional/${professionalId}`);
   }
   // PROFESSIONAL vendo outro profissional: sem página dedicada ainda.
   redirect("/pro/dashboard");

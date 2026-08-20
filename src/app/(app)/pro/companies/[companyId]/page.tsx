@@ -55,8 +55,8 @@ export default function CompanyViewPage() {
         Voltar
       </Link>
 
-      <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-        <div className="flex flex-col gap-4">
+      <div className="grid min-w-0 gap-4 lg:grid-cols-[320px_1fr]">
+        <div className="flex min-w-0 flex-col gap-4">
           <Card>
             <CardContent className="flex flex-col items-center gap-2 text-center">
               <Avatar className="size-24 rounded-xl">
@@ -141,7 +141,7 @@ export default function CompanyViewPage() {
           />
         </div>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex min-w-0 flex-col gap-4">
           {company.description && (
             <Card>
               <CardHeader>

@@ -38,7 +38,7 @@ export default function CompaniesDirectoryPage() {
       </div>
 
       {directory.isLoading && (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid min-w-0 gap-3 sm:grid-cols-2">
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-32" />
           ))}
@@ -49,9 +49,13 @@ export default function CompaniesDirectoryPage() {
         <EmptyState icon={Building2} title="Nenhuma empresa encontrada" />
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid min-w-0 gap-3 sm:grid-cols-2">
         {companies.map((company) => (
-          <Link key={company.id} href={`/pro/companies/${company.id}`}>
+          <Link
+            key={company.id}
+            href={`/pro/companies/${company.id}`}
+            className="block min-w-0"
+          >
             <Card className="hover:border-primary/40 h-full transition-colors">
               <CardContent className="flex items-start gap-3">
                 <Avatar className="size-14 shrink-0 rounded-xl">

@@ -98,7 +98,7 @@ export default function ProProfilePage() {
         </div>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
+      <div className="grid min-w-0 gap-4 lg:grid-cols-[320px_1fr]">
         <div className="flex flex-col gap-4">
           <Card>
             <CardContent className="flex flex-col items-center gap-2 text-center">

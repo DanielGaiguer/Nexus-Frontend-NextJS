@@ -542,3 +542,135 @@ lados, com rótulos em pt-BR vindos prontos do backend; oportunidade
 pública. `build`/`lint`/`typecheck` limpos, mais verificação visual via
 Playwright (360px + 1440px) em todas as telas novas — nenhuma regressão
 nas telas de Prompts anteriores.
+
+## Estado desta etapa (Prompt 5 — Painel Admin)
+
+Todo `templates/admin/**` do app antigo. Backend inteiro por trás
+(`AdminController`) lido de ponta a ponta antes de escrever qualquer tipo,
+como sempre — `/api/admin/**` acabou sendo praticamente a única superfície
+usada, mais `/api/analytics/{professional,company}/{id}/dashboard`
+(analytics *por id*, escopo admin, distinto do `/api/analytics/professional/dashboard`
+auto-escopado do Prompt 2) e `/api/professional/profile/export?professionalId=`
+(reaproveita o endpoint de export em PDF do Prompt 2, só com o query param
+opcional).
+
+### `DataTable` — TanStack Table v9
+
+`@tanstack/react-table` nesta versão é uma reescrita de API em cima do v8
+que o treinamento conhece — `node_modules/@tanstack/react-table/skills/*/SKILL.md`
+lido antes de codar, como o `AGENTS.md` manda. Diferenças que importam:
+`useReactTable` virou `useTable`; não existe mais passar
+`getCoreRowModel: getCoreRowModel()` direto nas options — agora é um objeto
+`tableFeatures({...})` que registra plugins + factories de row-model
+explicitamente (`rowSortingFeature`/`createSortedRowModel()`,
+`globalFilteringFeature`/`createFilteredRowModel()`,
+`rowPaginationFeature`/`createPaginatedRowModel()`); `createColumnHelper` é
+genérico sobre esse objeto de features, por isso
+`src/components/admin/table-features.ts` exporta uma única instância
+`adminTableFeatures` module-level compartilhada por toda tabela do painel;
+renderização usa `<table.FlexRender header={...} />`/`cell={...}` (forma de
+componente) em vez de chamar `flexRender()` direto. `DataTable<TData>`
+(`src/components/admin/data-table.tsx`) é genérico de verdade — busca global,
+colunas ordenáveis (ícones de seta), paginação — usado em
+`/admin/approvals`, `/admin/users` e `/admin/projects`.
+
+### Radar de skills — agregado no client, de propósito
+
+**Não existe no backend real** um endpoint de demanda de skills em escala
+de sistema — `SkillDemandDTO` só existe escopado a um profissional/empresa
+específico (dashboards individuais dos Prompts 2/3). Em vez de inventar
+dado ou pedir mudança no backend (proibido nesta migração), o
+`RadarChart` de `/admin/dashboard` agrega no client a partir de
+`GET /api/admin/projects` — conta frequência de cada skill em
+`requiredSkills` de todos os projetos e pega o top 8. Simplificação
+documentada, não escondida: é a leitura mais honesta possível de um dado
+que já existe no backend, sem fabricar nada.
+
+### Gráficos e cards — só shadcn Charts/Recharts, sem template de admin
+
+Por pedido explícito, nada de template de admin externo — mesmo design
+system do resto do app. `AdminDashboardDTO` vira KPIs grandes com
+indicadores de tendência (`src/app/(app)/admin/dashboard/page.tsx`),
+`RadarChart` (skills), `BarChart` (`monthlyMatches`) e `PieChart` donut
+(composição profissionais × empresas), todos com `chart.tsx`/`ChartConfig`
+e as cores via `var(--chart-N)` já definidas no Prompt 0 — respeitam
+dark/light automaticamente.
+
+### `/admin/projects` — simplificação deliberada
+
+O app antigo tinha um feed de cards com múltiplos filtros pesados
+(status, tipo, empresa, ordenação simultânea). Portei como `DataTable`
+(busca + ordenação por coluna + paginação + tabs Todos/Abertos/Fechados)
+em vez de replicar o feed — mesma filosofia de tabela do resto do painel,
+menos superfície de UI pra manter, sem perder nenhuma capacidade real de
+filtro (a busca global cobre título/empresa; as tabs cobrem status).
+
+### `/admin/companies` e `/admin/professionals` — mesmos diretórios de sempre
+
+Confirmado no `AdminController` (Thymeleaf) antigo: essas duas páginas só
+reusam o mesmíssimo `/api/public/{companies,professionals}` que os
+diretórios `/pro/companies` e `/company/professionals` já usam — por isso
+reaproveitei `useCompanyDirectory`/`useProfessionalDirectory` direto, sem
+hook novo, e as fichas linkam pra `/admin/company/{id}`/`/admin/professional/{id}`
+(visão somente-leitura, sem os CTAs de contato/chat da versão por papel).
+
+### Ações administrativas — mesma regra de modernização
+
+Aprovar/rejeitar empresa (`RejectCompanyDialog`, motivo obrigatório),
+ativar/desativar usuário (`ToggleUserDialog`), criar/remover skill
+(`CreateSkillDialog` + `AlertDialog` por chip) e fechar projeto — todas via
+`AlertDialog`/`Dialog` de confirmação + mutation + toast, nunca
+`confirm()` nativo nem reload de página, igual todo o resto do app desde
+o Prompt 0.
+
+### Bug de overflow horizontal em mobile — achado e corrigido em 3 camadas
+
+Investigação boa parte do tempo desta etapa: várias telas (novas e de
+Prompts anteriores) estouravam a largura em 360px sem estourar em 1440px.
+Depurado com Playwright (`scrollWidth` em 360px/1440px + um "offender
+scan" que filtra `getBoundingClientRect()` por `right > docWidth`) até
+achar **três causas distintas e independentes**, todas variações do mesmo
+tema — algum ancestral flex/grid sem `min-w-0` deixa o filho crescer pro
+tamanho do conteúdo em vez de encolher:
+
+1. **`Card` como item de grid/flex** (já resolvido no Prompt 3): `min-w-0`
+   adicionado direto em `src/components/ui/card.tsx`, global.
+2. **`<main>` do shell**: `SidebarInset` (`src/components/ui/sidebar.tsx`)
+   e o `<main>` de `src/components/shell/app-shell.tsx` são item flex sem
+   `min-w-0` — corrigido nos dois. Necessário mas **não suficiente**
+   sozinho pras páginas com coluna lateral (ver item 3).
+3. **`<Link>` sem `className` envolvendo um `<Card>` vira `display:inline`**
+   — não participa do algoritmo de encolhimento flex/grid, nenhum
+   `min-w-0` em ancestral resolve. Achado comparando o mesmo `scrollWidth`
+   exato (367px) numa página do Prompt 2 nunca tocada nesta etapa
+   (`/pro/companies`), provando que era um bug **pré-existente**, não algo
+   introduzido agora. Corrigido com `className="block min-w-0"` nos 4
+   lugares que tinham o padrão (`pro/companies`, `admin/companies`,
+   `company/professionals`, `admin/professionals`).
+4. **Item de grid também precisa do próprio `min-w-0`, não só o container**:
+   causa mais sutil, achada por último. `grid min-w-0 lg:grid-cols-[320px_1fr]`
+   no container não bastava — os dois `<div className="flex flex-col gap-4">`
+   que são os ITENS desse grid (coluna esquerda/direita) também têm
+   `min-width: auto` implícito por padrão do CSS Grid, então continuavam
+   forçando a largura do conteúdo. Corrigido com `min-w-0` direto nesses
+   dois divs em `admin/professional/[id]`, `admin/company/[id]`,
+   **e também** `pro/companies/[companyId]` e
+   `company/professionals/[professionalId]` — as duas últimas são do
+   Prompt 2/3 e tinham exatamente o mesmo bug latente, nunca antes
+   verificado nesse viewport especificamente (só as listas tinham sido
+   revarridas depois do item 3).
+
+Varredura final: 20 rotas × 2 viewports (as 12 do painel admin + 8 de
+Prompts anteriores tocadas por esses fixes) com `scrollWidth` batendo
+exatamente com o `docWidth` em todas.
+
+### Validado ponta a ponta contra o backend real
+
+Aprovar empresa pendente (empresa de teste criada com CNPJ válido por
+script) e rejeitar outra (motivo obrigatório, `RejectCompanyRequestDTO`);
+criar skill nova e remover (`SkillRequestDTO`, 409 real ao duplicar nome);
+ativar/desativar usuário; fechar projeto como admin; export de PDF do
+perfil profissional com `professionalId` (retorna `%PDF-1.7` genuíno);
+dashboard admin com métricas reais; analytics por id (profissional e
+empresa) reusando os mesmos componentes de gráfico do Prompt 2/3.
+`build`/`lint`/`typecheck` limpos, sem estado stray no `git status`.

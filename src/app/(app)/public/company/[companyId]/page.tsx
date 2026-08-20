@@ -8,9 +8,10 @@ import { getSession } from "@/lib/session";
  * (`/pro/companies/[id]` — contato, oportunidades fechadas etc.), então
  * essa rota só resolve o link neutro (ex.: "voltar ao perfil" a partir da
  * página de avaliações) — redireciona pra lá quando o viewer é
- * PROFESSIONAL. Não há `/company/companies/[id]` (o diretório de empresas
- * é só listagem, sem detalhe — ver README, Prompt 3), então COMPANY cai
- * de volta no diretório.
+ * PROFESSIONAL, ou pro `/admin/company/[id]` (Prompt 5) quando é ADMIN.
+ * Não há `/company/companies/[id]` (o diretório de empresas é só
+ * listagem, sem detalhe — ver README, Prompt 3), então COMPANY cai de
+ * volta no diretório.
  */
 export default async function PublicCompanyRedirectPage({
   params,
@@ -23,7 +24,7 @@ export default async function PublicCompanyRedirectPage({
     redirect(`/pro/companies/${companyId}`);
   }
   if (session.role === "ADMIN") {
-    redirect("/admin/dashboard");
+    redirect(`/admin/company/${companyId}`);
   }
   redirect("/company/companies");
 }

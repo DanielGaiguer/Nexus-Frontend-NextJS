@@ -48,7 +48,7 @@ export default function CompanyProfessionalsPage() {
       </div>
 
       {directory.isLoading && (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid min-w-0 gap-3 sm:grid-cols-2">
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-32" />
           ))}
@@ -59,11 +59,12 @@ export default function CompanyProfessionalsPage() {
         <EmptyState icon={Users} title="Nenhum profissional encontrado" />
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid min-w-0 gap-3 sm:grid-cols-2">
         {professionals.map((professional) => (
           <Link
             key={professional.id}
             href={`/company/professionals/${professional.id}`}
+            className="block min-w-0"
           >
             <Card className="hover:border-primary/40 h-full transition-colors">
               <CardContent className="flex items-start gap-3">

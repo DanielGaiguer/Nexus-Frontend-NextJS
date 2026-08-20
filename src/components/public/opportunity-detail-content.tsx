@@ -165,7 +165,7 @@ export function OpportunityDetailContent({
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
+      <div className="grid min-w-0 gap-4 lg:grid-cols-[320px_1fr]">
         <div className="flex flex-col gap-4">
           <Card>
             <CardHeader>

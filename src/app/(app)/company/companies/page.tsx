@@ -37,7 +37,7 @@ export default function CompanyCompaniesPage() {
       </div>
 
       {directory.isLoading && (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid min-w-0 gap-3 sm:grid-cols-2">
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-32" />
           ))}
@@ -48,7 +48,7 @@ export default function CompanyCompaniesPage() {
         <EmptyState icon={Building2} title="Nenhuma empresa encontrada" />
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid min-w-0 gap-3 sm:grid-cols-2">
         {companies.map((company) => (
           <Card key={company.id}>
             <CardContent className="flex items-start gap-3">
