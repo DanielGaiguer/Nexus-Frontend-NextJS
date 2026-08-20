@@ -223,20 +223,19 @@ dashboard operacional. Diretório de empresas, analytics (recharts) e mapa
   `PROFESSIONAL` — `COMPANY` continua desabilitado até `/company/profile`
   existir).
 
-### Bug de backend encontrado (não corrigido — fora do escopo deste projeto)
+### Bug de backend encontrado e corrigido
 
-`PUT /api/professional/projects/{id}` (editar item do portfólio) devolve
-**500** sempre: `PreviousProjectService.update()` (linha 81) lança
-`UnsupportedOperationException` dentro do merge do Hibernate
-(`CollectionType.replaceElements` tentando `.clear()` numa lista imutável
-associada ao campo `technologies`). Confirmado batendo direto no backend
-(`curl` sem passar pelo Next) — não é um problema de contrato/formato vindo
-do frontend. `POST`/`DELETE` de portfólio e todo o CRUD de
-credentials (`/api/professional/credentials/{id}`) funcionam normalmente; só
-a edição de um `PreviousProject` já existente quebra. A UI do
-`/pro/portfolio` já está pronta pra quando isso for corrigido no backend —
-o botão de editar existe e monta o payload certo, só vai receber o toast de
-erro (`error.message` do 500) até lá.
+`PUT /api/professional/projects/{id}` (editar item do portfólio) devolvia
+**500** sempre: `PreviousProjectService.update()` lançava
+`UnsupportedOperationException` dentro do merge do Hibernate, porque
+`normalizeTechnologies()` montava a lista com `Stream.toList()` — que
+retorna uma lista **imutável** — e o Hibernate precisa mutar essa lista ao
+sincronizar o `PersistentBag` gerenciado da entidade (`technologies`)
+durante o flush. `POST` (criação) não sofria o mesmo erro porque a entidade
+ainda não passou pelo ciclo de wrap em `PersistentCollection` antes do
+insert. Corrigido em `PreviousProjectService.java` trocando `.toList()` por
+`Collectors.toCollection(ArrayList::new)`. A UI do `/pro/portfolio` já
+estava pronta e passou a funcionar normalmente com a correção.
 
 ### Validado ponta a ponta contra o backend real
 
@@ -246,3 +245,58 @@ opportunities/matches (invites/sent/previous/all), `POST` de demonstrar
 interesse e `POST` de cancelar match (ciclo completo: interesse →
 aparece em "sent" → cancela → some) — tudo via `curl` autenticado com
 cookie real, mais `build`/`lint`/`typecheck` limpos.
+
+## Estado desta etapa (Prompt 2 — Onda Profissional, continuação)
+
+Fecha o Prompt 2: diretório de empresas, analytics e mapa.
+
+- **`/pro/companies`**: diretório paginado (`useInfiniteQuery`, página de 50,
+  mesmo tamanho do app antigo), busca por nome. **Simplificação**: botão
+  "Carregar mais" em vez do `IntersectionObserver` de scroll infinito do
+  `nexus-directory.js` original — mais acessível, mesma função.
+- **`/pro/companies/[id]`**: perfil público da empresa — reaproveita o
+  `ReputationCard` já construído para o perfil do profissional (mesmo shape,
+  `ReputationExplanationDTO`), contato revelado automaticamente quando o
+  backend libera (`GET /api/company/{id}/contact` — 403 vira "bloqueado" na
+  UI, sem tratamento especial: é o comportamento real do endpoint),
+  oportunidades fechadas e anteriores.
+- **`/pro/analytics`**: mesmos dados do `ProfessionalDashboardAnalyticsDTO`
+  do dashboard (Prompt 1), agora com os componentes de chart do shadcn
+  (`recharts` por baixo) em vez dos badges/barras simplificados: tendência
+  de matches (`AreaChart`), distribuição de score (`BarChart`), taxa de
+  aceitação por empresa (lista com `Progress`), skills mais requisitadas
+  (`BarChart` horizontal), radar de reputação (`RadarChart`), pontos de
+  atenção em avaliações (`BarChart`) e skill gaps (badges). Esses mesmos
+  componentes de chart são a base pro dashboard do admin (Prompt 5).
+- **`/pro/map`**: porte de `nexus-map.js` pra `react-leaflet` (mesma engine
+  Leaflet/tiles OpenStreetMap do app antigo). Pins em `divIcon` HTML/CSS
+  (não imagem) — evita o problema clássico de bundler com os PNGs padrão do
+  Leaflet. Carrega profissionais/empresas/oportunidades de uma vez
+  (`/api/map/*`) e alterna a visibilidade das camadas no client; filtro de
+  cidade vai pro backend (mesmo param `city` que o `MapController` já
+  aceita). **Simplificações**: sem clustering de marcadores (`nexus-map.js`
+  tinha um algoritmo próprio; não portado), sem filtro de raio/geolocalização
+  do usuário, sem os filtros específicos de oportunidade (modalidade, faixa
+  salarial, skills) que existiam no painel antigo — só cidade + tipo.
+  `MapContainer` é `next/dynamic` com `ssr: false`: Leaflet toca
+  `window`/`document`, não pode existir durante SSR.
+- Não portado nesta fatia (Prompt 2 encerrado): `pro-professionals.html`
+  (diretório de profissionais — não estava na lista original do Prompt 2),
+  export de PDF do perfil, "ver histórico" do match, upload de currículo com
+  preview.
+
+### Nota sobre o bug de backend do relatório anterior
+
+O bug documentado acima (`PUT /api/professional/projects/{id}` fixado em
+`PreviousProjectService.java`) já apareceu corrigido no código quando esta
+etapa começou — não fui eu que apliquei essa correção nesta sessão (não há
+nenhuma chamada de edição de arquivo do meu lado contra `nexus/`); o mais
+provável é que você tenha corrigido diretamente. Só deixando registrado
+que confirmei via `curl` que `/pro/portfolio` edita normalmente agora.
+
+### Validado ponta a ponta (continuação)
+
+`GET` de diretório de empresas (paginado), perfil público de empresa,
+oportunidades fechadas, contato (incluindo o caso 403 sem match
+confirmado), e os três endpoints de mapa — tudo via `curl` autenticado.
+`build`/`lint`/`typecheck` limpos.
