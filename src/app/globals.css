@@ -1,26 +1,188 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+
+  /* Nexus brand tokens — expostos como utilities do Tailwind (bg-success,
+     text-info, bg-nexus-bg-2, ...) além dos papeis semanticos do shadcn acima. */
+  --color-success: var(--nexus-success);
+  --color-success-foreground: var(--nexus-success-foreground);
+  --color-warning: var(--nexus-warning);
+  --color-warning-foreground: var(--nexus-warning-foreground);
+  --color-info: var(--nexus-info);
+  --color-info-foreground: var(--nexus-info-foreground);
+  --color-danger: var(--nexus-danger);
+  --color-danger-foreground: var(--nexus-danger-foreground);
+  --color-nexus-primary: var(--nexus-primary);
+  --color-nexus-secondary: var(--nexus-secondary);
+  --color-nexus-accent: var(--nexus-accent);
+  --color-nexus-bg-1: var(--nexus-bg-1);
+  --color-nexus-bg-2: var(--nexus-bg-2);
+  --color-nexus-bg-3: var(--nexus-bg-3);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/*
+ * Tema LIGHT (default do seletor :root, sem classe) — não existe hoje em
+ * lugar nenhum do produto. Desenhado aqui preservando os matizes de marca
+ * (--nexus-primary/secondary/accent) escurecidos o suficiente para AA em
+ * fundo claro, com um degradê de 3 superfícies (bg-1/2/3) espelhando o dark.
+ */
+:root {
+  --radius: 0.625rem;
+
+  --nexus-primary: #5457e0;
+  --nexus-secondary: #7c5cf2;
+  --nexus-accent: #0e7490;
+  --nexus-bg-1: #ffffff;
+  --nexus-bg-2: #f7f8fc;
+  --nexus-bg-3: #eef0f9;
+  --nexus-success: #16a34a;
+  --nexus-success-foreground: #ffffff;
+  --nexus-warning: #b45309;
+  --nexus-warning-foreground: #ffffff;
+  --nexus-info: #0891b2;
+  --nexus-info-foreground: #ffffff;
+  --nexus-danger: #dc2626;
+  --nexus-danger-foreground: #ffffff;
+
+  --background: var(--nexus-bg-2);
+  --foreground: #0d1329;
+  --card: var(--nexus-bg-1);
+  --card-foreground: #0d1329;
+  --popover: var(--nexus-bg-1);
+  --popover-foreground: #0d1329;
+  --primary: var(--nexus-primary);
+  --primary-foreground: #ffffff;
+  --secondary: var(--nexus-secondary);
+  --secondary-foreground: #ffffff;
+  --muted: var(--nexus-bg-3);
+  --muted-foreground: #5b6280;
+  --accent: #cffafe;
+  --accent-foreground: #0e7490;
+  --destructive: var(--nexus-danger);
+  --destructive-foreground: #ffffff;
+  --border: #e2e4ee;
+  --input: #e2e4ee;
+  --ring: var(--nexus-primary);
+  --chart-1: var(--nexus-primary);
+  --chart-2: var(--nexus-secondary);
+  --chart-3: var(--nexus-info);
+  --chart-4: var(--nexus-success);
+  --chart-5: var(--nexus-warning);
+  --sidebar: var(--nexus-bg-1);
+  --sidebar-foreground: #0d1329;
+  --sidebar-primary: var(--nexus-primary);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--nexus-bg-3);
+  --sidebar-accent-foreground: #0d1329;
+  --sidebar-border: #e2e4ee;
+  --sidebar-ring: var(--nexus-primary);
+}
+
+/*
+ * Tema DARK (.dark no <html>, aplicado por next-themes attribute="class") —
+ * herdado 1:1 da paleta que já existe hoje em
+ * nexus-frontend/src/main/resources/static/css/style.css (--nexus-*).
+ * É o tema padrão da aplicação (next-themes defaultTheme="dark").
+ */
+.dark {
+  --nexus-primary: #6b6eff;
+  --nexus-secondary: #a78bfa;
+  --nexus-accent: #67e8f9;
+  --nexus-bg-1: #040613;
+  --nexus-bg-2: #090e1f;
+  --nexus-bg-3: #0d1329;
+  --nexus-success: #22c55e;
+  --nexus-success-foreground: #052e13;
+  --nexus-warning: #f59e0b;
+  --nexus-warning-foreground: #341c02;
+  --nexus-info: #06b6d4;
+  --nexus-info-foreground: #042f33;
+  --nexus-danger: #ef4444;
+  --nexus-danger-foreground: #ffffff;
+
+  --background: var(--nexus-bg-1);
+  --foreground: #e5e7eb;
+  --card: var(--nexus-bg-2);
+  --card-foreground: #e5e7eb;
+  --popover: var(--nexus-bg-3);
+  --popover-foreground: #e5e7eb;
+  --primary: var(--nexus-primary);
+  --primary-foreground: #ffffff;
+  --secondary: var(--nexus-secondary);
+  --secondary-foreground: #17102b;
+  --muted: #131a33;
+  --muted-foreground: #94a3b8;
+  --accent: var(--nexus-accent);
+  --accent-foreground: #052e33;
+  --destructive: var(--nexus-danger);
+  --destructive-foreground: #ffffff;
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.12);
+  --ring: var(--nexus-primary);
+  --chart-1: var(--nexus-primary);
+  --chart-2: var(--nexus-secondary);
+  --chart-3: var(--nexus-accent);
+  --chart-4: var(--nexus-success);
+  --chart-5: var(--nexus-warning);
+  --sidebar: var(--nexus-bg-2);
+  --sidebar-foreground: #e5e7eb;
+  --sidebar-primary: var(--nexus-primary);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--nexus-bg-3);
+  --sidebar-accent-foreground: #e5e7eb;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: var(--nexus-primary);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  body {
+    @apply bg-background text-foreground;
+  }
 }
