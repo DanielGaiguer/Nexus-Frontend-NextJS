@@ -61,7 +61,7 @@ export function DataTable<TData extends RowData>({
         />
       </div>
 
-      <div className="min-w-0 rounded-md border">
+      <div className="bg-card min-w-0 rounded-md border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
