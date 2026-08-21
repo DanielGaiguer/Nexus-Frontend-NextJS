@@ -31,6 +31,7 @@ export function DataTable<TData extends RowData>({
   data,
   searchPlaceholder = "Buscar...",
   emptyMessage = "Nenhum resultado encontrado.",
+  hideSearch = false,
 }: {
   // Array de colunas heterogêneo (cada uma com seu próprio TValue de
   // accessor) — igual ao v8, só tipa em ColumnDef<Features, TData, any>[].
@@ -39,6 +40,8 @@ export function DataTable<TData extends RowData>({
   data: TData[];
   searchPlaceholder?: string;
   emptyMessage?: string;
+  /** Pra telas que já têm seu próprio campo "Buscar" fora da tabela (ex.: admin/projects, que espelha o painel de filtros único do admin-projects.html original) — evita um segundo campo de busca redundante. */
+  hideSearch?: boolean;
 }) {
   const table = useTable({
     features: adminTableFeatures,
@@ -51,15 +54,17 @@ export function DataTable<TData extends RowData>({
 
   return (
     <div className="flex min-w-0 flex-col gap-3">
-      <div className="relative max-w-sm">
-        <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-        <Input
-          placeholder={searchPlaceholder}
-          className="pl-9"
-          value={table.state.globalFilter ?? ""}
-          onChange={(e) => table.setGlobalFilter(e.target.value)}
-        />
-      </div>
+      {!hideSearch && (
+        <div className="relative max-w-sm">
+          <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+          <Input
+            placeholder={searchPlaceholder}
+            className="pl-9"
+            value={table.state.globalFilter ?? ""}
+            onChange={(e) => table.setGlobalFilter(e.target.value)}
+          />
+        </div>
+      )}
 
       <div className="bg-card min-w-0 rounded-md border">
         <Table>
