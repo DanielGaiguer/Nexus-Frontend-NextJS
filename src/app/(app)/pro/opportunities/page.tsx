@@ -41,7 +41,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useShowInterest } from "@/hooks/mutations/useShowInterest";
 import { useOpportunities } from "@/hooks/queries/useOpportunities";
 import { useProfessionalProfile } from "@/hooks/queries/useProfessionalProfile";
-import { useProjectSkillCatalog } from "@/hooks/queries/useProjectSkillCatalog";
+import { useSkillCatalog } from "@/hooks/queries/useSkillCatalog";
 import { ApiError } from "@/lib/api-client";
 import type { ExperienceLevel } from "@/types/professional";
 
@@ -90,7 +90,7 @@ function missingScoreRelevantFields(
 export default function OpportunitiesPage() {
   const { data: opportunities, isLoading } = useOpportunities();
   const { data: profile } = useProfessionalProfile();
-  const { data: skillCatalog } = useProjectSkillCatalog();
+  const { data: skillCatalog } = useSkillCatalog();
   const showInterest = useShowInterest();
   const [search, setSearch] = useState("");
   const [opportunityType, setOpportunityType] = useState<

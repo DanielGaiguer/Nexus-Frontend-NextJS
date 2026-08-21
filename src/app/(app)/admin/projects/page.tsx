@@ -34,7 +34,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCloseProjectAsAdmin } from "@/hooks/mutations/useAdminProjectActions";
 import { useAdminProjects } from "@/hooks/queries/useAdminProjects";
-import { useProjectSkillCatalog } from "@/hooks/queries/useProjectSkillCatalog";
+import { useSkillCatalog } from "@/hooks/queries/useSkillCatalog";
 import { ApiError } from "@/lib/api-client";
 import {
   contractTypeOptions,
@@ -73,7 +73,7 @@ const helper = createColumnHelper<
 
 export default function AdminProjectsPage() {
   const { data: projects, isLoading } = useAdminProjects();
-  const { data: skillCatalog } = useProjectSkillCatalog();
+  const { data: skillCatalog } = useSkillCatalog();
   const [status, setStatus] = useState<"all" | "OPEN" | "CLOSED">("all");
   const [search, setSearch] = useState("");
   const [oppType, setOppType] = useState<"" | "PROJECT" | "JOB">("");

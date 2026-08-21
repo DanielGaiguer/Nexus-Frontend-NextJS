@@ -15,7 +15,7 @@ import {
   useMapProfessionals,
 } from "@/hooks/queries/useMapData";
 import { useProfessionalProfile } from "@/hooks/queries/useProfessionalProfile";
-import { useProjectSkillCatalog } from "@/hooks/queries/useProjectSkillCatalog";
+import { useSkillCatalog } from "@/hooks/queries/useSkillCatalog";
 import { DEFAULT_MAP_CENTER, distanceKm } from "@/lib/geo";
 import {
   emptyOpportunityFilters,
@@ -77,7 +77,7 @@ export default function ProMapPage() {
   const companies = useMapCompanies({ city });
   const opportunities = useMapOpportunities({ city });
   const { data: profile } = useProfessionalProfile();
-  const { data: skillCatalog } = useProjectSkillCatalog();
+  const { data: skillCatalog } = useSkillCatalog();
 
   const you =
     profile?.latitude != null && profile?.longitude != null
