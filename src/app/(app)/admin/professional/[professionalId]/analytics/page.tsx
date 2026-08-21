@@ -8,8 +8,7 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 import { AcceptanceRateList } from "@/components/professional/acceptance-rate-list";
 import { MatchesTrendChart } from "@/components/professional/matches-trend-chart";
@@ -29,6 +28,7 @@ import { useAdminProfessionalProfile } from "@/hooks/queries/useAdminProfessiona
 export default function AdminProfessionalAnalyticsPage() {
   const { professionalId } = useParams<{ professionalId: string }>();
   const id = Number(professionalId);
+  const router = useRouter();
 
   const { data: profile } = useAdminProfessionalProfile(id);
   const { data, isLoading, isError } = useAdminProfessionalAnalytics(id);
@@ -36,13 +36,14 @@ export default function AdminProfessionalAnalyticsPage() {
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-4">
       <div>
-        <Link
-          href={`/admin/professional/${id}`}
+        <button
+          type="button"
+          onClick={() => router.back()}
           className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-1 text-sm"
         >
           <ArrowLeft className="size-4" />
-          Voltar para o perfil
-        </Link>
+          Voltar
+        </button>
         <h1 className="text-2xl font-bold tracking-tight">
           Estatísticas {profile ? `— ${profile.name}` : ""}
         </h1>

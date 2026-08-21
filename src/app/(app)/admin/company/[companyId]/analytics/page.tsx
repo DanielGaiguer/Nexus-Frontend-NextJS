@@ -8,8 +8,7 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 import { ProjectAcceptanceRateList } from "@/components/company/project-acceptance-rate-list";
 import { ProjectStatusChart } from "@/components/company/project-status-chart";
@@ -29,6 +28,7 @@ import { useAdminCompanyProfile } from "@/hooks/queries/useAdminCompanyView";
 export default function AdminCompanyAnalyticsPage() {
   const { companyId } = useParams<{ companyId: string }>();
   const id = Number(companyId);
+  const router = useRouter();
 
   const { data: profile } = useAdminCompanyProfile(id);
   const { data, isLoading, isError } = useAdminCompanyAnalytics(id);
@@ -36,13 +36,14 @@ export default function AdminCompanyAnalyticsPage() {
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-4">
       <div>
-        <Link
-          href={`/admin/company/${id}`}
+        <button
+          type="button"
+          onClick={() => router.back()}
           className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-1 text-sm"
         >
           <ArrowLeft className="size-4" />
-          Voltar para o perfil
-        </Link>
+          Voltar
+        </button>
         <h1 className="text-2xl font-bold tracking-tight">
           Estatísticas {profile ? `— ${profile.companyName}` : ""}
         </h1>

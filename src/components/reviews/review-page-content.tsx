@@ -53,13 +53,14 @@ export function ReviewPageContent({
         </div>
       ) : (
         <>
-          <Link
-            href={matchesUrl}
+          <button
+            type="button"
+            onClick={() => router.back()}
             className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm"
           >
             <ArrowLeft className="size-4" />
-            Voltar para matches
-          </Link>
+            Voltar
+          </button>
 
           <div className="bg-muted/50 text-muted-foreground rounded-md border p-3 text-sm">
             📋 Este match foi encerrado. Compartilhe sua experiência.

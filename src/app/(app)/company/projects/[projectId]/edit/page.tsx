@@ -1,8 +1,7 @@
 "use client";
 
 import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 import { ProjectForm } from "@/components/company/project-form";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,18 +9,20 @@ import { useProject } from "@/hooks/queries/useMyProjects";
 
 export default function EditProjectPage() {
   const { projectId } = useParams<{ projectId: string }>();
+  const router = useRouter();
   const { data: project, isLoading } = useProject(Number(projectId));
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4">
       <div>
-        <Link
-          href="/company/projects"
+        <button
+          type="button"
+          onClick={() => router.back()}
           className="text-muted-foreground hover:text-foreground mb-3 flex items-center gap-1 text-sm"
         >
           <ArrowLeft className="size-4" />
-          Voltar para projetos
-        </Link>
+          Voltar
+        </button>
         <h1 className="text-2xl font-bold tracking-tight">
           Editar Oportunidade
         </h1>

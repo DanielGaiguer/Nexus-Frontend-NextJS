@@ -10,8 +10,7 @@ import {
   Phone,
   Star,
 } from "lucide-react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 import { ReputationCard } from "@/components/professional/reputation-card";
 import { ReviewsPreviewCard } from "@/components/reviews/reviews-preview-card";
@@ -28,6 +27,7 @@ import {
 export default function CompanyViewPage() {
   const { companyId } = useParams<{ companyId: string }>();
   const id = Number(companyId);
+  const router = useRouter();
 
   const { data: company, isLoading } = usePublicCompany(id);
   const { data: closedProjects } = useCompanyClosedProjects(id);
@@ -47,13 +47,14 @@ export default function CompanyViewPage() {
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
-      <Link
-        href="/pro/companies"
+      <button
+        type="button"
+        onClick={() => router.back()}
         className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm"
       >
         <ArrowLeft className="size-4" />
         Voltar
-      </Link>
+      </button>
 
       <div className="grid min-w-0 gap-4 lg:grid-cols-[320px_1fr]">
         <div className="flex min-w-0 flex-col gap-4">

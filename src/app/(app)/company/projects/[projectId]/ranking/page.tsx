@@ -143,13 +143,14 @@ export default function ProjectRankingPage() {
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
       <div>
-        <Link
-          href="/company/projects"
+        <button
+          type="button"
+          onClick={() => router.back()}
           className="text-muted-foreground hover:text-foreground mb-3 flex items-center gap-1 text-sm"
         >
           <ArrowLeft className="size-4" />
-          Voltar para projetos
-        </Link>
+          Voltar
+        </button>
         <p className="text-primary text-xs font-bold tracking-widest uppercase">
           Ranking de Profissionais
         </p>

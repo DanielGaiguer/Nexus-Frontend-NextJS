@@ -12,8 +12,7 @@ import {
   Phone,
   Star,
 } from "lucide-react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 import { credentialColorHex } from "@/components/professional/credential-color";
 import { ReputationCard } from "@/components/professional/reputation-card";
@@ -64,6 +63,7 @@ function formatMoney(value: number | null) {
 export default function CompanyProfessionalViewPage() {
   const { professionalId } = useParams<{ professionalId: string }>();
   const id = Number(professionalId);
+  const router = useRouter();
 
   const { data: professional, isLoading } = usePublicProfessional(id);
   // O backend só libera o contato de fato se houver match confirmado — aqui
@@ -82,13 +82,14 @@ export default function CompanyProfessionalViewPage() {
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
-      <Link
-        href="/company/professionals"
+      <button
+        type="button"
+        onClick={() => router.back()}
         className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm"
       >
         <ArrowLeft className="size-4" />
         Voltar
-      </Link>
+      </button>
 
       <div className="grid min-w-0 gap-4 lg:grid-cols-[320px_1fr]">
         <div className="flex min-w-0 flex-col gap-4">

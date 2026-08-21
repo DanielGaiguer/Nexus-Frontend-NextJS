@@ -1,8 +1,7 @@
 "use client";
 
 import { ArrowLeft, Briefcase, Code2, History, Star } from "lucide-react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 import { ReputationCard } from "@/components/professional/reputation-card";
 import { ReviewsPreviewCard } from "@/components/reviews/reviews-preview-card";
@@ -45,6 +44,7 @@ function formatMoney(value: number | null) {
 export default function PeerProfessionalViewPage() {
   const { professionalId } = useParams<{ professionalId: string }>();
   const id = Number(professionalId);
+  const router = useRouter();
 
   const { data: professional, isLoading } = usePublicProfessional(id);
 
@@ -59,13 +59,14 @@ export default function PeerProfessionalViewPage() {
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
-      <Link
-        href="/pro/professionals"
+      <button
+        type="button"
+        onClick={() => router.back()}
         className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm"
       >
         <ArrowLeft className="size-4" />
         Voltar
-      </Link>
+      </button>
 
       <div className="grid min-w-0 gap-4 lg:grid-cols-[320px_1fr]">
         <div className="flex min-w-0 flex-col gap-4">

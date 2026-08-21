@@ -2,7 +2,7 @@
 
 import { ArrowLeft, Check, Trophy, User, X } from "lucide-react";
 import Link from "next/link";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
 import { Suspense, useEffect, useRef } from "react";
 import { toast } from "sonner";
@@ -76,6 +76,7 @@ export default function ComparisonPage() {
 
 function ComparisonContent() {
   const { projectId } = useParams<{ projectId: string }>();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const matchIds = (searchParams.get("matchIds") ?? "")
     .split(",")
@@ -113,13 +114,14 @@ function ComparisonContent() {
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
-      <Link
-        href={`/company/projects/${projectId}/ranking`}
+      <button
+        type="button"
+        onClick={() => router.back()}
         className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm"
       >
         <ArrowLeft className="size-4" />
-        Voltar ao ranking
-      </Link>
+        Voltar
+      </button>
 
       <div>
         <p className="text-primary text-xs font-bold tracking-widest uppercase">

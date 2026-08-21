@@ -15,7 +15,7 @@ import {
   Star,
 } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 import { credentialColorHex } from "@/components/professional/credential-color";
 import { ReputationCard } from "@/components/professional/reputation-card";
@@ -52,6 +52,7 @@ function money(value: number | null) {
 export default function AdminProfessionalViewPage() {
   const { professionalId } = useParams<{ professionalId: string }>();
   const id = Number(professionalId);
+  const router = useRouter();
 
   const { data: profile, isLoading } = useAdminProfessionalProfile(id);
   const { data: matches } = useAdminProfessionalMatches(id);
@@ -76,13 +77,14 @@ export default function AdminProfessionalViewPage() {
     <div className="mx-auto flex max-w-5xl flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <Link
-            href="/admin/users"
+          <button
+            type="button"
+            onClick={() => router.back()}
             className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-1 text-sm"
           >
             <ArrowLeft className="size-4" />
-            Voltar para Usuários
-          </Link>
+            Voltar
+          </button>
           <h1 className="text-2xl font-bold tracking-tight">
             Perfil do Profissional
           </h1>

@@ -19,7 +19,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 import { ReputationCard } from "@/components/professional/reputation-card";
 import { ReviewsPreviewCard } from "@/components/reviews/reviews-preview-card";
@@ -71,6 +71,7 @@ function formatMoney(value: number) {
 export default function AdminCompanyViewPage() {
   const { companyId } = useParams<{ companyId: string }>();
   const id = Number(companyId);
+  const router = useRouter();
 
   const { data: profile, isLoading } = useAdminCompanyProfile(id);
   const { data: projects } = useAdminCompanyProjects(id);
@@ -118,13 +119,14 @@ export default function AdminCompanyViewPage() {
     <div className="mx-auto flex max-w-5xl flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <Link
-            href="/admin/users"
+          <button
+            type="button"
+            onClick={() => router.back()}
             className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-1 text-sm"
           >
             <ArrowLeft className="size-4" />
-            Voltar para Usuários
-          </Link>
+            Voltar
+          </button>
           <h1 className="text-2xl font-bold tracking-tight">
             Perfil da Empresa
           </h1>

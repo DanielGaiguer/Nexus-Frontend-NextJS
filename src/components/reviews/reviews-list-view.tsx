@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft, Star } from "lucide-react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { ReviewCard } from "@/components/reviews/review-card";
@@ -22,26 +22,26 @@ export function ReviewsListView({
   entityType,
   entityId,
   profileName,
-  backHref,
 }: {
   entityType: "professional" | "company";
   entityId: number;
   profileName: string;
-  backHref: string;
 }) {
+  const router = useRouter();
   const [rating, setRating] = useState<number | null>(null);
   const { data, isLoading } = useReviewsAll(entityType, entityId, rating);
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
       <div>
-        <Link
-          href={backHref}
+        <button
+          type="button"
+          onClick={() => router.back()}
           className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-1 text-sm"
         >
           <ArrowLeft className="size-4" />
-          Voltar ao perfil
-        </Link>
+          Voltar
+        </button>
         <p className="text-muted-foreground mb-1 text-xs">
           Perfil &rarr; Avaliações de {profileName}
         </p>

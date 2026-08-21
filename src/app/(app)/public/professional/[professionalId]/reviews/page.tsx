@@ -24,7 +24,6 @@ export default function PublicProfessionalReviewsPage() {
       entityType="professional"
       entityId={id}
       profileName={professional.name}
-      backHref={`/public/professional/${id}`}
     />
   );
 }

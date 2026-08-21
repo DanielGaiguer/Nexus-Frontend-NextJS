@@ -1,8 +1,7 @@
 "use client";
 
 import { AlertTriangle, ArrowLeft, Lock, WifiOff } from "lucide-react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
 import { ChatComposer } from "@/components/chat/chat-composer";
@@ -15,6 +14,7 @@ import { useChatSocket } from "@/hooks/useChatSocket";
 export default function ChatWindowPage() {
   const { matchId } = useParams<{ matchId: string }>();
   const id = Number(matchId);
+  const router = useRouter();
 
   const { data: chats } = useChatMatches();
   const summary = chats?.find((c) => c.matchId === id);
@@ -31,13 +31,14 @@ export default function ChatWindowPage() {
   return (
     <div className="mx-auto flex h-[calc(100vh-6rem)] max-w-3xl flex-col overflow-hidden rounded-lg border">
       <div className="flex shrink-0 items-center gap-3 border-b p-3">
-        <Link
-          href="/chat"
+        <button
+          type="button"
+          onClick={() => router.back()}
           className="text-muted-foreground hover:text-foreground shrink-0"
-          aria-label="Voltar para conversas"
+          aria-label="Voltar"
         >
           <ArrowLeft className="size-5" />
-        </Link>
+        </button>
         {summary ? (
           <>
             <Avatar className="size-9 shrink-0">
