@@ -110,7 +110,10 @@
   --destructive: var(--nexus-danger);
   --destructive-foreground: #ffffff;
   --border: #e2e4ee;
-  --input: #e2e4ee;
+  /* --nexus-input do app antigo: borda (e leve preenchimento, via
+     dark:bg-input/30 nos componentes) tingida de roxo, não cinza neutro —
+     .nexus-input/.nexus-select usam rgba(107,110,255,0.15) na borda. */
+  --input: rgba(84, 87, 224, 0.25);
   --ring: var(--nexus-primary);
   --chart-1: var(--nexus-primary);
   --chart-2: var(--nexus-secondary);
@@ -176,7 +179,10 @@
   --destructive: var(--nexus-danger);
   --destructive-foreground: #ffffff;
   --border: rgba(255, 255, 255, 0.08);
-  --input: rgba(255, 255, 255, 0.12);
+  /* Mesma borda de .nexus-input/.nexus-select do app antigo — tingida de
+     roxo (rgba(107,110,255,0.15)), não branco neutro; usada tanto pra
+     border-input quanto pro leve preenchimento (dark:bg-input/30). */
+  --input: rgba(107, 110, 255, 0.15);
   --ring: var(--nexus-primary);
   --chart-1: var(--nexus-primary);
   --chart-2: var(--nexus-secondary);
