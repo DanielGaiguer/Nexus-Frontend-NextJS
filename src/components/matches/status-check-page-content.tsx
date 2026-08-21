@@ -16,7 +16,7 @@ export function StatusCheckPageContent({ matchId }: { matchId: number }) {
           Como está indo o match?
         </h1>
         <p className="text-muted-foreground text-sm">
-          Conte-nos como está sendo.
+          Faltam 15 dias para este match encerrar. Conte-nos como está sendo.
         </p>
       </div>
       <Card>

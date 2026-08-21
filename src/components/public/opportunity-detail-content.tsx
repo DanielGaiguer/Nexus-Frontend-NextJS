@@ -9,10 +9,12 @@ import {
   Clock,
   Code2,
   DollarSign,
+  Eye,
   FileText,
   Gift,
   MapPin,
   Send,
+  Star,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -140,8 +142,7 @@ export function OpportunityDetailContent({
 
           <div className="flex flex-col items-end gap-3">
             {viewerRole === "PROFESSIONAL" &&
-              match &&
-              match.status !== "PROFESSIONAL_INTERESTED" && (
+              (!match || match.status !== "PROFESSIONAL_INTERESTED" ? (
                 <Button
                   disabled={showInterest.isPending}
                   onClick={() =>
@@ -159,7 +160,12 @@ export function OpportunityDetailContent({
                   <Send className="size-4" />
                   Demonstrar interesse
                 </Button>
-              )}
+              ) : (
+                <Button variant="ghost" disabled>
+                  <CircleCheck className="size-4" />
+                  Interesse demonstrado
+                </Button>
+              ))}
             {score != null && <ScoreRing score={score} size={80} />}
           </div>
         </CardContent>
@@ -256,6 +262,31 @@ export function OpportunityDetailContent({
             </Card>
           )}
 
+          {project.salaryVisibleToProfessionals != null && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <Eye className="text-primary size-4" />
+                  Visibilidade
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <VisibilityRow
+                  label="Visível para outras empresas"
+                  value={project.visibleToCompanies ?? true}
+                />
+                <VisibilityRow
+                  label="Salário/orçamento visível para profissionais"
+                  value={project.salaryVisibleToProfessionals ?? false}
+                />
+                <VisibilityRow
+                  label="Salário/orçamento visível para empresas"
+                  value={project.salaryVisibleToCompanies ?? false}
+                />
+              </CardContent>
+            </Card>
+          )}
+
           {project.company && (
             <Card>
               <CardHeader>
@@ -273,8 +304,17 @@ export function OpportunityDetailContent({
                 {project.company.reputation != null &&
                 project.company.reputation > 0 ? (
                   <div className="flex items-center gap-1">
-                    <CircleCheck className="fill-warning text-warning size-3.5" />
-                    <span className="font-medium">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className={
+                          i < Math.round(project.company!.reputation!)
+                            ? "fill-warning text-warning size-3.5"
+                            : "text-muted-foreground size-3.5"
+                        }
+                      />
+                    ))}
+                    <span className="ml-1 font-medium">
                       {project.company.reputation.toFixed(1)}
                     </span>
                   </div>
@@ -342,6 +382,23 @@ export function OpportunityDetailContent({
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function VisibilityRow({ label, value }: { label: string; value: boolean }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-muted-foreground">{label}</span>
+      <span
+        className={
+          value
+            ? "text-success font-semibold"
+            : "text-destructive font-semibold"
+        }
+      >
+        {value ? "Sim" : "Não"}
+      </span>
     </div>
   );
 }

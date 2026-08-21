@@ -93,7 +93,7 @@ export function CompanyProfileEditDialog({
       </DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Editar perfil</DialogTitle>
+          <DialogTitle>Editar Perfil da Empresa</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -139,6 +139,9 @@ export function CompanyProfileEditDialog({
                     <FormControl>
                       <Input placeholder="00000-000" maxLength={9} {...field} />
                     </FormControl>
+                    <p className="text-muted-foreground text-xs">
+                      Cidade e estado são preenchidos automaticamente
+                    </p>
                     <FormMessage />
                   </FormItem>
                 )}

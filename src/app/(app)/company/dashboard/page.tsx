@@ -2,42 +2,91 @@
 
 import {
   Briefcase,
+  Building2,
   FolderOpen,
+  FolderX,
   Handshake,
-  Mail,
-  Sparkles,
+  Plus,
   TrendingUp,
-  Users,
 } from "lucide-react";
 import Link from "next/link";
+import type { ReactNode } from "react";
 
-import { MonthlyMatchesBars } from "@/components/dashboard/monthly-matches-bars";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { PendingReviewDialog } from "@/components/matches/pending-review-dialog";
 import { PendingStatusCheckDialog } from "@/components/matches/pending-status-check-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCompanyDashboard } from "@/hooks/queries/useCompanyDashboard";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useCompanyDashboardSummary } from "@/hooks/queries/useCompanyDashboardSummary";
 import { useCompanyProfile } from "@/hooks/queries/useCompanyProfile";
 import { useMyProjects } from "@/hooks/queries/useMyProjects";
-import { useReceivedInterests } from "@/hooks/queries/useCompanyMatches";
 import { usePendingStatusCheck } from "@/hooks/queries/useReviews";
+import type { Modality, ProjectResponseDTO } from "@/types/project";
+
+const modalityLabels: Record<Modality, string> = {
+  REMOTE: "Remoto",
+  ONSITE: "Presencial",
+  HYBRID: "Híbrido",
+};
+
+const statusBadgeClass: Record<string, string> = {
+  OPEN: "bg-success/15 text-success",
+  CLOSED: "bg-destructive/15 text-destructive",
+  CANCELLED: "bg-destructive/15 text-destructive",
+};
+
+const statusLabels: Record<string, string> = {
+  OPEN: "Aberto",
+  CLOSED: "Encerrado",
+  CANCELLED: "Cancelado",
+};
+
+function formatMoney(value: number) {
+  // Espelha #numbers.formatDecimal(x,1,'COMMA',0,'POINT') do template
+  // original: separador de milhar vírgula, sem casas decimais.
+  return value.toLocaleString("en-US", { maximumFractionDigits: 0 });
+}
+
+function formatCreatedAt(iso: string) {
+  return `Criado em ${new Date(iso).toLocaleDateString("pt-BR")}`;
+}
 
 export default function CompanyDashboardPage() {
   const profile = useCompanyProfile();
   const summary = useCompanyDashboardSummary();
-  const dashboard = useCompanyDashboard();
   const projects = useMyProjects();
-  const received = useReceivedInterests();
   // Só uma janela por vez — status check tem prioridade por ser mais urgente
   // (match ainda ativo), igual ao app antigo.
   const pendingStatusCheck = usePendingStatusCheck(true);
 
-  const openProjects = (projects.data ?? []).filter((p) => p.status === "OPEN");
+  const allProjects = projects.data ?? [];
+  const openProjects = allProjects.filter((p) => p.status === "OPEN");
+  const totalProjects = summary.data?.totalProjects ?? allProjects.length;
+  const projectsWithMatchCount = allProjects.filter(
+    (p) => (p.filledPositions ?? 0) > 0
+  ).length;
+  const successRate =
+    totalProjects > 0
+      ? `${Math.round((projectsWithMatchCount * 100) / totalProjects)}%`
+      : "—";
+
+  const recentProjects = allProjects
+    .filter((p) => p.opportunityType !== "JOB")
+    .slice(0, 5);
+  const recentJobs = allProjects
+    .filter((p) => p.opportunityType === "JOB")
+    .slice(0, 5);
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
@@ -46,192 +95,199 @@ export default function CompanyDashboardPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
           {profile.data ? (
-            <>Olá, {profile.data.companyName} 👋</>
+            profile.data.companyName
           ) : (
             <Skeleton className="h-8 w-56" />
           )}
         </h1>
         <p className="text-muted-foreground text-sm">
-          {received.data && received.data.length > 0
-            ? `Você tem ${received.data.length} interesse(s) aguardando resposta.`
-            : "Bem-vindo de volta ao Nexus."}
+          Visão geral da sua empresa no Nexus
         </p>
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard
-          icon={Mail}
-          label="Interesses recebidos"
-          value={String(received.data?.length ?? 0)}
+          icon={Briefcase}
+          label="Total de Projetos"
+          value={String(totalProjects)}
+        />
+        <StatCard
+          icon={FolderOpen}
+          label="Projetos Abertos"
+          value={String(openProjects.length)}
           accent="accent"
         />
         <StatCard
           icon={Handshake}
-          label="Matches confirmados"
+          label="Matches Confirmados"
           value={String(summary.data?.totalMatches ?? 0)}
           accent="success"
         />
         <StatCard
-          icon={FolderOpen}
-          label="Oportunidades abertas"
-          value={String(openProjects.length)}
-        />
-        <StatCard
-          icon={Briefcase}
-          label="Total de oportunidades"
-          value={String(
-            summary.data?.totalProjects ?? projects.data?.length ?? 0
-          )}
-          accent="secondary"
+          icon={TrendingUp}
+          label="Taxa de Sucesso"
+          value={successRate}
+          accent="warning"
         />
       </div>
 
-      <Card>
-        <CardHeader className="flex-row items-center justify-between">
-          <CardTitle className="text-sm">
-            Últimos interesses recebidos
-          </CardTitle>
-          <Link
-            href="/company/matches"
-            className="text-primary text-xs font-semibold hover:underline"
-          >
-            Ver todos
-          </Link>
-        </CardHeader>
-        <CardContent>
-          {received.isLoading ? (
-            <Skeleton className="h-24" />
-          ) : !received.data || received.data.length === 0 ? (
-            <EmptyState
-              icon={Mail}
-              title="Nenhum interesse ainda"
-              className="py-6"
-            />
+      <RecentOpportunitiesCard
+        title="Projetos Recentes"
+        subtitle="Seus últimos projetos publicados"
+        icon={Briefcase}
+        iconClassName="text-primary"
+        isLoading={projects.isLoading}
+        items={recentProjects}
+        emptyTitle="Nenhum projeto publicado ainda"
+        createLabel="Criar projeto"
+        moneyColumnLabel="Orçamento"
+        renderMoney={(p) =>
+          p.minimumBudget != null && p.maximumBudget != null ? (
+            <span className="text-primary font-semibold tabular-nums">
+              R${formatMoney(p.minimumBudget)}–R${formatMoney(p.maximumBudget)}
+            </span>
           ) : (
-            <div className="divide-y">
-              {received.data.slice(0, 3).map((match) => (
-                <div
-                  key={match.id}
-                  className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
-                >
-                  <Avatar className="size-10 shrink-0">
-                    <AvatarImage
-                      src={match.professional.profilePhotoUrl ?? undefined}
-                      alt=""
-                    />
-                    <AvatarFallback>
-                      {match.professional.name.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate font-medium">
-                      {match.professional.name}
-                    </div>
-                    <div className="text-muted-foreground truncate text-xs">
-                      {match.project.title}
-                    </div>
-                  </div>
-                  {match.scoreBreakdown && (
-                    <Badge variant="secondary" className="tabular-nums">
-                      {Math.round(match.scoreBreakdown.finalScore)}%
-                    </Badge>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            <span className="text-muted-foreground">A combinar</span>
+          )
+        }
+      />
 
-      {dashboard.data && (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-sm">
-                <TrendingUp className="size-4" />
-                Matches por mês
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {dashboard.data.matchesPerMonth.length > 0 ? (
-                <MonthlyMatchesBars data={dashboard.data.matchesPerMonth} />
-              ) : (
-                <p className="text-muted-foreground text-sm">
-                  Ainda sem histórico suficiente.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">
-                Skills mais requisitadas
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-wrap gap-2">
-              {dashboard.data.mostRequiredSkills.length > 0 ? (
-                dashboard.data.mostRequiredSkills.map((skill) => (
-                  <Badge key={skill.skillName} variant="secondary">
-                    {skill.skillName} · {skill.projectCount}
-                  </Badge>
-                ))
-              ) : (
-                <p className="text-muted-foreground text-sm">
-                  Nenhum dado de demanda ainda.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      <div className="grid gap-3 sm:grid-cols-3">
-        <QuickLink
-          href="/company/projects/new"
-          icon={Sparkles}
-          title="Nova oportunidade"
-          description="Publique uma vaga ou projeto"
-        />
-        <QuickLink
-          href="/company/professionals"
-          icon={Users}
-          title="Buscar profissionais"
-          description="Explore o diretório de talentos"
-        />
-        <QuickLink
-          href="/company/profile"
-          icon={Briefcase}
-          title="Atualizar perfil"
-          description="Mantenha os dados da empresa em dia"
-        />
-      </div>
+      <RecentOpportunitiesCard
+        title="Vagas Recentes"
+        subtitle="Suas últimas vagas publicadas"
+        icon={Building2}
+        iconClassName="text-success"
+        isLoading={projects.isLoading}
+        items={recentJobs}
+        emptyTitle="Nenhuma vaga publicada ainda"
+        createLabel="Criar vaga"
+        moneyColumnLabel="Salário"
+        renderMoney={(p) =>
+          p.monthlySalaryMin != null ? (
+            <span className="text-success font-semibold tabular-nums">
+              R${formatMoney(p.monthlySalaryMin)}/mês
+              {p.monthlySalaryMax != null &&
+                `–R$${formatMoney(p.monthlySalaryMax)}`}
+            </span>
+          ) : (
+            <span className="text-muted-foreground">A combinar</span>
+          )
+        }
+      />
     </div>
   );
 }
 
-function QuickLink({
-  href,
-  icon: Icon,
+function RecentOpportunitiesCard({
   title,
-  description,
+  subtitle,
+  icon: Icon,
+  iconClassName,
+  isLoading,
+  items,
+  emptyTitle,
+  createLabel,
+  moneyColumnLabel,
+  renderMoney,
 }: {
-  href: string;
-  icon: typeof Users;
   title: string;
-  description: string;
+  subtitle: string;
+  icon: typeof Briefcase;
+  iconClassName: string;
+  isLoading: boolean;
+  items: ProjectResponseDTO[];
+  emptyTitle: string;
+  createLabel: string;
+  moneyColumnLabel: string;
+  renderMoney: (project: ProjectResponseDTO) => ReactNode;
 }) {
   return (
-    <Link
-      href={href}
-      className="hover:border-primary/40 flex items-center gap-3 rounded-lg border p-4 transition-colors"
-    >
-      <div className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-full">
-        <Icon className="size-4" />
-      </div>
-      <div className="min-w-0">
-        <div className="text-sm font-medium">{title}</div>
-        <div className="text-muted-foreground text-xs">{description}</div>
-      </div>
-    </Link>
+    <Card className="gap-0 py-0">
+      <CardHeader className="flex-row items-center justify-between border-b py-4">
+        <div>
+          <CardTitle className="flex items-center gap-1.5 text-sm">
+            <Icon className={`size-4 ${iconClassName}`} />
+            {title}
+          </CardTitle>
+          <p className="text-muted-foreground text-xs">{subtitle}</p>
+        </div>
+        <Link
+          href="/company/projects"
+          className="text-primary text-xs font-semibold hover:underline"
+        >
+          Ver todos
+        </Link>
+      </CardHeader>
+      <CardContent className="px-0 pb-0">
+        {isLoading ? (
+          <Skeleton className="m-4 h-24" />
+        ) : items.length === 0 ? (
+          <EmptyState
+            icon={FolderX}
+            title={emptyTitle}
+            className="py-10"
+            action={
+              <Button asChild size="sm">
+                <Link href="/company/projects/new">
+                  <Plus className="size-3.5" />
+                  {createLabel}
+                </Link>
+              </Button>
+            }
+          />
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Título</TableHead>
+                  <TableHead>{moneyColumnLabel}</TableHead>
+                  <TableHead>Modalidade</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ação</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.map((project) => (
+                  <TableRow key={project.id}>
+                    <TableCell>
+                      <div className="font-medium">{project.title}</div>
+                      <div className="text-muted-foreground text-xs">
+                        {formatCreatedAt(project.createdAt)}
+                      </div>
+                    </TableCell>
+                    <TableCell>{renderMoney(project)}</TableCell>
+                    <TableCell>
+                      {project.workMode
+                        ? modalityLabels[project.workMode]
+                        : "—"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="secondary"
+                        className={
+                          statusBadgeClass[project.status] ??
+                          "bg-warning/15 text-warning"
+                        }
+                      >
+                        {statusLabels[project.status] ?? project.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Link
+                        href={`/company/projects/${project.id}/ranking`}
+                        className="text-primary text-xs font-semibold hover:underline"
+                      >
+                        Ver ranking
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

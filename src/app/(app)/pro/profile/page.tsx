@@ -213,6 +213,7 @@ export default function ProProfilePage() {
 
           <ReputationCard
             reputation={publicProfile?.reputationDetails ?? null}
+            title="Análise de qualidade"
           />
           <ReviewsPreviewCard
             entityType="professional"
@@ -227,7 +228,7 @@ export default function ProProfilePage() {
               <CardTitle className="text-sm">Dados pessoais</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3 sm:grid-cols-2">
-              <Field label="Nome completo" value={profile.name} />
+              <Field label="Nome Completo" value={profile.name} />
               <Field
                 label="Cidade"
                 value={
@@ -289,7 +290,15 @@ export default function ProProfilePage() {
             <CardContent>
               {profile.skills.length === 0 ? (
                 <p className="text-muted-foreground text-sm">
-                  Nenhuma skill cadastrada.
+                  Nenhuma skill cadastrada.{" "}
+                  <SkillsEditorDialog
+                    currentSkillNames={profile.skills}
+                    trigger={
+                      <button className="text-primary hover:underline">
+                        Adicionar agora →
+                      </button>
+                    }
+                  />
                 </p>
               ) : (
                 <div className="flex flex-wrap gap-2">
@@ -331,6 +340,18 @@ export default function ProProfilePage() {
                     className="block max-w-full rounded"
                   />
                 </div>
+                <div className="text-muted-foreground mt-2 flex items-center justify-end gap-1 text-[11px]">
+                  <span>Less</span>
+                  <span className="size-2.5 rounded-sm border border-white/10 bg-[#161b22]" />
+                  <span className="size-2.5 rounded-sm bg-[#0e4429]" />
+                  <span className="size-2.5 rounded-sm bg-[#006d32]" />
+                  <span className="size-2.5 rounded-sm bg-[#26a641]" />
+                  <span className="size-2.5 rounded-sm bg-[#39d353]" />
+                  <span>More</span>
+                </div>
+                <p className="text-muted-foreground mt-2 text-[11px]">
+                  Gráfico de contribuições dos últimos 12 meses
+                </p>
               </CardContent>
             </Card>
           )}

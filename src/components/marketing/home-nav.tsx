@@ -26,10 +26,13 @@ const roleHome: Record<SessionClaims["role"], string> = {
   ADMIN: "/admin/dashboard",
 };
 
+// Hrefs absolutos (não só "#âncora") porque este nav também é usado nas
+// páginas de auth (login/cadastro) — precisa navegar de volta pra home
+// antes de rolar até a seção, não só um "#" que faria nada fora de "/".
 const links = [
-  { href: "#como-funciona", label: "Como funciona" },
-  { href: "#para-empresas", label: "Para empresas" },
-  { href: "#para-profissionais", label: "Para profissionais" },
+  { href: "/#como-funciona", label: "Como funciona" },
+  { href: "/#para-empresas", label: "Para empresas" },
+  { href: "/#para-profissionais", label: "Para profissionais" },
 ];
 
 function SessionActions({
@@ -93,13 +96,13 @@ export function HomeNav({ session }: { session: SessionClaims | null }) {
 
         <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
           {links.map((link) => (
-            <a
+            <Link
               key={link.href}
               href={link.href}
               className="text-muted-foreground hover:text-foreground transition-colors"
             >
               {link.label}
-            </a>
+            </Link>
           ))}
           <Button variant="outline" size="sm" asChild>
             <Link href={dashboardHref}>Dashboard</Link>
@@ -135,12 +138,12 @@ export function HomeNav({ session }: { session: SessionClaims | null }) {
               <div className="flex flex-col gap-1 px-4 pb-4">
                 {links.map((link) => (
                   <SheetClose key={link.href} asChild>
-                    <a
+                    <Link
                       href={link.href}
                       className="hover:bg-accent rounded-md px-2 py-2 text-sm font-medium"
                     >
                       {link.label}
-                    </a>
+                    </Link>
                   </SheetClose>
                 ))}
                 <SheetClose asChild>

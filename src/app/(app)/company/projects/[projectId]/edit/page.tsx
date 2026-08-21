@@ -26,9 +26,12 @@ export default function EditProjectPage() {
           Editar Oportunidade
         </h1>
         <p className="text-muted-foreground text-sm">
-          Ao salvar, os scores dos matches em aberto são recalculados
-          automaticamente.
+          Escolha o tipo de oportunidade e preencha os dados correspondentes
         </p>
+      </div>
+      <div className="bg-info/10 text-foreground rounded-md p-3 text-sm">
+        Ao salvar, os scores dos matches em aberto serão recalculados
+        automaticamente.
       </div>
       {isLoading || !project ? (
         <Skeleton className="h-96" />

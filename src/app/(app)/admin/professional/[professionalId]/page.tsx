@@ -7,6 +7,7 @@ import {
   Code2,
   FileDown,
   Handshake,
+  Hash,
   Link2,
   Mail,
   MapPin,
@@ -16,7 +17,9 @@ import {
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
+import { credentialColorHex } from "@/components/professional/credential-color";
 import { ReputationCard } from "@/components/professional/reputation-card";
+import { ReviewsPreviewCard } from "@/components/reviews/reviews-preview-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -194,6 +197,10 @@ export default function AdminProfessionalViewPage() {
                 <Mail className="text-primary size-4" />
                 {profile.email}
               </div>
+              <div className="text-muted-foreground flex items-center gap-2">
+                <Hash className="text-primary size-4" />
+                <span className="tabular-nums">{profile.cep ?? "—"}</span>
+              </div>
               {profile.linkedinUrl && (
                 <a
                   href={profile.linkedinUrl}
@@ -321,6 +328,11 @@ export default function AdminProfessionalViewPage() {
                           </span>
                         )}
                       </div>
+                      {project.description && (
+                        <p className="text-muted-foreground mt-1 text-sm">
+                          {project.description}
+                        </p>
+                      )}
                       {project.technologies.length > 0 && (
                         <div className="mt-1 flex flex-wrap gap-1">
                           {project.technologies.map((tech) => (
@@ -340,6 +352,20 @@ export default function AdminProfessionalViewPage() {
               )}
             </CardContent>
           </Card>
+
+          <CredentialsCard
+            title="Certificados"
+            credentials={profile.credentials.filter(
+              (c) => c.type === "CERTIFICATE"
+            )}
+            emptyText="Nenhum certificado cadastrado."
+          />
+
+          <CredentialsCard
+            title="Eventos"
+            credentials={profile.credentials.filter((c) => c.type === "EVENT")}
+            emptyText="Nenhum evento cadastrado."
+          />
 
           {profile.hasGitHub && profile.githubLogin && (
             <Card>
@@ -369,6 +395,12 @@ export default function AdminProfessionalViewPage() {
               </CardContent>
             </Card>
           )}
+
+          <ReviewsPreviewCard
+            entityType="professional"
+            entityId={id}
+            viewAllHref={`/public/professional/${id}/reviews`}
+          />
 
           <Card>
             <CardHeader>
@@ -477,5 +509,49 @@ function Field({
         {value}
       </div>
     </div>
+  );
+}
+
+function CredentialsCard({
+  title,
+  credentials,
+  emptyText,
+}: {
+  title: string;
+  credentials: {
+    id: number;
+    name: string;
+    color: keyof typeof credentialColorHex;
+  }[];
+  emptyText: string;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-muted-foreground text-xs tracking-wide uppercase">
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {credentials.length === 0 ? (
+          <p className="text-muted-foreground text-sm">{emptyText}</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {credentials.map((credential) => (
+              <Badge
+                key={credential.id}
+                variant="outline"
+                style={{
+                  borderColor: credentialColorHex[credential.color],
+                  color: credentialColorHex[credential.color],
+                }}
+              >
+                {credential.name}
+              </Badge>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

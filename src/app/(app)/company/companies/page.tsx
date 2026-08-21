@@ -1,6 +1,7 @@
 "use client";
 
-import { Building2, Search, Star } from "lucide-react";
+import { Building2, MapPin, Search, Star } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 import { EmptyState } from "@/components/shared/empty-state";
@@ -22,7 +23,7 @@ export default function CompanyCompaniesPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Empresas</h1>
         <p className="text-muted-foreground text-sm">
-          Outras empresas cadastradas na plataforma
+          Explore as empresas cadastradas na plataforma
         </p>
       </div>
 
@@ -50,49 +51,56 @@ export default function CompanyCompaniesPage() {
 
       <div className="grid min-w-0 gap-3 sm:grid-cols-2">
         {companies.map((company) => (
-          <Card key={company.id}>
-            <CardContent className="flex items-start gap-3">
-              <Avatar className="size-14 shrink-0 rounded-xl">
-                <AvatarImage
-                  src={company.profilePhotoUrl ?? undefined}
-                  alt=""
-                />
-                <AvatarFallback className="rounded-xl">
-                  {company.companyName.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0 flex-1">
-                <div className="truncate font-semibold">
-                  {company.companyName}
-                </div>
-                {company.city && (
-                  <div className="text-muted-foreground text-xs">
-                    {company.city}
-                    {company.uf ? `, ${company.uf}` : ""}
+          <Link
+            key={company.id}
+            href={`/public/company/${company.id}`}
+            className="block min-w-0"
+          >
+            <Card className="hover:border-primary/40 h-full transition-colors">
+              <CardContent className="flex items-start gap-3">
+                <Avatar className="size-14 shrink-0 rounded-xl">
+                  <AvatarImage
+                    src={company.profilePhotoUrl ?? undefined}
+                    alt=""
+                  />
+                  <AvatarFallback className="rounded-xl">
+                    {company.companyName.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-semibold">
+                    {company.companyName}
                   </div>
-                )}
-                <div className="mt-1 flex items-center gap-1">
-                  {company.reputation != null ? (
-                    <>
-                      <Star className="fill-warning text-warning size-3.5" />
-                      <span className="text-xs font-medium">
-                        {company.reputation.toFixed(1)}
+                  {company.city && (
+                    <div className="text-muted-foreground flex items-center gap-1 text-xs">
+                      <MapPin className="text-primary size-3" />
+                      {company.city}
+                      {company.uf ? `, ${company.uf}` : ""}
+                    </div>
+                  )}
+                  <div className="mt-1 flex items-center gap-1">
+                    {company.reputation != null ? (
+                      <>
+                        <Star className="fill-warning text-warning size-3.5" />
+                        <span className="text-xs font-medium">
+                          {company.reputation.toFixed(1)}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">
+                        Sem avaliações ainda
                       </span>
-                    </>
-                  ) : (
-                    <span className="text-muted-foreground text-xs">
-                      Sem avaliações ainda
-                    </span>
+                    )}
+                  </div>
+                  {company.description && (
+                    <p className="text-muted-foreground mt-2 line-clamp-2 text-xs">
+                      {company.description}
+                    </p>
                   )}
                 </div>
-                {company.description && (
-                  <p className="text-muted-foreground mt-2 line-clamp-2 text-xs">
-                    {company.description}
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
 

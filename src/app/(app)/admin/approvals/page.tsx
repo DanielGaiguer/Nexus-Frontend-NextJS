@@ -77,7 +77,14 @@ export default function AdminApprovalsPage() {
                   {company.companyName.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <span className="font-medium">{company.companyName}</span>
+              <div className="min-w-0">
+                <div className="font-medium">{company.companyName}</div>
+                {company.description && (
+                  <div className="text-muted-foreground max-w-xs truncate text-xs">
+                    {company.description}
+                  </div>
+                )}
+              </div>
             </Link>
           );
         },
@@ -142,7 +149,7 @@ export default function AdminApprovalsPage() {
                 }}
               >
                 <Check className="size-4" />
-                Aprovar
+                Aprovar empresa
               </Button>
             </div>
           );

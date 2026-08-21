@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Star } from "lucide-react";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -32,11 +33,20 @@ import {
 export function ReviewForm({
   matchId,
   authorType,
+  cancelHref,
+  cancelLabel = "Cancelar",
+  onCancel,
   onSubmitted,
   onBlockedError,
 }: {
   matchId: number;
   authorType: AuthorType;
+  /** Link do botão de cancelar — usado na página standalone (volta pra lista de matches). */
+  cancelHref?: string;
+  /** Texto do botão de cancelar — "Responder depois" no modal do dashboard, "Cancelar" na página. */
+  cancelLabel?: string;
+  /** Ação do botão de cancelar quando não há navegação (ex.: fechar o modal). */
+  onCancel?: () => void;
   onSubmitted: () => void;
   /**
    * O backend recusa a avaliação com 400 em dois casos específicos: empresa
@@ -166,7 +176,18 @@ export function ReviewForm({
               )}
             />
 
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
+              {cancelHref ? (
+                <Button type="button" variant="ghost" asChild>
+                  <Link href={cancelHref}>{cancelLabel}</Link>
+                </Button>
+              ) : (
+                onCancel && (
+                  <Button type="button" variant="ghost" onClick={onCancel}>
+                    {cancelLabel}
+                  </Button>
+                )
+              )}
               <Button type="submit" disabled={submitReview.isPending}>
                 <Star className="size-4" />
                 Enviar avaliação

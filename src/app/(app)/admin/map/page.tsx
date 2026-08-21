@@ -14,6 +14,15 @@ import {
 } from "@/hooks/queries/useMapData";
 import { cn } from "@/lib/utils";
 
+// Sem item "Você" — o admin não tem localização própria (só profissional/
+// empresa/mapa tem esse pin), espelha admin-map.html.
+const legendItems = [
+  { color: "bg-primary", label: "Profissional" },
+  { color: "bg-warning", label: "Empresa" },
+  { color: "bg-[#a78bfa]", label: "Projeto" },
+  { color: "bg-success", label: "Vaga de emprego" },
+];
+
 // Leaflet toca `window`/`document` na inicialização — só pode existir no
 // client, nunca durante o SSR do Next.
 const NexusMap = dynamic(
@@ -76,6 +85,13 @@ export default function AdminMapPage() {
   const isLoading =
     professionals.isLoading || companies.isLoading || opportunities.isLoading;
 
+  const visibleCount =
+    (visibleTypes.has("professionals")
+      ? (professionals.data?.length ?? 0)
+      : 0) +
+    (visibleTypes.has("companies") ? (companies.data?.length ?? 0) : 0) +
+    (visibleTypes.has("opportunities") ? (opportunities.data?.length ?? 0) : 0);
+
   return (
     <div className="mx-auto flex h-[calc(100vh-6rem)] max-w-6xl flex-col gap-4 sm:flex-row">
       <aside className="flex w-full shrink-0 flex-col gap-4 sm:w-64">
@@ -123,6 +139,27 @@ export default function AdminMapPage() {
               </span>
             </button>
           ))}
+        </div>
+
+        <div className="mt-auto space-y-2 border-t pt-3">
+          <div className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+            Legenda
+          </div>
+          <div className="space-y-1.5">
+            {legendItems.map((item) => (
+              <div key={item.label} className="flex items-center gap-2">
+                <span
+                  className={cn("size-3 shrink-0 rounded-full", item.color)}
+                />
+                <span className="text-muted-foreground text-sm">
+                  {item.label}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="text-muted-foreground text-xs">
+            {visibleCount} resultado(s) visível(is)
+          </div>
         </div>
       </aside>
 

@@ -24,7 +24,7 @@ export default function PublicCompanyReviewsPage() {
       entityType="company"
       entityId={id}
       profileName={company.companyName}
-      backHref={`/pro/companies/${id}`}
+      backHref={`/public/company/${id}`}
     />
   );
 }

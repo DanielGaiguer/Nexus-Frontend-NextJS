@@ -34,10 +34,11 @@ export default function PortfolioPage() {
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Portfólio</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Projetos Anteriores
+          </h1>
           <p className="text-muted-foreground text-sm">
-            Projetos anteriores — impactam o componente de histórico do seu
-            score.
+            Seu portfólio impacta diretamente o score de histórico
           </p>
         </div>
         <PreviousProjectFormDialog />
@@ -54,8 +55,11 @@ export default function PortfolioPage() {
       {!isLoading && (!projects || projects.length === 0) && (
         <EmptyState
           icon={Briefcase}
-          title="Nenhum projeto no portfólio ainda"
-          description="Adicione projetos que você já entregou pra fortalecer seu perfil."
+          title="Nenhum projeto cadastrado"
+          description="Adicione seus projetos anteriores para aumentar o componente de Histórico no seu score de compatibilidade."
+          action={
+            <PreviousProjectFormDialog triggerLabel="Adicionar meu primeiro projeto" />
+          }
         />
       )}
 
@@ -112,8 +116,9 @@ export default function PortfolioPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Remover projeto</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja remover <strong>{deleting?.title}</strong>{" "}
-              do seu portfólio? Esta ação não pode ser desfeita.
+              Tem certeza que deseja remover o projeto{" "}
+              <strong>{deleting?.title}</strong>? Esta ação não pode ser
+              desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

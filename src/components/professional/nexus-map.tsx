@@ -30,7 +30,11 @@ function pin(color: string) {
 
 const professionalIcon = pin("#6b6eff");
 const companyIcon = pin("#f59e0b");
-const opportunityIcon = pin("#22c55e");
+// Espelha a legenda do mapa original: projeto (roxo) e vaga de emprego
+// (verde) usam cores de pin diferentes, não uma única cor "oportunidade".
+const projectIcon = pin("#a78bfa");
+const jobIcon = pin("#22c55e");
+const youIcon = pin("#ef4444");
 
 const BRAZIL_CENTER: [number, number] = [-14.2, -51.9];
 
@@ -41,6 +45,7 @@ export function NexusMap({
   visibleTypes,
   companyHref = (id) => `/pro/companies/${id}`,
   professionalHref,
+  you,
 }: {
   professionals: MapProfessionalDTO[];
   companies: MapCompanyDTO[];
@@ -50,6 +55,8 @@ export function NexusMap({
   companyHref?: (id: number) => string;
   /** Se informado, mostra um link "Ver profissional →" no popup (só faz sentido pro lado empresa). */
   professionalHref?: (id: number) => string;
+  /** Sua própria localização — pin vermelho "Você" na legenda do mapa original. */
+  you?: { latitude: number; longitude: number };
 }) {
   return (
     <MapContainer
@@ -132,7 +139,7 @@ export function NexusMap({
           <Marker
             key={`o-${o.id}`}
             position={[o.latitude, o.longitude]}
-            icon={opportunityIcon}
+            icon={o.opportunityType === "JOB" ? jobIcon : projectIcon}
           >
             <Popup>
               <div className="space-y-1 text-sm">
@@ -148,6 +155,14 @@ export function NexusMap({
             </Popup>
           </Marker>
         ))}
+
+      {you && (
+        <Marker position={[you.latitude, you.longitude]} icon={youIcon}>
+          <Popup>
+            <div className="text-sm font-semibold">Você</div>
+          </Popup>
+        </Marker>
+      )}
     </MapContainer>
   );
 }

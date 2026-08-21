@@ -42,6 +42,9 @@ export function ReviewsListView({
           <ArrowLeft className="size-4" />
           Voltar ao perfil
         </Link>
+        <p className="text-muted-foreground mb-1 text-xs">
+          Perfil &rarr; Avaliações de {profileName}
+        </p>
         <h1 className="text-2xl font-bold tracking-tight">
           Avaliações de {profileName}
         </h1>

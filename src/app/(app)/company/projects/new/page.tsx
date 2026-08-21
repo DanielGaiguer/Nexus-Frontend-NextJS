@@ -16,10 +16,12 @@ export default function NewProjectPage() {
         </Link>
         <h1 className="text-2xl font-bold tracking-tight">Nova Oportunidade</h1>
         <p className="text-muted-foreground text-sm">
-          Escolha o tipo de oportunidade e preencha os dados correspondentes. Ao
-          criar, o ranking de profissionais compatíveis é gerado
-          automaticamente.
+          Escolha o tipo de oportunidade e preencha os dados correspondentes
         </p>
+      </div>
+      <div className="bg-info/10 text-foreground rounded-md p-3 text-sm">
+        Ao criar, o ranking de profissionais compatíveis será gerado
+        automaticamente.
       </div>
       <ProjectForm />
     </div>

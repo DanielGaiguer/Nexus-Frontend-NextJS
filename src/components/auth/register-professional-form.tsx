@@ -9,6 +9,7 @@ import { toast } from "sonner";
 
 import { AuthCard } from "@/components/auth/auth-card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -44,6 +45,7 @@ export function RegisterProfessionalForm() {
       expectedSalaryPJ: "",
       freelanceMinExpectation: "",
       freelanceMaxExpectation: "",
+      allowCepUsage: false,
     },
   });
 
@@ -80,7 +82,7 @@ export function RegisterProfessionalForm() {
   return (
     <AuthCard
       icon={UserPlus}
-      eyebrow="Sou profissional"
+      eyebrow="Sou Profissional"
       title="Crie seu perfil"
       description="Preencha seus dados para começar a receber oportunidades."
       footer={
@@ -121,10 +123,23 @@ export function RegisterProfessionalForm() {
               />
               <FormField
                 control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Telefone</FormLabel>
+                    <FormControl>
+                      <Input placeholder="(11) 99999-9999" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>E-mail</FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input
                         type="email"
@@ -150,19 +165,6 @@ export function RegisterProfessionalForm() {
                         autoComplete="new-password"
                         {...field}
                       />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Telefone</FormLabel>
-                    <FormControl>
-                      <Input placeholder="(11) 99999-9999" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -271,6 +273,29 @@ export function RegisterProfessionalForm() {
               />
             </div>
           </div>
+
+          <FormField
+            control={form.control}
+            name="allowCepUsage"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start gap-2 space-y-0">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel className="text-muted-foreground font-normal">
+                    Permitir o uso da minha localização para encontrar
+                    oportunidades mais próximas e melhorar a relevância dos
+                    resultados.
+                  </FormLabel>
+                  <FormMessage />
+                </div>
+              </FormItem>
+            )}
+          />
 
           <Button
             type="submit"

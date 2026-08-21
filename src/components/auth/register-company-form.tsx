@@ -9,6 +9,7 @@ import { toast } from "sonner";
 
 import { AuthCard } from "@/components/auth/auth-card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -41,6 +42,7 @@ export function RegisterCompanyForm() {
       phone: "",
       cep: "",
       description: "",
+      allowCepUsage: false,
     },
   });
 
@@ -73,7 +75,7 @@ export function RegisterCompanyForm() {
   return (
     <AuthCard
       icon={Building2}
-      eyebrow="Sou empresa"
+      eyebrow="Sou Empresa"
       title="Cadastre sua empresa"
       description="Encontre os melhores profissionais para seus projetos de TI."
       footer={
@@ -132,7 +134,7 @@ export function RegisterCompanyForm() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>E-mail</FormLabel>
+                  <FormLabel>Email</FormLabel>
                   <FormControl>
                     <Input
                       type="email"
@@ -208,6 +210,29 @@ export function RegisterCompanyForm() {
               )}
             />
           </div>
+
+          <FormField
+            control={form.control}
+            name="allowCepUsage"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start gap-2 space-y-0">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel className="text-muted-foreground font-normal">
+                    Permitir o uso da minha localização para encontrar
+                    oportunidades mais próximas e melhorar a relevância dos
+                    resultados.
+                  </FormLabel>
+                  <FormMessage />
+                </div>
+              </FormItem>
+            )}
+          />
 
           <Button
             type="submit"

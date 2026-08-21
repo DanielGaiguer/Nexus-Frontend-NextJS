@@ -103,6 +103,7 @@ export function ReviewPageContent({
             <ReviewForm
               matchId={matchId}
               authorType={authorType}
+              cancelHref={matchesUrl}
               onSubmitted={() => setSubmitted(true)}
               onBlockedError={(message) => {
                 if (message === NEEDS_STATUS_CHECK_MSG) {

@@ -6,7 +6,13 @@ import Link from "next/link";
 import {
   Briefcase,
   Building2,
+  Calendar,
+  Clock,
+  DollarSign,
   Eye,
+  EyeOff,
+  FileText,
+  MapPin,
   Pencil,
   PlayCircle,
   RotateCcw,
@@ -56,9 +62,32 @@ const statusVariant: Record<string, "default" | "secondary" | "outline"> = {
 
 const statusLabels: Record<string, string> = {
   OPEN: "Aberto",
-  PAUSED: "Pausado",
+  PAUSED: "Pausado — limite de vagas atingido",
   CLOSED: "Encerrado",
 };
+
+const modalityLabels: Record<string, string> = {
+  REMOTE: "Remoto",
+  ONSITE: "Presencial",
+  HYBRID: "Híbrido",
+};
+
+const contractTypeLabels: Record<string, string> = {
+  CLT: "CLT",
+  PJ: "PJ",
+  INTERNSHIP: "Estágio",
+  TEMPORARY: "Temporário",
+  FREELANCER: "Freelancer",
+};
+
+function money(value: number) {
+  // Espelha #numbers.formatDecimal(x,1,'COMMA',0,'POINT') do template original.
+  return value.toLocaleString("en-US", { maximumFractionDigits: 0 });
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("pt-BR");
+}
 
 export function ProjectCard({ project }: { project: ProjectResponseDTO }) {
   const closeProject = useCloseProject();
@@ -87,6 +116,16 @@ export function ProjectCard({ project }: { project: ProjectResponseDTO }) {
               <Badge variant={statusVariant[project.status]}>
                 {statusLabels[project.status]}
               </Badge>
+              {project.visibleToCompanies === false && (
+                <Badge
+                  variant="outline"
+                  className="text-muted-foreground"
+                  title="Não aparece para outras empresas no mapa nem na aba Oportunidades"
+                >
+                  <EyeOff className="size-3" />
+                  Oculto p/ empresas
+                </Badge>
+              )}
             </div>
             <Link
               href={`/company/projects/${project.id}/ranking`}
@@ -94,13 +133,84 @@ export function ProjectCard({ project }: { project: ProjectResponseDTO }) {
             >
               {project.title}
             </Link>
-            <div className="text-muted-foreground flex items-center gap-1 text-xs">
-              <Users className="size-3" />
-              {project.filledPositions ?? 0}/{project.maxPositions ?? "—"}{" "}
-              posições preenchidas
+            <div className="text-muted-foreground text-xs">
+              Criado em {formatDate(project.createdAt)}
             </div>
           </div>
+          <div className="text-muted-foreground flex shrink-0 items-center gap-1 text-xs">
+            <Users className="size-3" />
+            {project.filledPositions ?? 0}/{project.maxPositions ?? "—"}{" "}
+            posições preenchidas
+          </div>
         </div>
+
+        {project.description && (
+          <p className="text-muted-foreground line-clamp-2 text-sm">
+            {project.description}
+          </p>
+        )}
+
+        <div className="text-muted-foreground flex flex-wrap gap-3 text-xs">
+          {project.opportunityType !== "JOB" &&
+            project.minimumBudget != null &&
+            project.maximumBudget != null && (
+              <span className="flex items-center gap-1">
+                <DollarSign className="size-3.5" />
+                R${money(project.minimumBudget)}–R$
+                {money(project.maximumBudget)}
+              </span>
+            )}
+          {project.opportunityType === "JOB" &&
+            project.monthlySalaryMin != null && (
+              <span className="flex items-center gap-1">
+                <DollarSign className="size-3.5" />
+                R${money(project.monthlySalaryMin)}/mês
+                {project.monthlySalaryMax != null &&
+                  `–R$${money(project.monthlySalaryMax)}`}
+              </span>
+            )}
+          {project.workMode && (
+            <span className="flex items-center gap-1">
+              <MapPin className="size-3.5" />
+              {modalityLabels[project.workMode] ?? project.workMode}
+            </span>
+          )}
+          {project.opportunityType !== "JOB" && project.deadline && (
+            <span className="flex items-center gap-1">
+              <Calendar className="size-3.5" />
+              Prazo: {formatDate(project.deadline)}
+            </span>
+          )}
+          {project.opportunityType === "JOB" && project.startDate && (
+            <span className="flex items-center gap-1">
+              <Calendar className="size-3.5" />
+              Início: {formatDate(project.startDate)}
+            </span>
+          )}
+          {project.opportunityType === "JOB" && project.contractType && (
+            <span className="flex items-center gap-1">
+              <FileText className="size-3.5" />
+              {contractTypeLabels[project.contractType] ?? project.contractType}
+            </span>
+          )}
+          {project.opportunityType === "JOB" &&
+            project.workloadHoursPerWeek != null && (
+              <span className="flex items-center gap-1">
+                <Clock className="size-3.5" />
+                {project.workloadHoursPerWeek}h/sem
+              </span>
+            )}
+        </div>
+
+        {project.opportunityType === "JOB" && project.benefits && (
+          <div className="flex flex-wrap gap-1">
+            {project.benefits.split(",").map((benefit) => (
+              <Badge key={benefit} variant="outline" className="text-[11px]">
+                {benefit.trim()}
+              </Badge>
+            ))}
+          </div>
+        )}
 
         {project.requiredSkills.length > 0 && (
           <div className="flex flex-wrap gap-1">

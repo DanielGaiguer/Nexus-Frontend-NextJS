@@ -7,29 +7,25 @@ import {
   Handshake,
   MailOpen,
   Map,
-  Sparkles,
-  TrendingUp,
   User,
 } from "lucide-react";
 import Link from "next/link";
 
-import { MonthlyMatchesBars } from "@/components/dashboard/monthly-matches-bars";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { PendingReviewDialog } from "@/components/matches/pending-review-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMatchInvites, useMatches } from "@/hooks/queries/useMatches";
 import { usePreviousProjects } from "@/hooks/queries/usePreviousProjects";
-import { useProfessionalDashboard } from "@/hooks/queries/useProfessionalDashboard";
 import { useProfessionalProfile } from "@/hooks/queries/useProfessionalProfile";
 import { useProfessionalStats } from "@/hooks/queries/useProfessionalStats";
 
 export default function ProDashboardPage() {
   const profile = useProfessionalProfile();
-  const dashboard = useProfessionalDashboard();
   const invites = useMatchInvites();
   const allMatches = useMatches();
   const previousProjects = usePreviousProjects();
@@ -60,9 +56,9 @@ export default function ProDashboardPage() {
       {profile.data && profile.data.available === false && (
         <div className="bg-info/10 flex flex-wrap items-center justify-between gap-2 rounded-md p-3 text-sm">
           <span className="text-foreground">
-            Sua conta está marcada como indisponível. Vá em Meu Perfil pra ficar
-            disponível e entrar no cálculo de compatibilidade com as
-            oportunidades.
+            Sua conta está marcada como indisponível. Vá para Meu Perfil e
+            marque como disponível caso deseje participar do cálculo de
+            compatibilidade com as oportunidades.
           </span>
           <Link
             href="/pro/profile"
@@ -76,24 +72,24 @@ export default function ProDashboardPage() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard
           icon={Bell}
-          label="Convites pendentes"
+          label="Convites Pendentes"
           value={String(invites.data?.length ?? 0)}
           accent="accent"
         />
         <StatCard
           icon={Handshake}
-          label="Matches confirmados"
+          label="Matches Confirmados"
           value={String(confirmed.length)}
           accent="success"
         />
         <StatCard
           icon={Briefcase}
-          label="Vagas disponíveis"
+          label="Vagas Disponíveis"
           value={String(stats.data?.availableOpportunitiesCount ?? 0)}
         />
         <StatCard
           icon={Award}
-          label="Projetos no portfólio"
+          label="Projetos Entregues"
           value={String(previousProjects.data?.length ?? 0)}
           accent="secondary"
         />
@@ -102,7 +98,12 @@ export default function ProDashboardPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader className="flex-row items-center justify-between">
-            <CardTitle className="text-sm">Últimos convites</CardTitle>
+            <div>
+              <CardTitle className="text-sm">Últimos Convites</CardTitle>
+              <p className="text-muted-foreground text-xs">
+                Empresas com interesse no seu perfil
+              </p>
+            </div>
             <Link
               href="/pro/matches"
               className="text-primary text-xs font-semibold hover:underline"
@@ -118,6 +119,11 @@ export default function ProDashboardPage() {
                 icon={MailOpen}
                 title="Nenhum convite ainda"
                 className="py-6"
+                action={
+                  <Button asChild size="sm" className="mt-3">
+                    <Link href="/pro/opportunities">Ver oportunidades</Link>
+                  </Button>
+                }
               />
             ) : (
               <div className="divide-y">
@@ -159,7 +165,12 @@ export default function ProDashboardPage() {
 
         <Card>
           <CardHeader className="flex-row items-center justify-between">
-            <CardTitle className="text-sm">Matches confirmados</CardTitle>
+            <div>
+              <CardTitle className="text-sm">Matches Confirmados</CardTitle>
+              <p className="text-muted-foreground text-xs">
+                Contatos já liberados para você
+              </p>
+            </div>
             <Link
               href="/pro/matches"
               className="text-primary text-xs font-semibold hover:underline"
@@ -201,9 +212,14 @@ export default function ProDashboardPage() {
                       <div className="text-muted-foreground truncate text-xs">
                         {match.project.companyName}
                       </div>
+                      {match.project.company?.contactEmail && (
+                        <div className="text-primary truncate text-xs">
+                          {match.project.company.contactEmail}
+                        </div>
+                      )}
                     </div>
                     <Badge className="bg-success/15 text-success">
-                      Confirmado
+                      Match Confirmado
                     </Badge>
                   </div>
                 ))}
@@ -212,48 +228,6 @@ export default function ProDashboardPage() {
           </CardContent>
         </Card>
       </div>
-
-      {dashboard.data && (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-sm">
-                <TrendingUp className="size-4" />
-                Matches por mês
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {dashboard.data.matchesPerMonth.length > 0 ? (
-                <MonthlyMatchesBars data={dashboard.data.matchesPerMonth} />
-              ) : (
-                <p className="text-muted-foreground text-sm">
-                  Ainda sem histórico suficiente.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">
-                Skills mais requisitadas
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-wrap gap-2">
-              {dashboard.data.mostRequiredSkills.length > 0 ? (
-                dashboard.data.mostRequiredSkills.map((skill) => (
-                  <Badge key={skill.skillName} variant="secondary">
-                    {skill.skillName} · {skill.projectCount}
-                  </Badge>
-                ))
-              ) : (
-                <p className="text-muted-foreground text-sm">
-                  Nenhum dado de demanda ainda.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
 
       <div className="grid gap-3 sm:grid-cols-3">
         <QuickLink
@@ -266,13 +240,13 @@ export default function ProDashboardPage() {
           href="/pro/portfolio"
           icon={Briefcase}
           title="Ver portfólio"
-          description="Adicione projetos anteriores pro seu score"
+          description="Adicione projetos anteriores para aumentar seu score"
         />
         <QuickLink
-          href="/pro/opportunities"
-          icon={Sparkles}
-          title="Ver oportunidades"
-          description="Vagas e projetos compatíveis com você"
+          href="/pro/map"
+          icon={Map}
+          title="Explorar mapa"
+          description="Veja empresas que estão próximas de você"
         />
       </div>
     </div>

@@ -115,7 +115,11 @@ export default function AdminSkillsPage() {
       )}
 
       {!isLoading && (!skills || skills.length === 0) && (
-        <EmptyState icon={TagX} title="Nenhuma skill cadastrada" />
+        <EmptyState
+          icon={TagX}
+          title="Nenhuma skill cadastrada"
+          action={<CreateSkillDialog existingCategories={categories} />}
+        />
       )}
 
       {!isLoading && skills && skills.length > 0 && grouped.size === 0 && (

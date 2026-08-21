@@ -77,11 +77,20 @@ export default function CompaniesDirectoryPage() {
                       {company.uf ? `, ${company.uf}` : ""}
                     </div>
                   )}
-                  <div className="mt-1 flex items-center gap-1">
+                  <div className="mt-1 flex items-center gap-0.5">
                     {company.reputation != null ? (
                       <>
-                        <Star className="fill-warning text-warning size-3.5" />
-                        <span className="text-xs font-medium">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star
+                            key={i}
+                            className={
+                              i < Math.round(company.reputation!)
+                                ? "fill-warning text-warning size-3.5"
+                                : "text-muted-foreground size-3.5"
+                            }
+                          />
+                        ))}
+                        <span className="text-muted-foreground ml-1 text-xs">
                           {company.reputation.toFixed(1)}
                         </span>
                       </>

@@ -56,13 +56,18 @@ import type {
 
 const typeConfig: Record<
   CredentialType,
-  { title: string; emptyLabel: string }
+  { title: string; editLabel: string; emptyLabel: string }
 > = {
   CERTIFICATE: {
     title: "Certificados",
+    editLabel: "Editar certificados",
     emptyLabel: "Nenhum certificado cadastrado.",
   },
-  EVENT: { title: "Eventos", emptyLabel: "Nenhum evento cadastrado." },
+  EVENT: {
+    title: "Eventos",
+    editLabel: "Editar eventos",
+    emptyLabel: "Nenhum evento cadastrado.",
+  },
 };
 
 export function CredentialsSection({ type }: { type: CredentialType }) {
@@ -93,8 +98,8 @@ export function CredentialsSection({ type }: { type: CredentialType }) {
       <CardHeader className="flex-row items-center justify-between">
         <CardTitle>{config.title}</CardTitle>
         <Button variant="ghost" size="sm" onClick={openAdd}>
-          <Plus className="size-3.5" />
-          Adicionar
+          <Pencil className="size-3.5" />
+          {config.editLabel}
         </Button>
       </CardHeader>
       <CardContent>
@@ -104,7 +109,7 @@ export function CredentialsSection({ type }: { type: CredentialType }) {
             title={config.emptyLabel}
             action={
               <Button variant="link" size="sm" onClick={openAdd}>
-                Adicionar agora
+                Adicionar agora →
               </Button>
             }
           />

@@ -1,8 +1,11 @@
 "use client";
 
 import {
+  Building2,
   Check,
   CircleCheck,
+  Clock,
+  Eye,
   HeartHandshake,
   History,
   Mail,
@@ -10,8 +13,10 @@ import {
   Send,
   Star,
   ThumbsDown,
+  X,
 } from "lucide-react";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -99,17 +104,19 @@ export default function MatchesPage() {
       <Tabs defaultValue="invites">
         <TabsList className="flex-wrap">
           <TabsTrigger value="invites">
-            Convites{" "}
+            Convites Pendentes{" "}
             <Badge variant="secondary">{invites.data?.length ?? 0}</Badge>
           </TabsTrigger>
           <TabsTrigger value="sent">
-            Enviados <Badge variant="secondary">{sent.data?.length ?? 0}</Badge>
+            Interesses Enviados{" "}
+            <Badge variant="secondary">{sent.data?.length ?? 0}</Badge>
           </TabsTrigger>
           <TabsTrigger value="confirmed">
-            Confirmados <Badge variant="secondary">{confirmed.length}</Badge>
+            Matches Confirmados{" "}
+            <Badge variant="secondary">{confirmed.length}</Badge>
           </TabsTrigger>
           <TabsTrigger value="previous">
-            Anteriores{" "}
+            Oportunidades Anteriores{" "}
             <Badge variant="secondary">{previous.data?.length ?? 0}</Badge>
           </TabsTrigger>
           <TabsTrigger value="rejected">
@@ -147,10 +154,15 @@ export default function MatchesPage() {
             matches={previous.data}
             isLoading={previous.isLoading}
             mySkills={profile?.skills}
-            emptyTitle="Nenhuma oportunidade anterior"
-            emptyDescription="Matches confirmados que já se encerraram aparecem aqui."
+            emptyTitle="Nenhum projeto anterior"
+            emptyDescription="Quando um match confirmado for encerrado, ele aparecerá aqui como histórico."
             emptyIcon={History}
             reviewedMatchIds={reviewedMatchIds}
+            renderBadge={() => (
+              <Badge variant="outline" className="text-muted-foreground w-fit">
+                Match encerrado
+              </Badge>
+            )}
           />
         </TabsContent>
 
@@ -160,7 +172,16 @@ export default function MatchesPage() {
             isLoading={allMatches.isLoading}
             mySkills={profile?.skills}
             emptyTitle="Nenhum match recusado"
+            emptyDescription="Convites recusados por você ou pela empresa aparecerão aqui."
             emptyIcon={ThumbsDown}
+            renderBadge={(match) => (
+              <Badge variant="destructive" className="w-fit">
+                {match.companyStatus !== "REJECTED" &&
+                match.professionalStatus !== "REJECTED"
+                  ? "Oportunidade encerrada pela empresa"
+                  : "Recusado"}
+              </Badge>
+            )}
           />
         </TabsContent>
       </Tabs>
@@ -207,6 +228,23 @@ function InvitesList({
       mySkills={mySkills}
       actions={
         <>
+          <Button size="sm" variant="ghost" asChild>
+            <Link
+              href={`/public/opportunity/${match.project.id}`}
+              target="_blank"
+            >
+              <Eye className="size-4" />
+              Ver oportunidade
+            </Link>
+          </Button>
+          {match.project.companyId != null && (
+            <Button size="sm" variant="ghost" asChild>
+              <Link href={`/pro/companies/${match.project.companyId}`}>
+                <Building2 className="size-4" />
+                Ver empresa
+              </Link>
+            </Button>
+          )}
           <RejectMatchDialog matchId={match.id} />
           <Button
             size="sm"
@@ -250,7 +288,7 @@ function SentList({
       <EmptyState
         icon={Send}
         title="Nenhum interesse enviado"
-        description="Oportunidades em que você demonstrar interesse aparecem aqui até a empresa responder."
+        description="Oportunidades em que você demonstrar interesse aparecerão aqui até que a empresa responda."
       />
     );
   }
@@ -261,24 +299,48 @@ function SentList({
       match={match}
       mySkills={mySkills}
       actions={
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={cancelMatch.isPending}
-          onClick={() =>
-            cancelMatch.mutate(match.id, {
-              onSuccess: () => toast.success("Interesse retirado."),
-              onError: (error) =>
-                toast.error(
-                  error instanceof ApiError
-                    ? error.message
-                    : "Não foi possível retirar."
-                ),
-            })
-          }
-        >
-          Retirar interesse
-        </Button>
+        <>
+          <Badge
+            variant="outline"
+            className="border-warning/30 text-warning mr-auto"
+          >
+            <Clock className="size-3" />
+            Aguardando resposta da empresa
+          </Badge>
+          <Button size="sm" variant="ghost" asChild>
+            <Link href={`/public/opportunity/${match.project.id}`}>
+              <Eye className="size-4" />
+              Ver oportunidade
+            </Link>
+          </Button>
+          {match.project.companyId != null && (
+            <Button size="sm" variant="ghost" asChild>
+              <Link href={`/pro/companies/${match.project.companyId}`}>
+                <Building2 className="size-4" />
+                Ver empresa
+              </Link>
+            </Button>
+          )}
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={cancelMatch.isPending}
+            onClick={() =>
+              cancelMatch.mutate(match.id, {
+                onSuccess: () => toast.success("Interesse retirado."),
+                onError: (error) =>
+                  toast.error(
+                    error instanceof ApiError
+                      ? error.message
+                      : "Não foi possível retirar."
+                  ),
+              })
+            }
+          >
+            <X className="size-4" />
+            Cancelar interesse
+          </Button>
+        </>
       }
     />
   ));
@@ -301,7 +363,7 @@ function ConfirmedList({
       <EmptyState
         icon={HeartHandshake}
         title="Nenhum match confirmado ainda"
-        description="Aceite um convite ou tenha seu interesse aceito pela empresa pra ver os contatos aqui."
+        description="Aceite convites ou demonstre interesse em oportunidades para confirmar matches."
       />
     );
   }
@@ -316,6 +378,14 @@ function ConfirmedList({
   ));
 }
 
+/** Dias restantes até completar 30 dias desde a confirmação — espelha
+ * MatchDTO#getDaysRemaining() do app antigo (pode dar negativo). */
+function daysRemaining(createdAt: string) {
+  const elapsedMs = Date.now() - new Date(createdAt).getTime();
+  const elapsedDays = Math.floor(elapsedMs / (1000 * 60 * 60 * 24));
+  return 30 - elapsedDays;
+}
+
 function ConfirmedMatchCard({
   match,
   mySkills,
@@ -327,12 +397,36 @@ function ConfirmedMatchCard({
 }) {
   const [revealed, setRevealed] = useState(false);
   const contact = useCompanyContact(match.project.companyId, revealed);
+  const cancelMatch = useCancelMatch();
+  const remaining = daysRemaining(match.createdAt);
+  const isEnded = match.active === false || remaining <= 0;
 
   return (
     <MatchCard
       match={match}
       mySkills={mySkills}
       showScore={false}
+      badge={
+        <div className="flex flex-col gap-1">
+          <Badge className="bg-success/15 text-success w-fit">
+            Match Confirmado
+          </Badge>
+          {isEnded ? (
+            <Badge variant="outline" className="text-muted-foreground w-fit">
+              Este match foi encerrado
+            </Badge>
+          ) : (
+            remaining <= 15 && (
+              <Badge
+                variant="outline"
+                className="border-warning/30 text-warning w-fit"
+              >
+                ⚠️ Este match expira em {remaining} dias
+              </Badge>
+            )
+          )}
+        </div>
+      }
       actions={
         <>
           <div className="flex flex-col items-end gap-1">
@@ -342,7 +436,7 @@ function ConfirmedMatchCard({
               onClick={() => setRevealed(true)}
             >
               <Mail className="size-4" />
-              Ver contato
+              Entrar em contato
             </Button>
             {revealed && contact.isLoading && (
               <span className="text-muted-foreground text-xs">Carregando…</span>
@@ -359,11 +453,41 @@ function ConfirmedMatchCard({
               </span>
             )}
           </div>
+          {match.project.companyId != null && (
+            <Button size="sm" variant="ghost" asChild>
+              <Link href={`/pro/companies/${match.project.companyId}`}>
+                <Building2 className="size-4" />
+                Ver perfil da empresa
+              </Link>
+            </Button>
+          )}
           <MatchHistoryDialog matchId={match.id} />
           <ChatAndReviewActions
             matchId={match.id}
             reviewedMatchIds={reviewedMatchIds}
           />
+          {match.active !== false && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-destructive"
+              disabled={cancelMatch.isPending}
+              onClick={() =>
+                cancelMatch.mutate(match.id, {
+                  onSuccess: () => toast.success("Match cancelado."),
+                  onError: (error) =>
+                    toast.error(
+                      error instanceof ApiError
+                        ? error.message
+                        : "Não foi possível cancelar."
+                    ),
+                })
+              }
+            >
+              <X className="size-4" />
+              Cancelar Match
+            </Button>
+          )}
         </>
       }
     />
@@ -378,6 +502,7 @@ function PlainList({
   emptyDescription,
   emptyIcon,
   reviewedMatchIds,
+  renderBadge,
 }: {
   matches: MatchResponseDTO[] | undefined;
   isLoading: boolean;
@@ -387,6 +512,7 @@ function PlainList({
   emptyIcon: typeof Mail;
   /** Só passado pra aba "anteriores" — a "recusados" não tem chat nem avaliação. */
   reviewedMatchIds?: number[];
+  renderBadge?: (match: MatchResponseDTO) => ReactNode;
 }) {
   if (isLoading) return <Loading />;
   if (!matches || matches.length === 0) {
@@ -405,8 +531,17 @@ function PlainList({
       match={match}
       mySkills={mySkills}
       showScore={false}
+      badge={renderBadge?.(match)}
       actions={
         <>
+          {match.project.companyId != null && (
+            <Button size="sm" variant="ghost" asChild>
+              <Link href={`/pro/companies/${match.project.companyId}`}>
+                <Building2 className="size-4" />
+                Ver empresa
+              </Link>
+            </Button>
+          )}
           <MatchHistoryDialog matchId={match.id} />
           {reviewedMatchIds !== undefined && (
             <ChatAndReviewActions

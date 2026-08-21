@@ -2,10 +2,8 @@
 
 import { CircleCheck, Clock, Handshake, TrendingUp, Users } from "lucide-react";
 import Link from "next/link";
-import { useMemo } from "react";
 
 import { MonthlyMatchesBarChart } from "@/components/admin/monthly-matches-bar-chart";
-import { SkillDemandRadarChart } from "@/components/admin/skill-demand-radar-chart";
 import { UserCompositionChart } from "@/components/admin/user-composition-chart";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -26,7 +24,6 @@ import {
   useAdminPendingCompanies,
   useAdminLatestCompanies,
 } from "@/hooks/queries/useAdminCompanies";
-import { useAdminProjects } from "@/hooks/queries/useAdminProjects";
 
 const statusLabels: Record<
   string,
@@ -41,20 +38,6 @@ export default function AdminDashboardPage() {
   const dashboard = useAdminDashboard();
   const pending = useAdminPendingCompanies();
   const latest = useAdminLatestCompanies();
-  const projects = useAdminProjects();
-
-  const skillDemand = useMemo(() => {
-    if (!projects.data) return [];
-    const counts = new Map<string, number>();
-    for (const project of projects.data) {
-      for (const skill of project.requiredSkills) {
-        counts.set(skill.name, (counts.get(skill.name) ?? 0) + 1);
-      }
-    }
-    return Array.from(counts.entries())
-      .map(([skillName, count]) => ({ skillName, count }))
-      .sort((a, b) => b.count - a.count);
-  }, [projects.data]);
 
   if (dashboard.isLoading || !dashboard.data) {
     return (
@@ -89,7 +72,7 @@ export default function AdminDashboardPage() {
               {d.totalUsers}
             </div>
             <div className="text-muted-foreground text-xs">
-              Total de usuários
+              Total de Usuários
             </div>
             <div className="mt-1.5 text-xs">
               <span className="text-success font-medium">
@@ -109,7 +92,7 @@ export default function AdminDashboardPage() {
               {d.totalProjects}
             </div>
             <div className="text-muted-foreground text-xs">
-              Total de oportunidades
+              Total de Projetos
             </div>
             <Badge variant="secondary" className="mt-1.5 text-[11px]">
               {d.totalOpenProjects} abertos
@@ -122,7 +105,7 @@ export default function AdminDashboardPage() {
               {d.totalMatches}
             </div>
             <div className="text-muted-foreground text-xs">
-              Total de matches
+              Total de Matches
             </div>
             <Badge variant="secondary" className="mt-1.5 text-[11px]">
               {d.totalConfirmedMatches} confirmados
@@ -137,7 +120,7 @@ export default function AdminDashboardPage() {
               {d.pendingCompanies}
             </div>
             <div className="text-muted-foreground text-xs">
-              Aguardando aprovação
+              Aguardando Aprovação
             </div>
             <div className="text-warning mt-1.5 text-xs">
               {d.pendingCompanies > 0
@@ -203,17 +186,27 @@ export default function AdminDashboardPage() {
               color="bg-success"
             />
             <FunnelRow
-              label="Oportunidades abertas"
+              label="Projetos ativos"
               value={d.totalOpenProjects}
               max={d.totalProjects}
               color="bg-accent-foreground"
             />
+            <div className="flex items-center justify-between border-t pt-2">
+              <span className="text-muted-foreground text-xs">
+                Taxa de conversão
+              </span>
+              <span className="text-secondary text-lg font-bold tabular-nums">
+                {d.totalMatches > 0
+                  ? `${((d.totalConfirmedMatches * 100) / d.totalMatches).toFixed(1)}%`
+                  : "—"}
+              </span>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
+      <div className="grid gap-4 lg:grid-cols-12">
+        <Card className="lg:col-span-7">
           <CardHeader>
             <CardTitle className="text-sm">Matches por mês</CardTitle>
           </CardHeader>
@@ -228,80 +221,63 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">
-              Skills mais demandadas na plataforma
-            </CardTitle>
+        <Card className="lg:col-span-5">
+          <CardHeader className="flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-sm">Aguardando aprovação</CardTitle>
+              <p className="text-muted-foreground text-xs">
+                {d.pendingCompanies} empresa(s)
+              </p>
+            </div>
+            <Link
+              href="/admin/approvals"
+              className="text-primary text-xs font-semibold hover:underline"
+            >
+              Ver todas
+            </Link>
           </CardHeader>
           <CardContent>
-            {skillDemand.length > 0 ? (
-              <SkillDemandRadarChart data={skillDemand} />
+            {!pending.data || pending.data.length === 0 ? (
+              <EmptyState
+                icon={CircleCheck}
+                title="Nenhuma empresa pendente"
+                className="py-6"
+              />
             ) : (
-              <p className="text-muted-foreground py-8 text-center text-sm">
-                Nenhum dado de demanda ainda.
-              </p>
+              <div className="divide-y">
+                {pending.data.slice(0, 5).map((company) => (
+                  <div
+                    key={company.id}
+                    className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
+                  >
+                    <Avatar className="size-8 shrink-0">
+                      <AvatarImage
+                        src={company.profilePhotoUrl ?? undefined}
+                        alt=""
+                      />
+                      <AvatarFallback>
+                        {company.companyName.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium">
+                        {company.companyName}
+                      </div>
+                      <div className="text-muted-foreground truncate text-xs">
+                        {[company.city, company.uf].filter(Boolean).join(", ")}
+                      </div>
+                    </div>
+                    <Badge variant="secondary" className="shrink-0">
+                      <Clock className="size-3" />
+                      Pendente
+                    </Badge>
+                  </div>
+                ))}
+              </div>
             )}
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader className="flex-row items-center justify-between">
-          <div>
-            <CardTitle className="text-sm">Aguardando aprovação</CardTitle>
-            <p className="text-muted-foreground text-xs">
-              {d.pendingCompanies} empresa(s)
-            </p>
-          </div>
-          <Link
-            href="/admin/approvals"
-            className="text-primary text-xs font-semibold hover:underline"
-          >
-            Ver todas
-          </Link>
-        </CardHeader>
-        <CardContent>
-          {!pending.data || pending.data.length === 0 ? (
-            <EmptyState
-              icon={CircleCheck}
-              title="Nenhuma empresa pendente"
-              className="py-6"
-            />
-          ) : (
-            <div className="divide-y">
-              {pending.data.slice(0, 5).map((company) => (
-                <div
-                  key={company.id}
-                  className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
-                >
-                  <Avatar className="size-8 shrink-0">
-                    <AvatarImage
-                      src={company.profilePhotoUrl ?? undefined}
-                      alt=""
-                    />
-                    <AvatarFallback>
-                      {company.companyName.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium">
-                      {company.companyName}
-                    </div>
-                    <div className="text-muted-foreground truncate text-xs">
-                      {[company.city, company.uf].filter(Boolean).join(", ")}
-                    </div>
-                  </div>
-                  <Badge variant="secondary" className="shrink-0">
-                    <Clock className="size-3" />
-                    Pendente
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       <Card>
         <CardHeader className="flex-row items-center justify-between">

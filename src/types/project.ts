@@ -96,3 +96,45 @@ export interface ProjectRequestDTO {
   salaryVisibleToProfessionals: boolean | null;
   salaryVisibleToCompanies: boolean | null;
 }
+
+// ── Autopreenchimento por IA (company-project-form.html :: "Preencher com
+// IA") — espelha com.main.nexus.dto.Ai*DTO. Nunca é persistido nem é o
+// mesmo objeto que ProjectRequestDTO; só pré-preenche o form, a empresa
+// revisa e edita livremente antes de submeter.
+
+/** Espelha com.main.nexus.dto.AiSkillSuggestionDTO. */
+export interface AiSkillSuggestionDTO {
+  extractedName: string;
+  matchedSkillId: number | null;
+  matchedSkillName: string | null;
+  foundInCatalog: boolean;
+}
+
+/** Espelha com.main.nexus.dto.AiOpportunityExtractionDTO — todo campo é opcional. */
+export interface AiOpportunityExtractionDTO {
+  title: string | null;
+  description: string | null;
+  opportunityType: OpportunityType | null;
+  type: ProjectType | null;
+  workMode: Modality | null;
+  experienceLevel: ExperienceLevel | null;
+  maxPositions: number | null;
+  minimumBudget: number | null;
+  maximumBudget: number | null;
+  deadline: string | null;
+  contractType: ContractType | null;
+  monthlySalaryMin: number | null;
+  monthlySalaryMax: number | null;
+  benefits: string[] | null;
+  startDate: string | null;
+  workloadHoursPerWeek: number | null;
+  cep: string | null;
+  requiredSkills: AiSkillSuggestionDTO[] | null;
+  niceToHaveSkills: AiSkillSuggestionDTO[] | null;
+}
+
+/** Espelha com.main.nexus.dto.AiExtractionResponseDTO. */
+export interface AiExtractionResponseDTO {
+  suggestion: AiOpportunityExtractionDTO;
+  lowConfidenceFields: string[];
+}

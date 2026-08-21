@@ -44,9 +44,19 @@ export default function ChatListPage() {
 
   const filtered = useMemo(() => {
     if (!chats) return [];
+    // Mais recente primeiro (sem última mensagem vai pro fim) — mesmo
+    // critério do nexus-chat-list.js original.
+    const sorted = [...chats].sort((a, b) => {
+      if (!a.lastMessageAt) return 1;
+      if (!b.lastMessageAt) return -1;
+      return (
+        new Date(b.lastMessageAt).getTime() -
+        new Date(a.lastMessageAt).getTime()
+      );
+    });
     const term = search.trim().toLowerCase();
-    if (!term) return chats;
-    return chats.filter(
+    if (!term) return sorted;
+    return sorted.filter(
       (c) =>
         c.otherPartyName.toLowerCase().includes(term) ||
         c.projectTitle.toLowerCase().includes(term)

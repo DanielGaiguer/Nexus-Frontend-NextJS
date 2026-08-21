@@ -29,7 +29,10 @@ export function StatCard({
       <CardContent className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="text-2xl font-bold tabular-nums">{value}</div>
-          <div className="text-muted-foreground truncate text-xs">{label}</div>
+          {/* Espelha .nexus-stat-label do app antigo: uppercase + tracking. */}
+          <div className="text-muted-foreground truncate text-xs tracking-wide uppercase">
+            {label}
+          </div>
         </div>
         <div
           className={cn(

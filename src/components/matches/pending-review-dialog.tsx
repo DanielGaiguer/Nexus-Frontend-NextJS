@@ -50,6 +50,8 @@ export function PendingReviewDialog({
           <ReviewForm
             matchId={pending.matchId}
             authorType={authorType}
+            cancelLabel="Responder depois"
+            onCancel={() => setDismissed(true)}
             onSubmitted={() => setDismissed(true)}
           />
         )}

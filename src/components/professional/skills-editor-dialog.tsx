@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, ChevronsUpDown, Pencil, X } from "lucide-react";
+import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -34,8 +35,11 @@ import { cn } from "@/lib/utils";
 
 export function SkillsEditorDialog({
   currentSkillNames,
+  trigger,
 }: {
   currentSkillNames: string[];
+  /** Sobrescreve o botão padrão — usado no estado vazio ("Adicionar agora →"). */
+  trigger?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [comboOpen, setComboOpen] = useState(false);
@@ -82,10 +86,12 @@ export function SkillsEditorDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">
-          <Pencil className="size-3.5" />
-          Editar skills
-        </Button>
+        {trigger ?? (
+          <Button variant="ghost" size="sm">
+            <Pencil className="size-3.5" />
+            Editar skills
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>

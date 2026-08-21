@@ -2,7 +2,23 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { myProjectsKey, projectKey } from "@/hooks/queries/useMyProjects";
 import { apiFetch } from "@/lib/api-client";
-import type { ProjectRequestDTO, ProjectResponseDTO } from "@/types/project";
+import type {
+  AiExtractionResponseDTO,
+  ProjectRequestDTO,
+  ProjectResponseDTO,
+} from "@/types/project";
+
+/** company-project-form.html :: "Preencher com IA" — só pré-preenche o
+ * form, nada é publicado automaticamente. */
+export function useAiExtractProject() {
+  return useMutation({
+    mutationFn: (rawText: string) =>
+      apiFetch<AiExtractionResponseDTO>("/api/projects/ai-extract", {
+        method: "POST",
+        body: { rawText },
+      }),
+  });
+}
 
 function useInvalidateProjects() {
   const queryClient = useQueryClient();

@@ -38,8 +38,10 @@ import type { PreviousProjectDTO } from "@/types/previous-project";
 
 export function PreviousProjectFormDialog({
   editing,
+  triggerLabel = "Adicionar projeto",
 }: {
   editing?: PreviousProjectDTO;
+  triggerLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   const addProject = useAddPreviousProject();
@@ -101,14 +103,14 @@ export function PreviousProjectFormDialog({
         ) : (
           <Button>
             <Plus className="size-4" />
-            Adicionar projeto
+            {triggerLabel}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            {editing ? "Editar projeto" : "Novo projeto"}
+            {editing ? "Editar Projeto" : "Adicionar Projeto"}
           </DialogTitle>
         </DialogHeader>
         <Form {...form}>
@@ -147,7 +149,7 @@ export function PreviousProjectFormDialog({
               name="technologies"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tecnologias</FormLabel>
+                  <FormLabel>Tecnologias usadas</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="React, Node.js, PostgreSQL"
@@ -187,7 +189,7 @@ export function PreviousProjectFormDialog({
                   ? "Salvando…"
                   : editing
                     ? "Salvar alterações"
-                    : "Adicionar"}
+                    : "Adicionar projeto"}
               </Button>
             </DialogFooter>
           </form>

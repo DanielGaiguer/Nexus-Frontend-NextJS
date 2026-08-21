@@ -1,6 +1,14 @@
 "use client";
 
-import { Award, BarChart3, Target, TrendingUp, Users } from "lucide-react";
+import {
+  Award,
+  BarChart3,
+  Check,
+  Clock,
+  Star,
+  TrendingUp,
+  X,
+} from "lucide-react";
 
 import { ProjectAcceptanceRateList } from "@/components/company/project-acceptance-rate-list";
 import { ProjectStatusChart } from "@/components/company/project-status-chart";
@@ -23,7 +31,7 @@ export default function CompanyAnalyticsPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Analytics</h1>
         <p className="text-muted-foreground text-sm">
-          Métricas de compatibilidade e reputação das suas oportunidades.
+          Visão analítica do desempenho da sua empresa na plataforma
         </p>
       </div>
 
@@ -46,37 +54,40 @@ export default function CompanyAnalyticsPage() {
 
       {data && (
         <>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
             <StatCard
-              icon={Users}
-              label="Total de matches"
+              icon={TrendingUp}
+              label="Total Matches"
               value={String(data.matchSummary.totalMatches)}
             />
             <StatCard
-              icon={Target}
-              label="Taxa de aceitação"
-              value={`${data.matchSummary.overallAcceptanceRate.toFixed(0)}%`}
+              icon={Check}
+              label="Confirmados"
+              value={String(data.matchSummary.confirmedMatches)}
+              accent="success"
+            />
+            <StatCard
+              icon={Clock}
+              label="Pendentes"
+              value={String(data.matchSummary.pendingMatches)}
+              accent="warning"
+            />
+            <StatCard
+              icon={X}
+              label="Rejeitados"
+              value={String(data.matchSummary.rejectedMatches)}
+            />
+            <StatCard
+              icon={BarChart3}
+              label="Taxa Aceitação"
+              value={`${data.matchSummary.overallAcceptanceRate.toFixed(1)}%`}
               accent="accent"
             />
             <StatCard
-              icon={Award}
-              label="Reputação geral"
-              value={
-                data.reputationSummary.overallReputation != null
-                  ? data.reputationSummary.overallReputation.toFixed(1)
-                  : "—"
-              }
+              icon={Star}
+              label="Avaliações Recebidas"
+              value={String(data.reputationSummary.totalReviews ?? 0)}
               accent="secondary"
-            />
-            <StatCard
-              icon={TrendingUp}
-              label="Recomendam vocês"
-              value={
-                data.reputationSummary.recommendationRate != null
-                  ? `${data.reputationSummary.recommendationRate.toFixed(0)}%`
-                  : "—"
-              }
-              accent="success"
             />
           </div>
 

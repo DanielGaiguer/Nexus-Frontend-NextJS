@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { LogIn, Mail, User } from "lucide-react";
+import { Building2, LogIn, Mail, User, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -67,22 +67,23 @@ export function LoginForm() {
       title="Bem-vindo de volta"
       description="Entre com suas credenciais para continuar"
       footer={
-        <>
-          Ainda não tem conta?{" "}
-          <Link
-            href="/register/professional"
-            className="text-primary font-medium hover:underline"
-          >
-            Sou profissional
-          </Link>{" "}
-          ·{" "}
-          <Link
-            href="/register/company"
-            className="text-primary font-medium hover:underline"
-          >
-            Sou empresa
-          </Link>
-        </>
+        <div className="space-y-2">
+          <p>Ainda não tem conta?</p>
+          <div className="flex justify-center gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/register/professional">
+                <UserPlus className="size-4" />
+                Sou Profissional
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/register/company">
+                <Building2 className="size-4" />
+                Sou Empresa
+              </Link>
+            </Button>
+          </div>
+        </div>
       }
     >
       <Form {...form}>
@@ -92,7 +93,7 @@ export function LoginForm() {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>E-mail</FormLabel>
+                <FormLabel>Email</FormLabel>
                 <FormControl>
                   <Input
                     type="email"

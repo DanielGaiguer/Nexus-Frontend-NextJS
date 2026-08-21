@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Users } from "lucide-react";
+import { MapPin, Search, Star, Users } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -33,7 +33,7 @@ export default function CompanyProfessionalsPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Profissionais</h1>
         <p className="text-muted-foreground text-sm">
-          Explore o diretório de talentos cadastrados na plataforma
+          Explore os profissionais cadastrados na plataforma
         </p>
       </div>
 
@@ -82,11 +82,26 @@ export default function CompanyProfessionalsPage() {
                     {professional.name}
                   </div>
                   {professional.city && (
-                    <div className="text-muted-foreground text-xs">
+                    <div className="text-muted-foreground flex items-center gap-1 text-xs">
+                      <MapPin className="text-primary size-3" />
                       {professional.city}
                       {professional.uf ? `, ${professional.uf}` : ""}
                     </div>
                   )}
+                  <div className="mt-1 flex items-center gap-1">
+                    {professional.reputation != null ? (
+                      <>
+                        <Star className="fill-warning text-warning size-3.5" />
+                        <span className="text-xs font-medium">
+                          {professional.reputation.toFixed(1)}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">
+                        Sem avaliações ainda
+                      </span>
+                    )}
+                  </div>
                   {professional.experienceLevel && (
                     <Badge variant="secondary" className="mt-1 text-[11px]">
                       {experienceLabels[professional.experienceLevel] ??

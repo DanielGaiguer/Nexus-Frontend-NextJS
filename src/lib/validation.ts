@@ -80,6 +80,16 @@ export const loginSchema = z.object({
 
 export type LoginFormValues = z.infer<typeof loginSchema>;
 
+// Espelha o checkbox obrigatório "allowCepUsage" dos templates
+// register-professional.html/register-company.html: o nexus-frontend
+// antigo trava o submit via JS se não estiver marcado, embora o campo não
+// exista em nenhum *RequestDTO do backend real (nunca foi conectado a
+// nada — é só um gate de UX). Fidelidade de conteúdo/comportamento com o
+// original, então continua travando o submit aqui também.
+const allowCepUsageField = z.boolean().refine((value) => value === true, {
+  message: "É necessário marcar esta opção para continuar.",
+});
+
 export const registerProfessionalSchema = z.object({
   name: z.string().trim().min(1, "Informe seu nome completo."),
   email: z
@@ -94,6 +104,7 @@ export const registerProfessionalSchema = z.object({
   expectedSalaryPJ: moneyField,
   freelanceMinExpectation: moneyField,
   freelanceMaxExpectation: moneyField,
+  allowCepUsage: allowCepUsageField,
 });
 
 export type RegisterProfessionalFormValues = z.infer<
@@ -112,6 +123,7 @@ export const registerCompanySchema = z.object({
   phone: phoneField,
   cep: cepField,
   description: z.string(),
+  allowCepUsage: allowCepUsageField,
 });
 
 export type RegisterCompanyFormValues = z.infer<typeof registerCompanySchema>;

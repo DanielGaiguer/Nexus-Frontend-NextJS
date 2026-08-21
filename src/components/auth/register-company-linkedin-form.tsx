@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link2 } from "lucide-react";
+import { Info, Link2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -94,6 +94,16 @@ export function RegisterCompanyLinkedinForm() {
         </>
       }
     >
+      <div className="bg-info/10 text-foreground flex items-start gap-2 rounded-md p-3 text-sm">
+        <Info className="text-info mt-0.5 size-4 shrink-0" />
+        <div>
+          <p className="font-medium">Prazo de aprovação</p>
+          <p className="text-muted-foreground text-xs">
+            Após o cadastro, sua conta passará por análise administrativa.
+          </p>
+        </div>
+      </div>
+
       <div className="space-y-1.5">
         <Label>E-mail (via LinkedIn)</Label>
         <Input value={email} readOnly disabled />

@@ -1,6 +1,14 @@
 "use client";
 
-import { AlertTriangle, Link2, Mail, MapPin, Phone, Star } from "lucide-react";
+import {
+  AlertTriangle,
+  FileText,
+  Link2,
+  Mail,
+  MapPin,
+  Phone,
+  Star,
+} from "lucide-react";
 
 import { CompanyPhoto } from "@/components/company/company-photo";
 import { CompanyProfileEditDialog } from "@/components/company/company-profile-edit-dialog";
@@ -107,6 +115,10 @@ export default function CompanyProfilePage() {
               <CardTitle className="text-sm">Contato</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
+              <div className="text-muted-foreground flex items-center gap-2">
+                <FileText className="text-primary size-4" />
+                {profile.taxId ?? "—"}
+              </div>
               <div className="text-muted-foreground flex items-center gap-2">
                 <MapPin className="text-primary size-4" />
                 {[profile.city, profile.uf].filter(Boolean).join(", ") || "—"}

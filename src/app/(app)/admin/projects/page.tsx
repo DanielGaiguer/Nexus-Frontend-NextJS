@@ -40,6 +40,16 @@ const statusLabels: Record<string, string> = {
   CLOSED: "Encerrado",
 };
 
+const modalityLabels: Record<string, string> = {
+  REMOTE: "Remoto",
+  ONSITE: "Presencial",
+  HYBRID: "Híbrido",
+};
+
+function formatMoney(value: number) {
+  return value.toLocaleString("en-US", { maximumFractionDigits: 0 });
+}
+
 const helper = createColumnHelper<
   typeof adminTableFeatures,
   ProjectResponseDTO
@@ -72,6 +82,14 @@ export default function AdminProjectsPage() {
         header: "Título",
         cell: (info) => {
           const project = info.row.original;
+          const isJob = project.opportunityType === "JOB";
+          const money = isJob
+            ? project.monthlySalaryMin != null
+              ? `R$${formatMoney(project.monthlySalaryMin)}/mês`
+              : null
+            : project.minimumBudget != null && project.maximumBudget != null
+              ? `R$${formatMoney(project.minimumBudget)}–R$${formatMoney(project.maximumBudget)}`
+              : null;
           return (
             <div>
               <Link
@@ -80,15 +98,21 @@ export default function AdminProjectsPage() {
               >
                 {project.title}
               </Link>
-              <div className="mt-0.5">
+              <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
                 <Badge
-                  variant={
-                    project.opportunityType === "JOB" ? "default" : "secondary"
-                  }
+                  variant={isJob ? "default" : "secondary"}
                   className="text-[10px]"
                 >
-                  {project.opportunityType === "JOB" ? "Vaga" : "Projeto"}
+                  {isJob ? "Vaga" : "Projeto"}
                 </Badge>
+                {money && (
+                  <span className="text-muted-foreground text-xs">{money}</span>
+                )}
+                {project.workMode && (
+                  <span className="text-muted-foreground text-xs">
+                    · {modalityLabels[project.workMode] ?? project.workMode}
+                  </span>
+                )}
               </div>
             </div>
           );
@@ -194,7 +218,7 @@ function CloseProjectAction({ project }: { project: ProjectResponseDTO }) {
       <AlertDialogTrigger asChild>
         <Button variant="outline" size="sm" className="text-destructive">
           <Lock className="size-3.5" />
-          Encerrar
+          Encerrar oportunidade
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>

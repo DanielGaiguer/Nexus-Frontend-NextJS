@@ -12,7 +12,16 @@ import {
   useMapOpportunities,
   useMapProfessionals,
 } from "@/hooks/queries/useMapData";
+import { useProfessionalProfile } from "@/hooks/queries/useProfessionalProfile";
 import { cn } from "@/lib/utils";
+
+const legendItems = [
+  { color: "bg-primary", label: "Profissional" },
+  { color: "bg-warning", label: "Empresa" },
+  { color: "bg-[#a78bfa]", label: "Projeto" },
+  { color: "bg-success", label: "Vaga de emprego" },
+  { color: "bg-destructive", label: "Você" },
+];
 
 // Leaflet toca `window`/`document` na inicialização — só pode existir no
 // client, nunca durante o SSR do Next.
@@ -56,6 +65,7 @@ export default function ProMapPage() {
   const professionals = useMapProfessionals({ city });
   const companies = useMapCompanies({ city });
   const opportunities = useMapOpportunities({ city });
+  const { data: profile } = useProfessionalProfile();
 
   const visibleTypes = useMemo<Set<MapEntityType>>(() => {
     if (selected === "all")
@@ -75,6 +85,13 @@ export default function ProMapPage() {
 
   const isLoading =
     professionals.isLoading || companies.isLoading || opportunities.isLoading;
+
+  const visibleCount =
+    (visibleTypes.has("professionals")
+      ? (professionals.data?.length ?? 0)
+      : 0) +
+    (visibleTypes.has("companies") ? (companies.data?.length ?? 0) : 0) +
+    (visibleTypes.has("opportunities") ? (opportunities.data?.length ?? 0) : 0);
 
   return (
     <div className="mx-auto flex h-[calc(100vh-6rem)] max-w-6xl flex-col gap-4 sm:flex-row">
@@ -124,6 +141,27 @@ export default function ProMapPage() {
             </button>
           ))}
         </div>
+
+        <div className="mt-auto space-y-2 border-t pt-3">
+          <div className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+            Legenda
+          </div>
+          <div className="space-y-1.5">
+            {legendItems.map((item) => (
+              <div key={item.label} className="flex items-center gap-2">
+                <span
+                  className={cn("size-3 shrink-0 rounded-full", item.color)}
+                />
+                <span className="text-muted-foreground text-sm">
+                  {item.label}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="text-muted-foreground text-xs">
+            {visibleCount} resultado(s) visível(is)
+          </div>
+        </div>
       </aside>
 
       <div className="min-h-[400px] flex-1 overflow-hidden rounded-lg border">
@@ -135,6 +173,11 @@ export default function ProMapPage() {
             companies={companies.data ?? []}
             opportunities={opportunities.data ?? []}
             visibleTypes={visibleTypes}
+            you={
+              profile?.latitude != null && profile?.longitude != null
+                ? { latitude: profile.latitude, longitude: profile.longitude }
+                : undefined
+            }
           />
         )}
       </div>

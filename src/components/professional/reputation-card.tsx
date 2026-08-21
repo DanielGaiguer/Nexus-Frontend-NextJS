@@ -13,8 +13,11 @@ const breakdownRows: { key: keyof ReputationExplanationDTO; label: string }[] =
 
 export function ReputationCard({
   reputation,
+  title = "Reputação",
 }: {
   reputation: ReputationExplanationDTO | null;
+  /** company-view.html usa "Reputação"; pro-profile.html usa "Análise de qualidade" — mesmo card, título diferente por página no app original. */
+  title?: string;
 }) {
   const hasReviews =
     reputation?.totalReviews != null && reputation.totalReviews > 0;
@@ -22,7 +25,7 @@ export function ReputationCard({
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between">
-        <CardTitle className="text-sm">Análise de qualidade</CardTitle>
+        <CardTitle className="text-sm">{title}</CardTitle>
         {hasReviews && (
           <span className="text-muted-foreground text-xs">
             {reputation!.totalReviews} avaliação(ões)
