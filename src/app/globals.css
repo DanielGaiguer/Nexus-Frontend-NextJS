@@ -100,8 +100,13 @@
   --secondary-foreground: #ffffff;
   --muted: var(--nexus-bg-3);
   --muted-foreground: #5b6280;
-  --accent: #cffafe;
-  --accent-foreground: #0e7490;
+  /* Tom neutro — NÃO usar --nexus-accent (ciano) aqui: --accent é o slot
+     genérico do shadcn pra hover/seleção/skeleton (botões, dropdown,
+     select, command, badge), papel diferente do ciano de marca, que seria
+     um azul estranho nesses lugares. Roxo suave, mesma família do
+     --nexus-primary. */
+  --accent: #eeeefc;
+  --accent-foreground: #0d1329;
   --destructive: var(--nexus-danger);
   --destructive-foreground: #ffffff;
   --border: #e2e4ee;
@@ -160,8 +165,14 @@
   --secondary-foreground: #17102b;
   --muted: #131a33;
   --muted-foreground: #94a3b8;
-  --accent: var(--nexus-accent);
-  --accent-foreground: #052e33;
+  /* Tom neutro — NÃO usar --nexus-accent (ciano) aqui: --accent é o slot
+     genérico do shadcn pra hover/seleção/skeleton (botões, dropdown,
+     select, command, badge), papel diferente do ciano de marca, que fica
+     um azul brusco/estranho nesses lugares. Roxo escuro e suave — mesma
+     ideia do hover original (rgba(107,110,255,0.08-0.15) sobre o fundo),
+     só que sólido pra não quebrar os modificadores de opacidade (bg-accent/50). */
+  --accent: #1b2044;
+  --accent-foreground: #e5e7eb;
   --destructive: var(--nexus-danger);
   --destructive-foreground: #ffffff;
   --border: rgba(255, 255, 255, 0.08);
