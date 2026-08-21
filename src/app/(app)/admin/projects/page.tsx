@@ -377,21 +377,6 @@ export default function AdminProjectsPage() {
               onChange={(v) => setOppFilters((f) => ({ ...f, skills: v }))}
             />
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="self-end justify-self-start"
-            onClick={() => {
-              setStatus("all");
-              setSearch("");
-              setOppType("");
-              setOppFilters(emptyOpportunityFilters);
-            }}
-          >
-            <X className="size-4" />
-            Limpar
-          </Button>
         </div>
 
         {oppType === "JOB" && (
@@ -496,6 +481,23 @@ export default function AdminProjectsPage() {
             </div>
           </div>
         )}
+
+        <div className="flex justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setStatus("all");
+              setSearch("");
+              setOppType("");
+              setOppFilters(emptyOpportunityFilters);
+            }}
+          >
+            <X className="size-4" />
+            Limpar
+          </Button>
+        </div>
       </div>
 
       <p className="text-muted-foreground text-sm">
