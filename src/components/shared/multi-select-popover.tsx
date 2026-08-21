@@ -17,22 +17,32 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 /**
  * Combobox multi-seleção genérico (usado nos filtros de "Experiência" e
- * "Skills" de pro/opportunities, e nos mesmos filtros nos mapas e em
- * admin/projects — todos espelham os `<select multiple>` do app antigo).
+ * "Skills" de pro/opportunities, dos mapas e de admin/projects — todos
+ * espelham os `<select multiple>` do app antigo).
+ *
+ * O gatilho ocupa a largura toda da célula por padrão (mesmo padrão dos
+ * `<Select>` vizinhos no mesmo grid de filtros — antes ficava do tamanho
+ * do texto, sobrando espaço vazio ao lado); o popover acompanha essa
+ * largura via `--radix-popover-trigger-width`, em vez de uma largura fixa
+ * que não tinha relação com o gatilho. Dá pra estreitar num caso pontual
+ * passando `className` (ex.: `className="w-auto"`).
  */
 export function MultiSelectPopover({
   label,
   options,
   value,
   onChange,
+  className,
 }: {
   label: string;
   options: { value: string; label: string }[];
   value: string[];
   onChange: (value: string[]) => void;
+  className?: string;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -48,7 +58,7 @@ export function MultiSelectPopover({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="justify-between font-normal"
+          className={cn("w-full justify-between font-normal", className)}
         >
           <span className="truncate">
             {value.length > 0 ? `${label} (${value.length})` : label}
@@ -56,7 +66,7 @@ export function MultiSelectPopover({
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-0">
+      <PopoverContent className="w-(--radix-popover-trigger-width) p-0">
         <Command>
           <CommandList>
             <CommandEmpty>Nenhuma opção encontrada.</CommandEmpty>
