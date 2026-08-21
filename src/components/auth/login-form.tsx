@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Building2, LogIn, User, UserPlus } from "lucide-react";
+import { Building2, LogIn, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
@@ -118,7 +118,7 @@ export function LoginForm() {
 
   return (
     <AuthCard
-      icon={User}
+      wordmark
       title="Bem-vindo de volta"
       description="Entre com suas credenciais para continuar"
       footer={
