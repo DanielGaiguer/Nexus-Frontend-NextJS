@@ -366,7 +366,7 @@ As 9 telas da área de empresa (`company-dashboard`, `company-profile`,
   `ScoreDistributionDTO[]` etc.) já eram genéricos, sem nada específico de
   profissional. Só dois componentes novos porque o
   `CompanyDashboardAnalyticsDTO` difere do `ProfessionalDashboardAnalyticsDTO`:
-  `ProjectAcceptanceRateList` (taxa de aceitação por *oportunidade*, não por
+  `ProjectAcceptanceRateList` (taxa de aceitação por _oportunidade_, não por
   empresa) e `ProjectStatusChart` (distribuição de status das
   oportunidades — não existe no lado profissional).
 - **`/company/map`**: mesmo `NexusMap` do Prompt 2. O componente ganhou dois
@@ -419,6 +419,7 @@ Chat, avaliações/status-check e páginas públicas — tudo que atravessa os
 dois papéis em vez de pertencer só a `/pro/**` ou `/company/**`.
 
 ### Chat — mecanismo (investigado antes de portar, ver explicação completa
+
 dada ao usuário no chat desta sessão)
 
 O backend real usa **STOMP sobre WebSocket/SockJS** (`/ws`), não REST puro:
@@ -435,7 +436,7 @@ lê um header nativo `Authorization` só no frame `CONNECT`, nada de
 cookie/sessão.
 
 Isso importa porque nosso JWT vive num cookie **httpOnly** — nunca visível
-a JS do browser, de propósito. Mas o handshake STOMP *precisa* que o JS
+a JS do browser, de propósito. Mas o handshake STOMP _precisa_ que o JS
 defina esse header na mão. O próprio `nexus-frontend` (Thymeleaf) atual
 já esbarra na mesma parede — ele guarda o JWT numa `HttpSession` do
 servidor, e resolve expondo o token ao client **só sob demanda**, via um
@@ -549,7 +550,7 @@ Todo `templates/admin/**` do app antigo. Backend inteiro por trás
 (`AdminController`) lido de ponta a ponta antes de escrever qualquer tipo,
 como sempre — `/api/admin/**` acabou sendo praticamente a única superfície
 usada, mais `/api/analytics/{professional,company}/{id}/dashboard`
-(analytics *por id*, escopo admin, distinto do `/api/analytics/professional/dashboard`
+(analytics _por id_, escopo admin, distinto do `/api/analytics/professional/dashboard`
 auto-escopado do Prompt 2) e `/api/professional/profile/export?professionalId=`
 (reaproveita o endpoint de export em PDF do Prompt 2, só com o query param
 opcional).
@@ -766,14 +767,14 @@ Achados, todos corrigidos nesta etapa:
     um retângulo de cor sólida em vez de uma barra. Adicionado
     `max-w-12` na barra pra ela ler como "uma barra" independente de
     quantos meses existem.
-  Achado por acidente numa captura de tela deste prompt — vale registrar
-  o método: a primeira leitura pareceu bug (chart "quebrado"), a segunda
-  captura com mais tempo de espera mostrou que era só timing de
-  carregamento: o app estava certo, o script de verificação que não
-  esperava o bastante. Só depois de isolar caso a caso é que a
-  `MatchesTrendChart` se confirmou como bug de verdade (mesmo com tempo
-  de sobra, o bloco sólido persistia) — não vale corrigir a partir da
-  primeira impressão de uma screenshot sem investigar a causa raiz.
+    Achado por acidente numa captura de tela deste prompt — vale registrar
+    o método: a primeira leitura pareceu bug (chart "quebrado"), a segunda
+    captura com mais tempo de espera mostrou que era só timing de
+    carregamento: o app estava certo, o script de verificação que não
+    esperava o bastante. Só depois de isolar caso a caso é que a
+    `MatchesTrendChart` se confirmou como bug de verdade (mesmo com tempo
+    de sobra, o bloco sólido persistia) — não vale corrigir a partir da
+    primeira impressão de uma screenshot sem investigar a causa raiz.
 
 ### Confirmado como decisão já documentada, não lacuna nova
 
@@ -839,3 +840,71 @@ Checklist limpo: paridade de rotas fechada, consistência visual revisada,
 cobrindo página **e** papel em todas as três áreas. Decisão de trocar o
 domínio de produção e desligar o `nexus-frontend` antigo fica com o
 usuário — nada foi decomissionado nesta etapa.
+
+## Estado desta etapa (auditoria de fidelidade — pós-Prompt 6)
+
+Duas pendências que a auditoria de fidelidade tinha sinalizado e deixado
+pra depois, corrigidas nesta rodada:
+
+### Painel "Filtros de oportunidade" (8 campos) + raio de distância
+
+Faltava em `pro/map`, `company/map`, `admin/map` (barra lateral) e em
+`admin/projects` (barra de filtros acima da tabela) — mesmos campos do
+`nexus-map.js`/`admin-projects.html` originais: busca, modalidade,
+experiência (multi), data de postagem, regime de trabalho, skills (multi),
+tipo de contrato e faixa de salário/orçamento (condicional por tipo de
+oportunidade, igual a `pro/opportunities`). Nos três mapas também entrou o
+seletor de raio (5/10/20/50 km/sem limite) e o sub-filtro "Tipo de
+oportunidade" (Todos/Projetos/Vagas) — ambos também ausentes, filtrando
+**todos** os marcadores (não só oportunidades) por distância até o centro
+(local do próprio usuário quando disponível, senão São Paulo — mesmo
+fallback do JS original).
+
+Extraído pra código compartilhado em vez de reimplementado 4 vezes:
+`src/lib/opportunity-filters.ts` (tipo `OpportunityFilters` + predicado
+`matchesOpportunityFilters`, espelhando `matchesOpportunityFilters()` do
+`nexus-map.js`), `src/lib/geo.ts` (`distanceKm` — Haversine, mesma fórmula
+do original), `src/components/shared/multi-select-popover.tsx` (extraído
+de `pro/opportunities`), `src/components/map/opportunity-filter-fields.tsx`
+e `src/components/map/radius-selector.tsx`.
+
+### Login social (LinkedIn/GitHub)
+
+Os botões "Entrar/Cadastre-se com LinkedIn/GitHub" tinham ficado de fora
+da migração (decisão registrada no Prompt 1) — restaurados em
+`login-form.tsx`, `register-professional-form.tsx` (LinkedIn + GitHub) e
+`register-company-form.tsx` (só LinkedIn, igual ao original). O fluxo
+completo:
+
+- `GET /api/auth/{linkedin,github}/{login,register}` (Route Handlers novos)
+  — só repassam via 302 pro backend real (`BACKEND_URL`), preservando
+  `redirect`/`role` na query string. Precisam ser Route Handlers (não
+  `fetch` client-side) porque o próximo passo é o navegador sair do nosso
+  domínio de vez.
+- O backend (`AuthService#handle{LinkedIn,GitHub}Callback`) devolve o
+  usuário pra `{nexus.frontend.base-url}/auth/{linkedin,github}/complete`
+  já com um JWT pronto na query string (mesmo token que
+  `TokenService#generateToken` sempre emite) — ou pra
+  `/auth/login?{linkedin,github}Error=...` em caso de falha.
+- `src/app/auth/{linkedin,github}/complete/route.ts` (novos) verificam a
+  assinatura do token recebido (nunca confiam cegamente numa query string),
+  plantam o mesmo cookie httpOnly que `/api/auth/login` usa, e mandam pro
+  dashboard certo ou pro `redirect` original. Ficam fora do grupo de rotas
+  `(auth)` de propósito — `/auth/**` é o path exato que o backend usa pra
+  montar a URL, não escolhemos; precisou entrar em `PUBLIC_PATHS`
+  (`src/proxy.ts`) porque chegam sem sessão ainda.
+- `login-form.tsx` passou a ler `linkedinError`/`githubError` da query
+  string e mostrar a mensagem certa por código (mesma tabela de mensagens
+  do `login.html` original) via toast, em vez do alerta estático antigo.
+- Ícones de marca (`src/components/auth/brand-icons.tsx`): lucide-react
+  não tem LinkedIn/GitHub — SVGs inline com os traçados oficiais em vez de
+  puxar uma lib nova só por dois ícones.
+
+**Pendência que não é possível resolver só no frontend**: o backend
+determina o destino desses redirects pela property
+`nexus.frontend.base-url` (`nexus/src/main/resources/application.properties`),
+hoje apontando pro `nexus-frontend` antigo (`http://localhost:8082`). Sem
+mudar isso — via variável de ambiente `NEXUS_FRONTEND_BASE_URL` ao subir o
+backend, não editando o arquivo — o callback do OAuth completa no app
+antigo, não aqui. Não alterei essa property nem o `nexus/`: é configuração
+de ambiente do backend, fora do escopo desta migração de frontend.

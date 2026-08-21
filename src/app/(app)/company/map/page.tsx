@@ -4,6 +4,8 @@ import { Briefcase, Building2, Layers, Search, Users } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 
+import { OpportunityFilterFields } from "@/components/map/opportunity-filter-fields";
+import { RadiusSelector } from "@/components/map/radius-selector";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { MapEntityType } from "@/components/professional/nexus-map";
@@ -13,6 +15,12 @@ import {
   useMapOpportunities,
   useMapProfessionals,
 } from "@/hooks/queries/useMapData";
+import { useProjectSkillCatalog } from "@/hooks/queries/useProjectSkillCatalog";
+import { DEFAULT_MAP_CENTER, distanceKm } from "@/lib/geo";
+import {
+  emptyOpportunityFilters,
+  matchesOpportunityFilters,
+} from "@/lib/opportunity-filters";
 import { cn } from "@/lib/utils";
 
 const legendItems = [
@@ -61,11 +69,23 @@ export default function CompanyMapPage() {
   const [cityInput, setCityInput] = useState("");
   const [city, setCity] = useState("");
   const [selected, setSelected] = useState<"all" | MapEntityType>("all");
+  const [radius, setRadius] = useState(50);
+  const [oppType, setOppType] = useState<"" | "PROJECT" | "JOB">("");
+  const [oppFilters, setOppFilters] = useState(emptyOpportunityFilters);
 
   const professionals = useMapProfessionals({ city });
   const companies = useMapCompanies({ city });
   const opportunities = useMapOpportunities({ city });
   const { data: profile } = useCompanyProfile();
+  const { data: skillCatalog } = useProjectSkillCatalog();
+
+  const you =
+    profile?.latitude != null && profile?.longitude != null
+      ? { latitude: profile.latitude, longitude: profile.longitude }
+      : undefined;
+  const center = you
+    ? { lat: you.latitude, lng: you.longitude }
+    : DEFAULT_MAP_CENTER;
 
   const visibleTypes = useMemo<Set<MapEntityType>>(() => {
     if (selected === "all")
@@ -73,29 +93,60 @@ export default function CompanyMapPage() {
     return new Set([selected]);
   }, [selected]);
 
+  const filteredProfessionals = useMemo(
+    () =>
+      (professionals.data ?? []).filter(
+        (p) =>
+          distanceKm(center.lat, center.lng, p.latitude, p.longitude) <= radius
+      ),
+    [professionals.data, center.lat, center.lng, radius]
+  );
+  const filteredCompanies = useMemo(
+    () =>
+      (companies.data ?? []).filter(
+        (c) =>
+          distanceKm(center.lat, center.lng, c.latitude, c.longitude) <= radius
+      ),
+    [companies.data, center.lat, center.lng, radius]
+  );
+  const filteredOpportunities = useMemo(
+    () =>
+      (opportunities.data ?? []).filter(
+        (o) =>
+          distanceKm(center.lat, center.lng, o.latitude, o.longitude) <=
+            radius &&
+          (!oppType || o.opportunityType === oppType) &&
+          matchesOpportunityFilters(o, oppFilters)
+      ),
+    [opportunities.data, center.lat, center.lng, radius, oppType, oppFilters]
+  );
+
   const counts = {
     all:
-      (professionals.data?.length ?? 0) +
-      (companies.data?.length ?? 0) +
-      (opportunities.data?.length ?? 0),
-    professionals: professionals.data?.length ?? 0,
-    companies: companies.data?.length ?? 0,
-    opportunities: opportunities.data?.length ?? 0,
+      filteredProfessionals.length +
+      filteredCompanies.length +
+      filteredOpportunities.length,
+    professionals: filteredProfessionals.length,
+    companies: filteredCompanies.length,
+    opportunities: filteredOpportunities.length,
   };
 
   const isLoading =
     professionals.isLoading || companies.isLoading || opportunities.isLoading;
 
   const visibleCount =
-    (visibleTypes.has("professionals")
-      ? (professionals.data?.length ?? 0)
-      : 0) +
-    (visibleTypes.has("companies") ? (companies.data?.length ?? 0) : 0) +
-    (visibleTypes.has("opportunities") ? (opportunities.data?.length ?? 0) : 0);
+    (visibleTypes.has("professionals") ? filteredProfessionals.length : 0) +
+    (visibleTypes.has("companies") ? filteredCompanies.length : 0) +
+    (visibleTypes.has("opportunities") ? filteredOpportunities.length : 0);
+
+  const skillOptions = (skillCatalog ?? []).map((s) => ({
+    value: s.name,
+    label: s.name,
+  }));
 
   return (
     <div className="mx-auto flex h-[calc(100vh-6rem)] max-w-6xl flex-col gap-4 sm:flex-row">
-      <aside className="flex w-full shrink-0 flex-col gap-4 sm:w-64">
+      <aside className="flex w-full shrink-0 flex-col gap-4 overflow-y-auto sm:w-72">
         <div>
           <h1 className="text-lg font-bold tracking-tight">Mapa de Talentos</h1>
           <p className="text-muted-foreground text-xs">
@@ -140,7 +191,42 @@ export default function CompanyMapPage() {
               </span>
             </button>
           ))}
+
+          {selected === "opportunities" && (
+            <div className="bg-primary/5 border-primary/15 ml-4 space-y-1 rounded-md border p-2">
+              <div className="text-primary text-[11px] font-bold tracking-wide uppercase">
+                Tipo de oportunidade
+              </div>
+              {[
+                { value: "", label: "Todos" },
+                { value: "PROJECT", label: "Projetos" },
+                { value: "JOB", label: "Vagas de emprego" },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setOppType(opt.value as typeof oppType)}
+                  className={cn(
+                    "block w-full rounded px-1.5 py-1 text-left text-xs",
+                    oppType === opt.value
+                      ? "bg-primary/10 text-foreground"
+                      : "text-muted-foreground"
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
+
+        <RadiusSelector value={radius} onChange={setRadius} />
+
+        <OpportunityFilterFields
+          filters={oppFilters}
+          onChange={setOppFilters}
+          skillOptions={skillOptions}
+        />
 
         <div className="mt-auto space-y-2 border-t pt-3">
           <div className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
@@ -169,17 +255,13 @@ export default function CompanyMapPage() {
           <Skeleton className="h-full w-full" />
         ) : (
           <NexusMap
-            professionals={professionals.data ?? []}
-            companies={companies.data ?? []}
-            opportunities={opportunities.data ?? []}
+            professionals={filteredProfessionals}
+            companies={filteredCompanies}
+            opportunities={filteredOpportunities}
             visibleTypes={visibleTypes}
             companyHref={(id) => `/public/company/${id}`}
             professionalHref={(id) => `/company/professionals/${id}`}
-            you={
-              profile?.latitude != null && profile?.longitude != null
-                ? { latitude: profile.latitude, longitude: profile.longitude }
-                : undefined
-            }
+            you={you}
           />
         )}
       </div>

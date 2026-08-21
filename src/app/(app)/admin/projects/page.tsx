@@ -1,13 +1,14 @@
 "use client";
 
 import { createColumnHelper } from "@tanstack/react-table";
-import { Lock } from "lucide-react";
+import { Lock, X } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { DataTable } from "@/components/admin/data-table";
 import { adminTableFeatures } from "@/components/admin/table-features";
+import { MultiSelectPopover } from "@/components/shared/multi-select-popover";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,11 +22,26 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCloseProjectAsAdmin } from "@/hooks/mutations/useAdminProjectActions";
 import { useAdminProjects } from "@/hooks/queries/useAdminProjects";
+import { useProjectSkillCatalog } from "@/hooks/queries/useProjectSkillCatalog";
 import { ApiError } from "@/lib/api-client";
+import {
+  contractTypeOptions,
+  emptyOpportunityFilters,
+  experienceLevelOptions,
+  matchesOpportunityFilters,
+} from "@/lib/opportunity-filters";
 import type { ProjectResponseDTO } from "@/types/project";
 
 const statusVariant: Record<string, "default" | "secondary" | "outline"> = {
@@ -57,7 +73,10 @@ const helper = createColumnHelper<
 
 export default function AdminProjectsPage() {
   const { data: projects, isLoading } = useAdminProjects();
+  const { data: skillCatalog } = useProjectSkillCatalog();
   const [status, setStatus] = useState<"all" | "OPEN" | "CLOSED">("all");
+  const [oppType, setOppType] = useState<"" | "PROJECT" | "JOB">("");
+  const [oppFilters, setOppFilters] = useState(emptyOpportunityFilters);
 
   const counts = useMemo(() => {
     const list = projects ?? [];
@@ -69,12 +88,25 @@ export default function AdminProjectsPage() {
 
   const filtered = useMemo(() => {
     if (!projects) return [];
-    if (status === "all") return projects;
-    if (status === "OPEN") return projects.filter((p) => p.status === "OPEN");
-    return projects.filter(
-      (p) => p.status === "CLOSED" || p.status === "PAUSED"
+    const byStatus =
+      status === "all"
+        ? projects
+        : status === "OPEN"
+          ? projects.filter((p) => p.status === "OPEN")
+          : projects.filter(
+              (p) => p.status === "CLOSED" || p.status === "PAUSED"
+            );
+    return byStatus.filter(
+      (p) =>
+        (!oppType || p.opportunityType === oppType) &&
+        matchesOpportunityFilters(p, oppFilters)
     );
-  }, [projects, status]);
+  }, [projects, status, oppType, oppFilters]);
+
+  const skillOptions = (skillCatalog ?? []).map((s) => ({
+    value: s.name,
+    label: s.name,
+  }));
 
   const columns = useMemo(
     () => [
@@ -186,6 +218,188 @@ export default function AdminProjectsPage() {
           <Badge variant="default">{counts.open} abertos</Badge>
           <Badge variant="outline">{counts.closed} encerrados</Badge>
         </div>
+      </div>
+
+      <div className="flex flex-col gap-3 rounded-lg border p-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Select
+            value={oppType || "ALL"}
+            onValueChange={(v) => {
+              const next = v === "ALL" ? "" : (v as "PROJECT" | "JOB");
+              setOppType(next);
+              setOppFilters((f) => ({
+                ...f,
+                contractType: "",
+                minBudget: "",
+                maxBudget: "",
+              }));
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Oportunidade" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Todas</SelectItem>
+              <SelectItem value="PROJECT">Projetos</SelectItem>
+              <SelectItem value="JOB">Vagas</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={oppFilters.modality || "ALL"}
+            onValueChange={(v) =>
+              setOppFilters((f) => ({
+                ...f,
+                modality: v === "ALL" ? "" : v,
+              }))
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Modalidade" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Todas</SelectItem>
+              <SelectItem value="REMOTE">Remoto</SelectItem>
+              <SelectItem value="ONSITE">Presencial</SelectItem>
+              <SelectItem value="HYBRID">Híbrido</SelectItem>
+            </SelectContent>
+          </Select>
+          <MultiSelectPopover
+            label="Experiência"
+            options={experienceLevelOptions}
+            value={oppFilters.expLevels}
+            onChange={(v) => setOppFilters((f) => ({ ...f, expLevels: v }))}
+          />
+          <Input
+            type="date"
+            value={oppFilters.postedDate}
+            onChange={(e) =>
+              setOppFilters((f) => ({ ...f, postedDate: e.target.value }))
+            }
+          />
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Select
+            value={oppFilters.projectType || "ALL"}
+            onValueChange={(v) =>
+              setOppFilters((f) => ({
+                ...f,
+                projectType: v === "ALL" ? "" : v,
+              }))
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Regime de trabalho" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Todos</SelectItem>
+              <SelectItem value="FREELANCE">Freelance</SelectItem>
+              <SelectItem value="FULL_TIME">Tempo integral</SelectItem>
+              <SelectItem value="PART_TIME">Meio período</SelectItem>
+            </SelectContent>
+          </Select>
+          <MultiSelectPopover
+            label="Skills"
+            options={skillOptions}
+            value={oppFilters.skills}
+            onChange={(v) => setOppFilters((f) => ({ ...f, skills: v }))}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="justify-self-start"
+            onClick={() => {
+              setOppType("");
+              setOppFilters(emptyOpportunityFilters);
+            }}
+          >
+            <X className="size-4" />
+            Limpar
+          </Button>
+        </div>
+
+        {oppType === "JOB" && (
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Select
+              value={oppFilters.contractType || "ALL"}
+              onValueChange={(v) =>
+                setOppFilters((f) => ({
+                  ...f,
+                  contractType: v === "ALL" ? "" : v,
+                }))
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Tipo de contrato" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Todos</SelectItem>
+                {contractTypeOptions.map((c) => (
+                  <SelectItem key={c.value} value={c.value}>
+                    {c.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {(oppFilters.contractType === "CLT" ||
+              oppFilters.contractType === "PJ") && (
+              <>
+                <Input
+                  type="number"
+                  min={0}
+                  step={100}
+                  placeholder="Salário mín. (R$/mês)"
+                  value={oppFilters.minSalary}
+                  onChange={(e) =>
+                    setOppFilters((f) => ({
+                      ...f,
+                      minSalary: e.target.value,
+                    }))
+                  }
+                />
+                <Input
+                  type="number"
+                  min={0}
+                  step={100}
+                  placeholder="Salário máx. (R$/mês)"
+                  value={oppFilters.maxSalary}
+                  onChange={(e) =>
+                    setOppFilters((f) => ({
+                      ...f,
+                      maxSalary: e.target.value,
+                    }))
+                  }
+                />
+              </>
+            )}
+          </div>
+        )}
+
+        {oppType === "PROJECT" && (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Input
+              type="number"
+              min={0}
+              step={100}
+              placeholder="Orçamento mín. (R$)"
+              value={oppFilters.minBudget}
+              onChange={(e) =>
+                setOppFilters((f) => ({ ...f, minBudget: e.target.value }))
+              }
+            />
+            <Input
+              type="number"
+              min={0}
+              step={100}
+              placeholder="Orçamento máx. (R$)"
+              value={oppFilters.maxBudget}
+              onChange={(e) =>
+                setOppFilters((f) => ({ ...f, maxBudget: e.target.value }))
+              }
+            />
+          </div>
+        )}
       </div>
 
       <Tabs value={status} onValueChange={(v) => setStatus(v as typeof status)}>

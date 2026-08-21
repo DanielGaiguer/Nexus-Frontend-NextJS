@@ -24,7 +24,10 @@ const roleHome: Record<UserRole, string> = {
  * (dashboard, projetos, chat, ...) chegam nos próximos prompts desta mesma
  * migração — à medida que forem entrando, adicione o prefixo aqui.
  */
-const PUBLIC_PATHS = ["/", "/login", "/register", "/theme-test"];
+// `/auth/**` são os Route Handlers de conclusão do OAuth (linkedin/github
+// "complete") — chegam aqui SEM sessão ainda (é o próprio passo que planta
+// o cookie), então precisam ficar públicos.
+const PUBLIC_PATHS = ["/", "/login", "/register", "/theme-test", "/auth"];
 
 // `/public/**` no app antigo era servido fora do shell autenticado, sem
 // exigir login (link compartilhável). Este projeto ainda não tem site

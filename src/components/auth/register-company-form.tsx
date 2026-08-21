@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { AuthCard } from "@/components/auth/auth-card";
+import { LinkedInIcon } from "@/components/auth/brand-icons";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -244,6 +245,22 @@ export function RegisterCompanyForm() {
           </Button>
         </form>
       </Form>
+
+      <div className="flex items-center gap-2">
+        <div className="bg-border h-px flex-1" />
+        <span className="text-muted-foreground text-xs">ou</span>
+        <div className="bg-border h-px flex-1" />
+      </div>
+
+      <Button
+        asChild
+        className="w-full bg-[#0A66C2] text-white hover:bg-[#0A66C2]/90"
+      >
+        <a href="/api/auth/linkedin/register?role=COMPANY">
+          <LinkedInIcon className="size-4" />
+          Cadastre-se com LinkedIn
+        </a>
+      </Button>
     </AuthCard>
   );
 }
