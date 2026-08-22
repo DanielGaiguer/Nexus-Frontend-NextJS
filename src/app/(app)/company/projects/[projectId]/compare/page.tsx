@@ -528,16 +528,18 @@ function ComparisonContent() {
                   </TableCell>
                   {data.candidates.map((c) => (
                     <TableCell key={c.matchId}>
-                      <div className="flex flex-wrap justify-center gap-1">
+                      <div className="flex justify-center">
                         {c.matchingSkills.length > 0 ? (
-                          c.matchingSkills.map((skill) => (
-                            <Badge
-                              key={skill}
-                              className="bg-success/15 text-success text-[10px]"
-                            >
-                              {skill}
-                            </Badge>
-                          ))
+                          <div className="grid grid-cols-3 justify-items-center gap-1">
+                            {c.matchingSkills.map((skill) => (
+                              <Badge
+                                key={skill}
+                                className="bg-success/15 text-success text-[10px]"
+                              >
+                                {skill}
+                              </Badge>
+                            ))}
+                          </div>
                         ) : (
                           <span className="text-muted-foreground">—</span>
                         )}
@@ -551,17 +553,19 @@ function ComparisonContent() {
                   </TableCell>
                   {data.candidates.map((c) => (
                     <TableCell key={c.matchId}>
-                      <div className="flex flex-wrap justify-center gap-1">
+                      <div className="flex justify-center">
                         {c.missingSkills.length > 0 ? (
-                          c.missingSkills.map((skill) => (
-                            <Badge
-                              key={skill}
-                              variant="destructive"
-                              className="text-[10px]"
-                            >
-                              {skill}
-                            </Badge>
-                          ))
+                          <div className="grid grid-cols-3 justify-items-center gap-1">
+                            {c.missingSkills.map((skill) => (
+                              <Badge
+                                key={skill}
+                                variant="destructive"
+                                className="text-[10px]"
+                              >
+                                {skill}
+                              </Badge>
+                            ))}
+                          </div>
                         ) : (
                           <span className="text-muted-foreground">—</span>
                         )}
