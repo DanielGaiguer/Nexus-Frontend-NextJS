@@ -259,11 +259,7 @@ export function MatchCompareDialog({ match }: { match: MatchResponseDTO }) {
                 <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2">
                   {breakdownRows
                     .filter(
-                      (row) =>
-                        candidate.scoreBreakdown?.[row.key] != null &&
-                        (row.key !== "distance" || project.city != null) &&
-                        (row.key !== "experience" ||
-                          candidate.experienceLevel != null)
+                      (row) => candidate.scoreBreakdown?.[row.key] != null
                     )
                     .map((row) => {
                       const value = candidate.scoreBreakdown?.[row.key] ?? 0;
