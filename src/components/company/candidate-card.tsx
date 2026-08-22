@@ -1,6 +1,7 @@
 import { Briefcase, Building2, Star } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { MatchCompareDialog } from "@/components/company/match-compare-dialog";
 import { ScoreRing } from "@/components/professional/score-ring";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -88,16 +89,6 @@ export function CandidateCard({
 
             {badge}
 
-            {professional.skills.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {professional.skills.map((skill) => (
-                  <Badge key={skill} variant="outline" className="text-[11px]">
-                    {skill}
-                  </Badge>
-                ))}
-              </div>
-            )}
-
             {match.rejectionReasons && match.rejectionReasons.length > 0 && (
               <div>
                 <div className="text-muted-foreground mb-1 text-[11px] tracking-wide uppercase">
@@ -149,11 +140,10 @@ export function CandidateCard({
           </div>
         )}
       </CardContent>
-      {actions && (
-        <div className="flex flex-wrap justify-end gap-2 border-t px-6 py-3">
-          {actions}
-        </div>
-      )}
+      <div className="flex flex-wrap justify-end gap-2 border-t px-6 py-3">
+        <MatchCompareDialog match={match} />
+        {actions}
+      </div>
     </Card>
   );
 }
