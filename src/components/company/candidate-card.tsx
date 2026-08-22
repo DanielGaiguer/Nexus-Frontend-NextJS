@@ -54,7 +54,7 @@ export function CandidateCard({
             <div>
               <div className="font-semibold">{professional.name}</div>
               {showProject && (
-                <div className="text-muted-foreground mt-1 flex items-center gap-1.5 text-sm">
+                <div className="mt-1 flex flex-col items-start gap-1">
                   <Badge
                     variant={
                       match.project.opportunityType === "JOB"
@@ -71,7 +71,9 @@ export function CandidateCard({
                       ? "Vaga"
                       : "Projeto"}
                   </Badge>
-                  <span>{match.project.title}</span>
+                  <span className="text-muted-foreground text-sm">
+                    {match.project.title}
+                  </span>
                 </div>
               )}
               {professional.reputation != null && (
