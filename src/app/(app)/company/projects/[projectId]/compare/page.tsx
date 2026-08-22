@@ -1,12 +1,26 @@
 "use client";
 
-import { ArrowLeft, Check, Trophy, User, X } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Award,
+  Check,
+  DollarSign,
+  Handshake,
+  MapPin,
+  Star,
+  Trophy,
+  User,
+  X,
+} from "lucide-react";
 import Link from "next/link";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
-import { Suspense, useEffect, useRef } from "react";
+import { Suspense } from "react";
 import { toast } from "sonner";
 
+import { ScoreRing } from "@/components/professional/score-ring";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,8 +35,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useCompareCandidates } from "@/hooks/mutations/useCompareCandidates";
+import { useCompanyShowInterest } from "@/hooks/mutations/useCompanyMatchActions";
+import {
+  candidateComparisonKey,
+  useCandidateComparison,
+} from "@/hooks/queries/useCandidateComparison";
 import { ApiError } from "@/lib/api-client";
+import { cn } from "@/lib/utils";
 import type { CandidateComparisonItemDTO } from "@/types/comparison";
 import type { ScoreBreakdownDTO } from "@/types/match";
 
@@ -32,6 +51,12 @@ const experienceLabels: Record<string, string> = {
   JUNIOR: "Júnior",
   PLENO: "Pleno",
   SENIOR: "Sênior",
+};
+
+const workModeLabels: Record<string, string> = {
+  REMOTE: "Remoto",
+  ONSITE: "Presencial",
+  HYBRID: "Híbrido",
 };
 
 const matchStatusLabels: Record<string, string> = {
@@ -66,6 +91,38 @@ const breakdownRows: {
   { key: "reputationAdjustment", label: "Ajuste Reputação" },
 ];
 
+const tierClasses = {
+  success: { text: "text-success", bar: "bg-success" },
+  primary: { text: "text-primary", bar: "bg-primary" },
+  warning: { text: "text-warning", bar: "bg-warning" },
+  destructive: { text: "text-destructive", bar: "bg-destructive" },
+} as const;
+
+/** Mesmos limiares por dimensão do company-comparison.html original — cada
+ * linha da tabela de comparação tinha sua própria cor (verde/azul/âmbar/
+ * vermelho), não a mesma cor genérica repetida em todas. */
+function breakdownTier(
+  key: keyof ScoreBreakdownDTO,
+  value: number
+): keyof typeof tierClasses {
+  if (key === "reputationAdjustment")
+    return value >= 0 ? "success" : "destructive";
+  if (key === "experience") {
+    if (value >= 90) return "success";
+    if (value >= 70) return "warning";
+    return "destructive";
+  }
+  if (key === "distance") {
+    if (value >= 70) return "success";
+    if (value >= 50) return "warning";
+    return "destructive";
+  }
+  if (value >= 80) return "success";
+  if (value >= 60) return "primary";
+  if (value >= 40) return "warning";
+  return "destructive";
+}
+
 export default function ComparisonPage() {
   return (
     <Suspense fallback={null}>
@@ -76,34 +133,23 @@ export default function ComparisonPage() {
 
 function ComparisonContent() {
   const { projectId } = useParams<{ projectId: string }>();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const matchIds = (searchParams.get("matchIds") ?? "")
     .split(",")
     .map(Number)
     .filter((n) => !Number.isNaN(n));
+  const request =
+    matchIds.length > 0
+      ? { projectId: Number(projectId), matchIds }
+      : undefined;
 
-  const compare = useCompareCandidates();
-  const requestedRef = useRef(false);
+  const comparison = useCandidateComparison(request);
+  const showInterest = useCompanyShowInterest();
+  const queryClient = useQueryClient();
+  const compareUrl = `/company/projects/${projectId}/compare?matchIds=${matchIds.join(",")}`;
 
-  useEffect(() => {
-    if (requestedRef.current || matchIds.length === 0) return;
-    requestedRef.current = true;
-    compare.mutate(
-      { projectId: Number(projectId), matchIds },
-      {
-        onError: (error) => {
-          toast.error(
-            error instanceof ApiError
-              ? error.message
-              : "Não foi possível comparar os candidatos."
-          );
-        },
-      }
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- só dispara uma vez, na montagem
-  }, []);
-
-  const data = compare.data;
+  const data = comparison.data;
   const hasDistance = data?.candidates.some(
     (c) => c.scoreBreakdown?.distance != null
   );
@@ -113,21 +159,59 @@ function ComparisonContent() {
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
-      <Link
-        href={`/company/projects/${projectId}/ranking`}
+      <button
+        type="button"
+        onClick={() => router.back()}
         className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm"
       >
         <ArrowLeft className="size-4" />
-        Voltar ao ranking
-      </Link>
+        Voltar
+      </button>
 
       <div>
         <p className="text-primary text-xs font-bold tracking-widest uppercase">
           Comparação de Candidatos
         </p>
-        <h1 className="text-2xl font-bold tracking-tight">
-          {data?.projectTitle}
-        </h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-2xl font-bold tracking-tight">
+            {data?.projectTitle}
+          </h1>
+          {data && (
+            <div className="flex flex-wrap items-center gap-2">
+              {data.workMode && (
+                <Badge variant="outline">
+                  <MapPin className="size-3" />
+                  {workModeLabels[data.workMode] ?? data.workMode}
+                </Badge>
+              )}
+              {data.experienceLevelRequired && (
+                <Badge variant="outline">
+                  <Award className="size-3" />
+                  {experienceLabels[data.experienceLevelRequired] ??
+                    data.experienceLevelRequired}
+                </Badge>
+              )}
+              {data.opportunityType !== "JOB" &&
+                data.minimumBudget != null &&
+                data.maximumBudget != null && (
+                  <Badge className="bg-success/15 text-success">
+                    <DollarSign className="size-3" />
+                    {money(data.minimumBudget)}–{money(data.maximumBudget)}
+                  </Badge>
+                )}
+              {data.opportunityType === "JOB" &&
+                data.monthlySalaryMin != null && (
+                  <Badge className="bg-success/15 text-success">
+                    <DollarSign className="size-3" />
+                    {money(data.monthlySalaryMin)}/mês
+                    {data.monthlySalaryMax != null && (
+                      <> –{money(data.monthlySalaryMax)}</>
+                    )}
+                  </Badge>
+                )}
+            </div>
+          )}
+        </div>
         {data && (
           <p className="text-muted-foreground text-sm">
             {data.candidates.length} candidatos selecionados, ordenados por
@@ -153,12 +237,27 @@ function ComparisonContent() {
         </Card>
       )}
 
-      {compare.isPending && (
+      {comparison.isPending && matchIds.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: matchIds.length || 2 }).map((_, i) => (
             <Skeleton key={i} className="h-96" />
           ))}
         </div>
+      )}
+
+      {comparison.isError && (
+        <Card>
+          <CardContent className="py-10 text-center">
+            <p className="font-semibold">
+              Não foi possível comparar os candidatos
+            </p>
+            <p className="text-muted-foreground text-sm">
+              {comparison.error instanceof ApiError
+                ? comparison.error.message
+                : "Tente novamente em instantes."}
+            </p>
+          </CardContent>
+        </Card>
       )}
 
       {data && (
@@ -217,11 +316,12 @@ function ComparisonContent() {
                   </TableCell>
                   {data.candidates.map((c) => (
                     <TableCell key={c.matchId} className="text-center">
-                      <span className="text-lg font-bold tabular-nums">
-                        {c.scoreBreakdown
-                          ? `${Math.round(c.scoreBreakdown.finalScore)}%`
-                          : "—"}
-                      </span>
+                      <div className="flex justify-center py-1">
+                        <ScoreRing
+                          score={Math.round(c.scoreBreakdown?.finalScore ?? 0)}
+                          size={80}
+                        />
+                      </div>
                     </TableCell>
                   ))}
                 </TableRow>
@@ -238,18 +338,50 @@ function ComparisonContent() {
                       </TableCell>
                       {data.candidates.map((c) => {
                         const value = c.scoreBreakdown?.[row.key];
+                        if (value == null) {
+                          return (
+                            <TableCell key={c.matchId} className="text-center">
+                              —
+                            </TableCell>
+                          );
+                        }
+                        const tier = tierClasses[breakdownTier(row.key, value)];
+                        const isReputationAdjustment =
+                          row.key === "reputationAdjustment";
+                        const displayValue = isReputationAdjustment
+                          ? `${value >= 0 ? "+" : ""}${value.toFixed(1)}`
+                          : value.toFixed(1);
+                        if (isReputationAdjustment) {
+                          return (
+                            <TableCell key={c.matchId} className="text-center">
+                              <span
+                                className={cn(
+                                  "text-sm font-semibold tabular-nums",
+                                  tier.text
+                                )}
+                              >
+                                {displayValue}
+                              </span>
+                            </TableCell>
+                          );
+                        }
                         return (
                           <TableCell key={c.matchId} className="text-center">
-                            {value != null ? (
-                              <div className="mx-auto max-w-16">
-                                <span className="text-xs font-semibold tabular-nums">
-                                  {value.toFixed(1)}
-                                </span>
-                                <Progress value={value} className="h-1" />
-                              </div>
-                            ) : (
-                              "—"
-                            )}
+                            <div className="mx-auto max-w-16">
+                              <span
+                                className={cn(
+                                  "text-xs font-semibold tabular-nums",
+                                  tier.text
+                                )}
+                              >
+                                {displayValue}
+                              </span>
+                              <Progress
+                                value={Math.max(0, Math.min(100, value))}
+                                className="h-1"
+                                indicatorClassName={tier.bar}
+                              />
+                            </div>
                           </TableCell>
                         );
                       })}
@@ -261,27 +393,80 @@ function ComparisonContent() {
                   label="Avaliação média"
                   candidates={data.candidates}
                   render={(c) =>
-                    c.reputation != null ? c.reputation.toFixed(1) : "—"
+                    c.reputation != null ? (
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="font-semibold tabular-nums">
+                          {c.reputation.toFixed(1)}
+                        </span>
+                        <span className="inline-flex">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star
+                              key={i}
+                              className={cn(
+                                "size-3",
+                                i + 1 <= c.reputation!
+                                  ? "fill-warning text-warning"
+                                  : "text-muted-foreground"
+                              )}
+                            />
+                          ))}
+                        </span>
+                      </span>
+                    ) : (
+                      "—"
+                    )
                   }
                 />
                 <AttrRow
                   label="Avaliações (confiança)"
                   candidates={data.candidates}
-                  render={(c) =>
-                    c.totalReviews != null
-                      ? `${c.totalReviews} (${c.confidenceScore?.toFixed(0) ?? 0}%)`
-                      : "—"
-                  }
+                  render={(c) => (
+                    <div>
+                      <span>
+                        <span className="font-bold tabular-nums">
+                          {c.totalReviews ?? 0}
+                        </span>{" "}
+                        avaliações
+                      </span>
+                      {c.confidenceScore != null && (
+                        <div
+                          className={cn(
+                            "text-xs",
+                            c.confidenceScore < 50
+                              ? "text-destructive"
+                              : "text-success"
+                          )}
+                        >
+                          {c.confidenceScore.toFixed(0)}% de confiança
+                        </div>
+                      )}
+                    </div>
+                  )}
                 />
                 <AttrRow
                   label="Nível de experiência"
                   candidates={data.candidates}
-                  render={(c) =>
-                    c.experienceLevel
+                  render={(c) => {
+                    const label = c.experienceLevel
                       ? (experienceLabels[c.experienceLevel] ??
                         c.experienceLevel)
-                      : "—"
-                  }
+                      : "—";
+                    const required = data.experienceLevelRequired;
+                    const isCompatible =
+                      required != null && c.experienceLevel === required;
+                    return (
+                      <span className="inline-flex items-center gap-1.5">
+                        {label}
+                        {required != null &&
+                          c.experienceLevel != null &&
+                          (isCompatible ? (
+                            <Check className="text-success size-4" />
+                          ) : (
+                            <AlertTriangle className="text-warning size-4" />
+                          ))}
+                      </span>
+                    );
+                  }}
                 />
                 <AttrRow
                   label="Disponível agora"
@@ -302,34 +487,41 @@ function ComparisonContent() {
                 <AttrRow
                   label="Pretensão salarial"
                   candidates={data.candidates}
-                  render={(c) =>
-                    c.minimumSalary != null || c.maximumSalary != null
-                      ? `${money(c.minimumSalary)} – ${money(c.maximumSalary)}`
-                      : "—"
-                  }
+                  render={(c) => {
+                    if (c.minimumSalary == null && c.maximumSalary == null) {
+                      return "—";
+                    }
+                    const ceiling =
+                      data.opportunityType === "JOB"
+                        ? data.monthlySalaryMax
+                        : data.maximumBudget;
+                    const withinBudget =
+                      c.minimumSalary != null && ceiling != null
+                        ? c.minimumSalary <= ceiling
+                        : null;
+                    return (
+                      <div>
+                        <div>
+                          {money(c.minimumSalary)} – {money(c.maximumSalary)}
+                        </div>
+                        {withinBudget != null && (
+                          <div
+                            className={cn(
+                              "text-xs",
+                              withinBudget ? "text-success" : "text-destructive"
+                            )}
+                          >
+                            {withinBudget
+                              ? "dentro do orçamento"
+                              : "acima do orçamento"}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }}
                 />
 
                 <GroupHeaderRow label="Skills" span={data.candidates.length} />
-                <TableRow>
-                  <TableCell className="bg-background text-muted-foreground sticky left-0 pl-6">
-                    Skills que possui
-                  </TableCell>
-                  {data.candidates.map((c) => (
-                    <TableCell key={c.matchId}>
-                      <div className="flex flex-wrap justify-center gap-1">
-                        {c.skills.map((skill) => (
-                          <Badge
-                            key={skill}
-                            variant="outline"
-                            className="text-[10px]"
-                          >
-                            {skill}
-                          </Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                  ))}
-                </TableRow>
                 <TableRow>
                   <TableCell className="bg-background text-muted-foreground sticky left-0 pl-6">
                     Skills Compatíveis
@@ -400,12 +592,52 @@ function ComparisonContent() {
                   </TableCell>
                   {data.candidates.map((c) => (
                     <TableCell key={c.matchId} className="text-center">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/public/professional/${c.professionalId}`}>
-                          <User className="size-3.5" />
-                          Ver perfil
-                        </Link>
-                      </Button>
+                      <div className="flex flex-wrap items-center justify-center gap-2">
+                        <Button variant="outline" size="sm" asChild>
+                          <Link
+                            href={
+                              c.matchStatus === "WAITING"
+                                ? `/public/professional/${c.professionalId}?${new URLSearchParams(
+                                    {
+                                      matchId: String(c.matchId),
+                                      returnTo: compareUrl,
+                                    }
+                                  ).toString()}`
+                                : `/public/professional/${c.professionalId}`
+                            }
+                          >
+                            <User className="size-3.5" />
+                            Ver perfil
+                          </Link>
+                        </Button>
+                        {c.matchStatus === "WAITING" && (
+                          <Button
+                            size="sm"
+                            disabled={showInterest.isPending}
+                            onClick={() =>
+                              showInterest.mutate(c.matchId, {
+                                onSuccess: () => {
+                                  toast.success(
+                                    "Convite enviado ao profissional!"
+                                  );
+                                  queryClient.invalidateQueries({
+                                    queryKey: candidateComparisonKey(request),
+                                  });
+                                },
+                                onError: (error) =>
+                                  toast.error(
+                                    error instanceof ApiError
+                                      ? error.message
+                                      : "Não foi possível enviar o convite."
+                                  ),
+                              })
+                            }
+                          >
+                            <Handshake className="size-3.5" />
+                            Demonstrar interesse
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   ))}
                 </TableRow>
@@ -415,7 +647,7 @@ function ComparisonContent() {
         </Card>
       )}
 
-      {compare.isSuccess && data && data.candidates.length === 0 && (
+      {comparison.isSuccess && data && data.candidates.length === 0 && (
         <Card>
           <CardContent className="py-10 text-center">
             <p className="font-semibold">Nenhum candidato para comparar</p>
