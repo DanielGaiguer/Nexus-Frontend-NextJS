@@ -1,4 +1,4 @@
-import { Star } from "lucide-react";
+import { Briefcase, Building2, Star } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { ScoreRing } from "@/components/professional/score-ring";
@@ -54,8 +54,24 @@ export function CandidateCard({
             <div>
               <div className="font-semibold">{professional.name}</div>
               {showProject && (
-                <div className="text-muted-foreground text-sm">
-                  {match.project.title}
+                <div className="text-muted-foreground mt-1 flex items-center gap-1.5 text-sm">
+                  <Badge
+                    variant={
+                      match.project.opportunityType === "JOB"
+                        ? "default"
+                        : "secondary"
+                    }
+                  >
+                    {match.project.opportunityType === "JOB" ? (
+                      <Building2 className="size-3" />
+                    ) : (
+                      <Briefcase className="size-3" />
+                    )}
+                    {match.project.opportunityType === "JOB"
+                      ? "Vaga"
+                      : "Projeto"}
+                  </Badge>
+                  <span>{match.project.title}</span>
                 </div>
               )}
               {professional.reputation != null && (
