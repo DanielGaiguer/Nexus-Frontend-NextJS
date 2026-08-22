@@ -592,7 +592,7 @@ function ComparisonContent() {
                   </TableCell>
                   {data.candidates.map((c) => (
                     <TableCell key={c.matchId} className="text-center">
-                      <div className="flex flex-wrap items-center justify-center gap-2">
+                      <div className="flex flex-col items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
                           <Link
                             href={
