@@ -95,17 +95,50 @@ export default function CompanyMatchesPage() {
       </div>
 
       <Tabs defaultValue="received">
-        <TabsList>
+        {/* Mobile (< md): 3 linhas -- Confirmados sozinho em cima (é o mais
+            importante), Recebidos+Enviados no meio, o resto embaixo. */}
+        <div className="flex flex-col gap-1.5 md:hidden">
+          <TabsList className="w-full">
+            <TabsTrigger value="confirmed">
+              Confirmados{" "}
+              <Badge variant="secondary">{confirmed.data?.length ?? 0}</Badge>
+            </TabsTrigger>
+          </TabsList>
+          <TabsList className="w-full">
+            <TabsTrigger value="received">
+              Recebidos{" "}
+              <Badge variant="secondary">{received.data?.length ?? 0}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="sent">
+              Enviados{" "}
+              <Badge variant="secondary">{sent.data?.length ?? 0}</Badge>
+            </TabsTrigger>
+          </TabsList>
+          <TabsList className="w-full">
+            <TabsTrigger value="previous">
+              Anteriores{" "}
+              <Badge variant="secondary">{previous.data?.length ?? 0}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="rejected">
+              Recusados{" "}
+              <Badge variant="secondary">{rejected.data?.length ?? 0}</Badge>
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        {/* Desktop (>= md): uma linha só, Confirmados primeiro, depois
+            Recebidos, Enviados, Anteriores, Recusados. */}
+        <TabsList className="hidden md:inline-flex">
+          <TabsTrigger value="confirmed">
+            Confirmados{" "}
+            <Badge variant="secondary">{confirmed.data?.length ?? 0}</Badge>
+          </TabsTrigger>
           <TabsTrigger value="received">
             Recebidos{" "}
             <Badge variant="secondary">{received.data?.length ?? 0}</Badge>
           </TabsTrigger>
           <TabsTrigger value="sent">
             Enviados <Badge variant="secondary">{sent.data?.length ?? 0}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="confirmed">
-            Confirmados{" "}
-            <Badge variant="secondary">{confirmed.data?.length ?? 0}</Badge>
           </TabsTrigger>
           <TabsTrigger value="previous">
             Anteriores{" "}
