@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ArrowLeft,
   Award,
   Briefcase,
   Building2,
@@ -17,6 +18,7 @@ import {
   Star,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { ScoreRing } from "@/components/professional/score-ring";
@@ -70,6 +72,7 @@ export function OpportunityDetailContent({
   opportunityId: number;
   viewerRole: UserRole;
 }) {
+  const router = useRouter();
   const { data: project, isLoading } = usePublicOpportunity(opportunityId);
   const opportunities = useOpportunities();
   const showInterest = useShowInterest();
@@ -82,9 +85,26 @@ export function OpportunityDetailContent({
     ? Math.round(match.scoreBreakdown.finalScore)
     : null;
 
+  // Espelha o `<a href="javascript:history.back()">Voltar</a>` do
+  // opportunity-detail.html original — esta tela é alcançável de vários
+  // lugares (feed de oportunidades, mapa, tabela do admin, ...), então o
+  // botão precisa voltar pra onde a pessoa realmente veio, não pra um
+  // destino fixo.
+  const backButton = (
+    <button
+      type="button"
+      onClick={() => router.back()}
+      className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm"
+    >
+      <ArrowLeft className="size-4" />
+      Voltar
+    </button>
+  );
+
   if (isLoading || !project) {
     return (
       <div className="mx-auto flex max-w-4xl flex-col gap-4">
+        {backButton}
         <Skeleton className="h-32" />
         <Skeleton className="h-64" />
       </div>
@@ -96,10 +116,13 @@ export function OpportunityDetailContent({
     project.company &&
     (viewerRole === "PROFESSIONAL"
       ? `/pro/companies/${project.company.id}`
-      : `/public/company/${project.company.id}`);
+      : viewerRole === "ADMIN"
+        ? `/admin/company/${project.company.id}`
+        : `/public/company/${project.company.id}`);
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
+      {backButton}
       <Card>
         <CardContent className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-start gap-4">
@@ -324,9 +347,11 @@ export function OpportunityDetailContent({
                   </span>
                 )}
                 {companyHref && (
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={companyHref}>Ver mais</Link>
-                  </Button>
+                  <div className="flex justify-end">
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={companyHref}>Ver mais</Link>
+                    </Button>
+                  </div>
                 )}
               </CardContent>
             </Card>

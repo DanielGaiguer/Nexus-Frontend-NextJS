@@ -4,14 +4,12 @@ import { getSession } from "@/lib/session";
 
 /**
  * `/public/company/{id}` no app antigo é a página neutra de perfil de
- * empresa. No Next, o profissional já tem sua própria versão
- * (`/pro/companies/[id]` — contato, oportunidades fechadas etc.), então
- * essa rota só resolve o link neutro (ex.: "voltar ao perfil" a partir da
- * página de avaliações) — redireciona pra lá quando o viewer é
- * PROFESSIONAL, ou pro `/admin/company/[id]` (Prompt 5) quando é ADMIN.
- * Não há `/company/companies/[id]` (o diretório de empresas é só
- * listagem, sem detalhe — ver README, Prompt 3), então COMPANY cai de
- * volta no diretório.
+ * empresa. No Next, cada papel tem sua própria versão
+ * (`/pro/companies/[id]` — contato, oportunidades fechadas etc.;
+ * `/company/companies/[id]` — mesma visão, sem o card de Contato, que não
+ * faz sentido entre duas empresas; `/admin/company/[id]` — Prompt 5), então
+ * essa rota só resolve o link neutro (ex.: "Ver mais" a partir da página de
+ * oportunidade, "voltar ao perfil" a partir da página de avaliações).
  */
 export default async function PublicCompanyRedirectPage({
   params,
@@ -26,5 +24,5 @@ export default async function PublicCompanyRedirectPage({
   if (session.role === "ADMIN") {
     redirect(`/admin/company/${companyId}`);
   }
-  redirect("/company/companies");
+  redirect(`/company/companies/${companyId}`);
 }
