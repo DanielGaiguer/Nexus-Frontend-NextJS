@@ -16,13 +16,27 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAdminUsers } from "@/hooks/queries/useAdminUsers";
 import type { UserSummaryDTO } from "@/types/admin";
 
+// Mesma cor por tipo do admin-users.html original (.nexus-status-badge
+// purple/info/warning) — não a mesma badge "outline" neutra pros três tipos.
 const typeBadge: Record<
   UserSummaryDTO["type"],
-  { label: string; icon: typeof User }
+  { label: string; icon: typeof User; className: string }
 > = {
-  PROFESSIONAL: { label: "Professional", icon: User },
-  COMPANY: { label: "Company", icon: Building2 },
-  ADMIN: { label: "Admin", icon: Shield },
+  PROFESSIONAL: {
+    label: "Professional",
+    icon: User,
+    className: "bg-secondary/15 text-secondary",
+  },
+  COMPANY: {
+    label: "Company",
+    icon: Building2,
+    className: "bg-nexus-accent/15 text-nexus-accent",
+  },
+  ADMIN: {
+    label: "Admin",
+    icon: Shield,
+    className: "bg-warning/15 text-warning",
+  },
 };
 
 const helper = createColumnHelper<typeof adminTableFeatures, UserSummaryDTO>();
@@ -67,7 +81,7 @@ export default function AdminUsersPage() {
           const badge = typeBadge[info.getValue()];
           const Icon = badge.icon;
           return (
-            <Badge variant="outline" className="gap-1">
+            <Badge variant="outline" className={`gap-1 ${badge.className}`}>
               <Icon className="size-3" />
               {badge.label}
             </Badge>
@@ -87,11 +101,16 @@ export default function AdminUsersPage() {
         header: "Ações",
         cell: (info) => {
           const user = info.row.original;
+          // `user.id` é o id do User/login — nunca o da linha professional/
+          // company (PKs independentes, só coincidem por acaso pros primeiros
+          // cadastros de cada tipo). Usar `entityId` aqui era o bug: clicar
+          // "Ver perfil" caía num professional/company qualquer cujo id
+          // batesse por acidente com o `user.id` de quem foi clicado.
           const profileHref =
-            user.type === "PROFESSIONAL"
-              ? `/admin/professional/${user.id}`
-              : user.type === "COMPANY"
-                ? `/admin/company/${user.id}`
+            user.type === "PROFESSIONAL" && user.entityId != null
+              ? `/admin/professional/${user.entityId}`
+              : user.type === "COMPANY" && user.entityId != null
+                ? `/admin/company/${user.entityId}`
                 : null;
           return (
             <div className="flex items-center gap-2">
@@ -128,12 +147,14 @@ export default function AdminUsersPage() {
       </div>
 
       <Tabs value={type} onValueChange={(v) => setType(v as typeof type)}>
-        <TabsList className="flex-wrap">
-          <TabsTrigger value="all">Todos</TabsTrigger>
-          <TabsTrigger value="PROFESSIONAL">Professional</TabsTrigger>
-          <TabsTrigger value="COMPANY">Company</TabsTrigger>
-          <TabsTrigger value="ADMIN">Admin</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto">
+          <TabsList>
+            <TabsTrigger value="all">Todos</TabsTrigger>
+            <TabsTrigger value="PROFESSIONAL">Professional</TabsTrigger>
+            <TabsTrigger value="COMPANY">Company</TabsTrigger>
+            <TabsTrigger value="ADMIN">Admin</TabsTrigger>
+          </TabsList>
+        </div>
       </Tabs>
 
       {isLoading ? (

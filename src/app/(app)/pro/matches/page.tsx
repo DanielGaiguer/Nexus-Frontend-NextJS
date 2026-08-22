@@ -102,27 +102,29 @@ export default function MatchesPage() {
       </div>
 
       <Tabs defaultValue="invites">
-        <TabsList className="flex-wrap">
-          <TabsTrigger value="invites">
-            Convites Pendentes{" "}
-            <Badge variant="secondary">{invites.data?.length ?? 0}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="sent">
-            Interesses Enviados{" "}
-            <Badge variant="secondary">{sent.data?.length ?? 0}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="confirmed">
-            Matches Confirmados{" "}
-            <Badge variant="secondary">{confirmed.length}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="previous">
-            Oportunidades Anteriores{" "}
-            <Badge variant="secondary">{previous.data?.length ?? 0}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="rejected">
-            Recusados <Badge variant="secondary">{rejected.length}</Badge>
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto">
+          <TabsList>
+            <TabsTrigger value="invites">
+              Convites Pendentes{" "}
+              <Badge variant="secondary">{invites.data?.length ?? 0}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="sent">
+              Interesses Enviados{" "}
+              <Badge variant="secondary">{sent.data?.length ?? 0}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="confirmed">
+              Matches Confirmados{" "}
+              <Badge variant="secondary">{confirmed.length}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="previous">
+              Oportunidades Anteriores{" "}
+              <Badge variant="secondary">{previous.data?.length ?? 0}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="rejected">
+              Recusados <Badge variant="secondary">{rejected.length}</Badge>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="invites" className="flex flex-col gap-3">
           <InvitesList
