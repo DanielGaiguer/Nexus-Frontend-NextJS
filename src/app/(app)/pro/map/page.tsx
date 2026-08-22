@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils";
 const legendItems = [
   { color: "bg-primary", label: "Profissional" },
   { color: "bg-warning", label: "Empresa" },
-  { color: "bg-[#a78bfa]", label: "Projeto" },
+  { color: "bg-info", label: "Projeto" },
   { color: "bg-success", label: "Vaga de emprego" },
   { color: "bg-destructive", label: "Você" },
 ];
@@ -146,7 +146,7 @@ export default function ProMapPage() {
 
   return (
     <div className="mx-auto flex h-[calc(100vh-6rem)] max-w-6xl flex-col gap-4 sm:flex-row">
-      <aside className="flex w-full shrink-0 flex-col gap-4 overflow-y-auto sm:w-72">
+      <aside className="scrollbar-hide flex w-full shrink-0 flex-col gap-4 overflow-y-auto sm:w-72">
         <div>
           <h1 className="text-lg font-bold tracking-tight">Mapa de Talentos</h1>
           <p className="text-muted-foreground text-xs">
@@ -198,21 +198,28 @@ export default function ProMapPage() {
                 Tipo de oportunidade
               </div>
               {[
-                { value: "", label: "Todos" },
-                { value: "PROJECT", label: "Projetos" },
-                { value: "JOB", label: "Vagas de emprego" },
+                {
+                  value: "",
+                  label: "Todos",
+                  dot: "bg-gradient-to-br from-info to-success",
+                },
+                { value: "PROJECT", label: "Projetos", dot: "bg-info" },
+                { value: "JOB", label: "Vagas de emprego", dot: "bg-success" },
               ].map((opt) => (
                 <button
                   key={opt.value}
                   type="button"
                   onClick={() => setOppType(opt.value as typeof oppType)}
                   className={cn(
-                    "block w-full rounded px-1.5 py-1 text-left text-xs",
+                    "flex w-full items-center gap-2 rounded px-1.5 py-1 text-left text-xs",
                     oppType === opt.value
                       ? "bg-primary/10 text-foreground"
                       : "text-muted-foreground"
                   )}
                 >
+                  <span
+                    className={cn("size-2 shrink-0 rounded-full", opt.dot)}
+                  />
                   {opt.label}
                 </button>
               ))}

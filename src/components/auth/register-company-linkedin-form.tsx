@@ -80,6 +80,7 @@ export function RegisterCompanyLinkedinForm() {
     <AuthCard
       icon={Link2}
       eyebrow="Conectado com LinkedIn"
+      eyebrowClassName="bg-nexus-accent/10 text-nexus-accent border-nexus-accent/20"
       title="Falta pouco!"
       description="O LinkedIn não informa a razão social da empresa — complete os dados abaixo para finalizar o cadastro."
       footer={
@@ -94,8 +95,8 @@ export function RegisterCompanyLinkedinForm() {
         </>
       }
     >
-      <div className="bg-info/10 text-foreground flex items-start gap-2 rounded-md p-3 text-sm">
-        <Info className="text-info mt-0.5 size-4 shrink-0" />
+      <div className="bg-primary/5 border-primary/15 text-foreground flex items-start gap-2 rounded-md border p-3 text-sm">
+        <Info className="text-primary mt-0.5 size-4 shrink-0" />
         <div>
           <p className="font-medium">Prazo de aprovação</p>
           <p className="text-muted-foreground text-xs">

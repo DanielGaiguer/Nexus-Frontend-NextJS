@@ -91,9 +91,12 @@ export default function AdminCompanyViewPage() {
 
   const openProjects = (projects ?? []).filter((p) => p.status === "OPEN");
   const closedProjects = (projects ?? []).filter((p) => p.status === "CLOSED");
-  const confirmed = (matches ?? []).filter(
-    (m) => m.status === "MATCHED" && m.active !== false
-  );
+  // "Confirmados" conta todo match MATCHED, ativo ou não (o admin-company-
+  // profile.html original nunca filtra por `active` aqui — só o "Oportunidades
+  // anteriores" abaixo faz isso). Tinha um `&& m.active !== false` sobrando
+  // aqui que fazia esse número (e a Taxa de Sucesso, derivada dele) ficar bem
+  // menor que o app antigo pra empresas com matches já encerrados.
+  const confirmed = (matches ?? []).filter((m) => m.status === "MATCHED");
   const rejectedMatches = (matches ?? []).filter(
     (m) => m.status === "REJECTED"
   );
@@ -236,6 +239,7 @@ export default function AdminCompanyViewPage() {
 
           <ReputationCard
             reputation={publicCompany?.reputationDetails ?? null}
+            title="Análise de qualidade"
           />
         </div>
 
@@ -499,14 +503,14 @@ export default function AdminCompanyViewPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-sm">
-                Interesses pendentes{" "}
+                Matches pendentes{" "}
                 <Badge variant="secondary">{pending.length}</Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
               {pending.length === 0 ? (
                 <p className="text-muted-foreground text-sm">
-                  Nenhum interesse pendente.
+                  Nenhum match pendente.
                 </p>
               ) : (
                 <div className="flex flex-col gap-2">

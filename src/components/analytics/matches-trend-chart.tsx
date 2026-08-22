@@ -1,7 +1,14 @@
 "use client";
 
 import { TrendingUp } from "lucide-react";
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
+import {
+  Area,
+  CartesianGrid,
+  ComposedChart,
+  Line,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import {
@@ -15,9 +22,9 @@ import {
 import type { MonthlyMatchDTO } from "@/types/analytics";
 
 const chartConfig = {
-  totalMatches: { label: "Total", color: "var(--chart-1)" },
-  confirmedMatches: { label: "Confirmados", color: "var(--chart-4)" },
-  rejectedMatches: { label: "Recusados", color: "var(--chart-5)" },
+  totalMatches: { label: "Total", color: "var(--nexus-primary)" },
+  confirmedMatches: { label: "Confirmados", color: "var(--nexus-success)" },
+  rejectedMatches: { label: "Rejeitados", color: "var(--nexus-danger)" },
 } satisfies ChartConfig;
 
 export function MatchesTrendChart({ data }: { data: MonthlyMatchDTO[] }) {
@@ -37,7 +44,7 @@ export function MatchesTrendChart({ data }: { data: MonthlyMatchDTO[] }) {
 
   return (
     <ChartContainer config={chartConfig} className="h-64 w-full">
-      <AreaChart data={data} margin={{ left: 12, right: 12 }}>
+      <ComposedChart data={data} margin={{ left: 12, right: 12 }}>
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey="monthLabel"
@@ -45,14 +52,22 @@ export function MatchesTrendChart({ data }: { data: MonthlyMatchDTO[] }) {
           axisLine={false}
           tickMargin={8}
         />
+        <YAxis
+          allowDecimals={false}
+          tickLine={false}
+          axisLine={false}
+          width={28}
+        />
         <ChartTooltip content={<ChartTooltipContent />} />
         <ChartLegend content={<ChartLegendContent />} />
+        {/* Total e Confirmados: linha sólida com área de gradiente, igual ao lineChart antigo. */}
         <Area
           dataKey="totalMatches"
           type="monotone"
           fill="var(--color-totalMatches)"
           fillOpacity={0.15}
           stroke="var(--color-totalMatches)"
+          strokeWidth={2}
         />
         <Area
           dataKey="confirmedMatches"
@@ -60,15 +75,18 @@ export function MatchesTrendChart({ data }: { data: MonthlyMatchDTO[] }) {
           fill="var(--color-confirmedMatches)"
           fillOpacity={0.15}
           stroke="var(--color-confirmedMatches)"
+          strokeWidth={2}
         />
-        <Area
+        {/* Rejeitados: linha tracejada sem preenchimento, igual ao lineChart antigo. */}
+        <Line
           dataKey="rejectedMatches"
           type="monotone"
-          fill="var(--color-rejectedMatches)"
-          fillOpacity={0.15}
           stroke="var(--color-rejectedMatches)"
+          strokeWidth={1.5}
+          strokeDasharray="4 3"
+          dot={false}
         />
-      </AreaChart>
+      </ComposedChart>
     </ChartContainer>
   );
 }

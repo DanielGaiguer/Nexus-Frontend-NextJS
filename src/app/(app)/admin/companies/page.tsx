@@ -91,6 +91,11 @@ export default function AdminCompaniesPage() {
                       </span>
                     )}
                   </div>
+                  {company.description && (
+                    <p className="text-muted-foreground mt-2 line-clamp-2 text-xs">
+                      {company.description}
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>

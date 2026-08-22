@@ -60,7 +60,7 @@ export function OpportunityFilterFields({
         </Button>
       </div>
 
-      <div className="max-h-85 space-y-2 overflow-y-auto pr-1">
+      <div className="scrollbar-hide max-h-85 space-y-2 overflow-y-auto pr-1">
         <div className="space-y-1">
           <Label className="text-xs">Buscar</Label>
           <Input

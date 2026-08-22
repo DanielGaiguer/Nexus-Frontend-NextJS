@@ -151,7 +151,10 @@ export default function ChatListPage() {
                     {chat.lastMessage ?? "Nenhuma mensagem ainda"}
                   </span>
                   {chat.unreadCount > 0 && !isEnded && (
-                    <Badge className="h-5 min-w-5 shrink-0 justify-center rounded-full px-1.5 text-[11px]">
+                    <Badge
+                      variant="destructive"
+                      className="h-5 min-w-5 shrink-0 justify-center rounded-full px-1.5 text-[11px]"
+                    >
                       {chat.unreadCount > 99 ? "99+" : chat.unreadCount}
                     </Badge>
                   )}

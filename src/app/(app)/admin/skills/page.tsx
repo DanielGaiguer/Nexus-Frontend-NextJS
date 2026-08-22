@@ -27,6 +27,17 @@ import { ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import type { AdminSkillDTO } from "@/types/admin";
 
+// Mesma cor por categoria do admin-skills.html original — cada grupo tinha
+// seu próprio ícone colorido, não o mesmo `text-primary` repetido em todos.
+const categoryIconColor: Record<string, string> = {
+  Backend: "text-primary",
+  Frontend: "text-nexus-accent",
+  Mobile: "text-[#f472b6]",
+  DevOps: "text-success",
+  Database: "text-warning",
+  Data: "text-secondary",
+};
+
 export default function AdminSkillsPage() {
   const { data: skills, isLoading } = useAdminSkills();
   const [search, setSearch] = useState("");
@@ -133,7 +144,12 @@ export default function AdminSkillsPage() {
           <Card key={cat}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-sm">
-                <Tag className="text-primary size-4" />
+                <Tag
+                  className={cn(
+                    "size-4",
+                    categoryIconColor[cat] ?? "text-muted-foreground"
+                  )}
+                />
                 {cat}
                 <Badge variant="secondary">{items.length}</Badge>
               </CardTitle>

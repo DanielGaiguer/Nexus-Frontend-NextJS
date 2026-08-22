@@ -72,7 +72,7 @@ export function AppSidebar({ session }: { session: SessionClaims }) {
                       asChild
                       isActive={pathname.startsWith(item.href)}
                       tooltip={item.title}
-                      className="text-muted-foreground hover:bg-primary/8 hover:text-foreground data-[active=true]:bg-primary/15 data-[active=true]:text-foreground h-12! gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors data-[active=true]:font-semibold data-[active=true]:shadow-[inset_3px_0_0_var(--primary)]"
+                      className="text-muted-foreground hover:bg-primary/8 hover:text-foreground data-[active=true]:bg-primary/15 data-[active=true]:text-foreground h-10! gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors data-[active=true]:font-semibold data-[active=true]:shadow-[inset_3px_0_0_var(--primary)]"
                     >
                       <Link href={item.href}>
                         <item.icon />

@@ -1,30 +1,15 @@
 "use client";
 
-import {
-  Award,
-  BarChart3,
-  ArrowLeft,
-  Target,
-  TrendingUp,
-  Users,
-} from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 
-import { AcceptanceRateList } from "@/components/professional/acceptance-rate-list";
-import { MatchesTrendChart } from "@/components/professional/matches-trend-chart";
-import { ReputationRadarChart } from "@/components/professional/reputation-radar-chart";
-import { ScoreDistributionChart } from "@/components/professional/score-distribution-chart";
-import { SkillDemandChart } from "@/components/professional/skill-demand-chart";
-import { SoftSkillFeedbackChart } from "@/components/professional/soft-skill-feedback-chart";
-import { StatCard } from "@/components/dashboard/stat-card";
-import { EmptyState } from "@/components/shared/empty-state";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ProfessionalAnalyticsView } from "@/components/analytics/professional-analytics-view";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAdminProfessionalAnalytics } from "@/hooks/queries/useAdminAnalytics";
 import { useAdminProfessionalProfile } from "@/hooks/queries/useAdminProfessionalView";
 
-/** Reaproveita os mesmos componentes de chart de /pro/analytics — só a fonte do dado muda (endpoint por id, só admin). */
+/** Reaproveita o mesmo ProfessionalAnalyticsView de /pro/analytics — só a fonte do dado muda (endpoint por id, só admin). */
 export default function AdminProfessionalAnalyticsPage() {
   const { professionalId } = useParams<{ professionalId: string }>();
   const id = Number(professionalId);
@@ -45,7 +30,7 @@ export default function AdminProfessionalAnalyticsPage() {
           Voltar
         </button>
         <h1 className="text-2xl font-bold tracking-tight">
-          Estatísticas {profile ? `— ${profile.name}` : ""}
+          Analytics {profile ? `— ${profile.name}` : ""}
         </h1>
         <p className="text-muted-foreground text-sm">
           Visão somente leitura do administrador
@@ -68,167 +53,7 @@ export default function AdminProfessionalAnalyticsPage() {
         </Card>
       )}
 
-      {data && (
-        <>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <StatCard
-              icon={Users}
-              label="Total de matches"
-              value={String(data.matchSummary.totalMatches)}
-            />
-            <StatCard
-              icon={Target}
-              label="Taxa de aceitação"
-              value={`${data.matchSummary.overallAcceptanceRate.toFixed(0)}%`}
-              accent="accent"
-            />
-            <StatCard
-              icon={Award}
-              label="Reputação geral"
-              value={
-                data.reputationSummary.overallReputation != null
-                  ? data.reputationSummary.overallReputation.toFixed(1)
-                  : "—"
-              }
-              accent="secondary"
-            />
-            <StatCard
-              icon={TrendingUp}
-              label="Recomendam"
-              value={
-                data.reputationSummary.recommendationRate != null
-                  ? `${data.reputationSummary.recommendationRate.toFixed(0)}%`
-                  : "—"
-              }
-              accent="success"
-            />
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-sm">
-                <TrendingUp className="size-4" />
-                Matches ao longo do tempo
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {data.matchesPerMonth.length > 0 ? (
-                <MatchesTrendChart data={data.matchesPerMonth} />
-              ) : (
-                <EmptyState
-                  icon={BarChart3}
-                  title="Ainda sem histórico suficiente"
-                  className="py-8"
-                />
-              )}
-            </CardContent>
-          </Card>
-
-          <div className="grid gap-4 lg:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Distribuição de score</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {data.scoreDistribution.length > 0 ? (
-                  <ScoreDistributionChart data={data.scoreDistribution} />
-                ) : (
-                  <EmptyState
-                    icon={BarChart3}
-                    title="Nenhum dado ainda"
-                    className="py-8"
-                  />
-                )}
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">
-                  Skills mais requisitadas
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {data.mostRequiredSkills.length > 0 ? (
-                  <SkillDemandChart data={data.mostRequiredSkills} />
-                ) : (
-                  <EmptyState
-                    icon={BarChart3}
-                    title="Nenhum dado ainda"
-                    className="py-8"
-                  />
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="grid gap-4 lg:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">
-                  Taxa de aceitação por empresa
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {data.acceptanceRatePerCompany.length > 0 ? (
-                  <AcceptanceRateList data={data.acceptanceRatePerCompany} />
-                ) : (
-                  <EmptyState
-                    icon={BarChart3}
-                    title="Nenhum dado ainda"
-                    className="py-8"
-                  />
-                )}
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Perfil de reputação</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {data.reputationSummary.totalReviews ? (
-                  <ReputationRadarChart reputation={data.reputationSummary} />
-                ) : (
-                  <EmptyState
-                    icon={Award}
-                    title="Nenhuma avaliação ainda"
-                    className="py-8"
-                  />
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {data.skillGaps.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">
-                  Skills em alta que o profissional ainda não tem
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-wrap gap-2">
-                {data.skillGaps.map((gap) => (
-                  <Badge key={gap.skillName} variant="outline">
-                    {gap.skillName} · {gap.frequency}
-                  </Badge>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
-          {data.softSkillFeedback.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">
-                  Pontos de atenção nas avaliações
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <SoftSkillFeedbackChart data={data.softSkillFeedback} />
-              </CardContent>
-            </Card>
-          )}
-        </>
-      )}
+      {data && <ProfessionalAnalyticsView data={data} />}
     </div>
   );
 }

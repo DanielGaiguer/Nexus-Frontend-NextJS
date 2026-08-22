@@ -140,6 +140,7 @@ export default function CompanyDashboardPage() {
         items={recentProjects}
         emptyTitle="Nenhum projeto publicado ainda"
         createLabel="Criar projeto"
+        titleColumnLabel="Projeto"
         moneyColumnLabel="Orçamento"
         renderMoney={(p) =>
           p.minimumBudget != null && p.maximumBudget != null ? (
@@ -161,6 +162,7 @@ export default function CompanyDashboardPage() {
         items={recentJobs}
         emptyTitle="Nenhuma vaga publicada ainda"
         createLabel="Criar vaga"
+        titleColumnLabel="Vaga"
         moneyColumnLabel="Salário"
         renderMoney={(p) =>
           p.monthlySalaryMin != null ? (
@@ -187,6 +189,7 @@ function RecentOpportunitiesCard({
   items,
   emptyTitle,
   createLabel,
+  titleColumnLabel,
   moneyColumnLabel,
   renderMoney,
 }: {
@@ -198,6 +201,7 @@ function RecentOpportunitiesCard({
   items: ProjectResponseDTO[];
   emptyTitle: string;
   createLabel: string;
+  titleColumnLabel: string;
   moneyColumnLabel: string;
   renderMoney: (project: ProjectResponseDTO) => ReactNode;
 }) {
@@ -240,7 +244,7 @@ function RecentOpportunitiesCard({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Título</TableHead>
+                  <TableHead>{titleColumnLabel}</TableHead>
                   <TableHead>{moneyColumnLabel}</TableHead>
                   <TableHead>Modalidade</TableHead>
                   <TableHead>Status</TableHead>

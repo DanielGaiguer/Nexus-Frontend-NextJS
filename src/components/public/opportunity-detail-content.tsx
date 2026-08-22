@@ -116,7 +116,9 @@ export function OpportunityDetailContent({
     project.company &&
     (viewerRole === "PROFESSIONAL"
       ? `/pro/companies/${project.company.id}`
-      : `/public/company/${project.company.id}`);
+      : viewerRole === "ADMIN"
+        ? `/admin/company/${project.company.id}`
+        : `/public/company/${project.company.id}`);
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">

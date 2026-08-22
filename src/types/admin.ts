@@ -28,6 +28,12 @@ export interface UserSummaryDTO {
   type: "PROFESSIONAL" | "COMPANY" | "ADMIN";
   active: boolean;
   profilePhotoUrl: string | null;
+  /**
+   * Id da própria linha professional/company (PK independente da de `id`
+   * acima, que é o User/login) — é este o id que /admin/professional/{id} e
+   * /admin/company/{id} esperam. Nulo pra ADMIN.
+   */
+  entityId: number | null;
 }
 
 /** Espelha com.main.nexus.dto.RejectCompanyRequestDTO. */

@@ -13,13 +13,24 @@ import { getSession } from "@/lib/session";
  */
 export default async function PublicProfessionalRedirectPage({
   params,
+  searchParams,
 }: PageProps<"/public/professional/[professionalId]">) {
   const { professionalId } = await params;
+  const query = await searchParams;
   const session = await getSession();
   if (!session) redirect("/login");
 
   if (session.role === "COMPANY") {
-    redirect(`/company/professionals/${professionalId}`);
+    // `matchId`/`returnTo` vêm da tela de comparação (ver "Ver perfil" em
+    // company/projects/[projectId]/compare) e habilitam o botão "Demonstrar
+    // interesse" na página do profissional, com volta pra comparação.
+    const forwarded = new URLSearchParams();
+    if (typeof query.matchId === "string")
+      forwarded.set("matchId", query.matchId);
+    if (typeof query.returnTo === "string")
+      forwarded.set("returnTo", query.returnTo);
+    const suffix = forwarded.size > 0 ? `?${forwarded.toString()}` : "";
+    redirect(`/company/professionals/${professionalId}${suffix}`);
   }
   if (session.role === "ADMIN") {
     redirect(`/admin/professional/${professionalId}`);

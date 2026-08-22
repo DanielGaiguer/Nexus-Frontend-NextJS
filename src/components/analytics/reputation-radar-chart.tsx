@@ -11,7 +11,7 @@ import {
 import type { ReputationSummaryDTO } from "@/types/analytics";
 
 const chartConfig = {
-  value: { label: "Nota", color: "var(--chart-1)" },
+  value: { label: "Nota", color: "var(--nexus-primary)" },
 } satisfies ChartConfig;
 
 export function ReputationRadarChart({

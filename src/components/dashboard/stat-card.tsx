@@ -25,12 +25,13 @@ export function StatCard({
   accent = "primary",
 }: StatCardProps) {
   return (
-    <Card>
-      <CardContent className="flex items-center justify-between gap-3">
+    <Card className="h-full">
+      <CardContent className="flex h-full items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="text-2xl font-bold tabular-nums">{value}</div>
           {/* Espelha .nexus-stat-label do app antigo: uppercase + tracking. */}
-          <div className="text-muted-foreground truncate text-xs tracking-wide uppercase">
+          {/* Sem truncate: quebra em várias linhas em vez de cortar com reticências. */}
+          <div className="text-muted-foreground text-xs tracking-wide uppercase">
             {label}
           </div>
         </div>

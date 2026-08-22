@@ -7,9 +7,14 @@ import { cn } from "@/lib/utils";
 
 function Progress({
   className,
+  indicatorClassName,
   value,
   ...props
-}: React.ComponentProps<typeof ProgressPrimitive.Root>) {
+}: React.ComponentProps<typeof ProgressPrimitive.Root> & {
+  /** Sobrescreve a cor do preenchimento (default `bg-primary`) — usado onde cada
+   * barra precisa de uma cor própria, ex. os eixos de reputação do app antigo. */
+  indicatorClassName?: string;
+}) {
   return (
     <ProgressPrimitive.Root
       data-slot="progress"
@@ -21,7 +26,10 @@ function Progress({
     >
       <ProgressPrimitive.Indicator
         data-slot="progress-indicator"
-        className="bg-primary h-full w-full flex-1 transition-all"
+        className={cn(
+          "h-full w-full flex-1 transition-all",
+          indicatorClassName ?? "bg-primary"
+        )}
         style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
       />
     </ProgressPrimitive.Root>

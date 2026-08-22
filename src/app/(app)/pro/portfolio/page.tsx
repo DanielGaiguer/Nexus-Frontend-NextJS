@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDeletePreviousProject } from "@/hooks/mutations/usePreviousProjectMutations";
 import { usePreviousProjects } from "@/hooks/queries/usePreviousProjects";
@@ -45,9 +45,9 @@ export default function PortfolioPage() {
       </div>
 
       {isLoading && (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="flex flex-col gap-3">
           {Array.from({ length: 2 }).map((_, i) => (
-            <Skeleton key={i} className="h-40" />
+            <Skeleton key={i} className="h-24" />
           ))}
         </div>
       )}
@@ -63,16 +63,32 @@ export default function PortfolioPage() {
         />
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="flex flex-col gap-3">
         {projects?.map((project) => (
-          <Card key={project.id}>
-            <CardHeader className="flex-row items-start justify-between gap-2">
-              <div>
-                <CardTitle className="text-base">{project.title}</CardTitle>
-                {project.yearOfCompletion && (
-                  <p className="text-muted-foreground text-xs">
-                    {project.yearOfCompletion}
+          <Card key={project.id} className="py-4">
+            <CardContent className="flex flex-wrap items-start justify-between gap-4 sm:flex-nowrap">
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <div className="flex flex-wrap items-baseline gap-2">
+                  <CardTitle className="text-base">{project.title}</CardTitle>
+                  {project.yearOfCompletion && (
+                    <span className="text-muted-foreground text-xs">
+                      {project.yearOfCompletion}
+                    </span>
+                  )}
+                </div>
+                {project.description && (
+                  <p className="text-muted-foreground text-sm">
+                    {project.description}
                   </p>
+                )}
+                {project.technologies.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {project.technologies.map((tech) => (
+                      <Badge key={tech} variant="secondary" className="text-xs">
+                        {tech}
+                      </Badge>
+                    ))}
+                  </div>
                 )}
               </div>
               <div className="flex shrink-0 gap-1">
@@ -87,22 +103,6 @@ export default function PortfolioPage() {
                   <Trash2 className="size-4" />
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {project.description && (
-                <p className="text-muted-foreground text-sm">
-                  {project.description}
-                </p>
-              )}
-              {project.technologies.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {project.technologies.map((tech) => (
-                    <Badge key={tech} variant="secondary" className="text-xs">
-                      {tech}
-                    </Badge>
-                  ))}
-                </div>
-              )}
             </CardContent>
           </Card>
         ))}

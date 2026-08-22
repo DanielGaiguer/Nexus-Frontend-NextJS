@@ -3,13 +3,13 @@
 import { CircleCheck, Clock, Handshake, TrendingUp, Users } from "lucide-react";
 import Link from "next/link";
 
+import { ConversionRateGauge } from "@/components/admin/conversion-rate-gauge";
 import { MonthlyMatchesBarChart } from "@/components/admin/monthly-matches-bar-chart";
 import { UserCompositionChart } from "@/components/admin/user-composition-chart";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -79,7 +79,7 @@ export default function AdminDashboardPage() {
                 {d.totalProfessionals}
               </span>
               <span className="text-muted-foreground"> profissionais · </span>
-              <span className="text-accent-foreground font-medium">
+              <span className="text-nexus-accent font-medium">
                 {d.totalCompanies}
               </span>
               <span className="text-muted-foreground"> empresas</span>
@@ -139,11 +139,11 @@ export default function AdminDashboardPage() {
               Taxa de conversão
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col items-center gap-3">
-            <div className="text-primary text-4xl font-bold tabular-nums">
+          <CardContent className="flex flex-col items-center gap-1">
+            <ConversionRateGauge rate={d.matchConversionRate} />
+            <div className="text-primary text-2xl font-bold tabular-nums">
               {d.matchConversionRate.toFixed(1)}%
             </div>
-            <Progress value={d.matchConversionRate} className="h-2 w-full" />
             <p className="text-muted-foreground text-center text-xs">
               dos matches gerados viraram conexões reais
             </p>
@@ -189,7 +189,7 @@ export default function AdminDashboardPage() {
               label="Projetos ativos"
               value={d.totalOpenProjects}
               max={d.totalProjects}
-              color="bg-accent-foreground"
+              color="bg-nexus-accent"
             />
             <div className="flex items-center justify-between border-t pt-2">
               <span className="text-muted-foreground text-xs">

@@ -291,7 +291,7 @@ export default function AdminProjectsPage() {
           </div>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <div className="space-y-1.5">
             <Label className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
               Modalidade
@@ -305,7 +305,7 @@ export default function AdminProjectsPage() {
                 }))
               }
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full lg:w-[90%]">
                 <SelectValue placeholder="Todas" />
               </SelectTrigger>
               <SelectContent>
@@ -325,6 +325,18 @@ export default function AdminProjectsPage() {
               options={experienceLevelOptions}
               value={oppFilters.expLevels}
               onChange={(v) => setOppFilters((f) => ({ ...f, expLevels: v }))}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+              Skills
+            </Label>
+            <MultiSelectPopover
+              label="Skills"
+              options={skillOptions}
+              value={oppFilters.skills}
+              onChange={(v) => setOppFilters((f) => ({ ...f, skills: v }))}
             />
           </div>
           <div className="space-y-1.5">
@@ -362,20 +374,6 @@ export default function AdminProjectsPage() {
                 <SelectItem value="PART_TIME">Meio período</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-        </div>
-
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-              Skills
-            </Label>
-            <MultiSelectPopover
-              label="Skills"
-              options={skillOptions}
-              value={oppFilters.skills}
-              onChange={(v) => setOppFilters((f) => ({ ...f, skills: v }))}
-            />
           </div>
         </div>
 

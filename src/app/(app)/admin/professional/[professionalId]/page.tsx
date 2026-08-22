@@ -219,6 +219,7 @@ export default function AdminProfessionalViewPage() {
 
           <ReputationCard
             reputation={publicProfile?.reputationDetails ?? null}
+            title="Análise de qualidade"
           />
         </div>
 

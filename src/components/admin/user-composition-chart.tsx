@@ -11,9 +11,11 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 
+// Mesmas cores do donutChart original (COLOR_PRIMARY / COLOR_ACCENT — ciano,
+// não a cor lavanda genérica de --chart-2).
 const chartConfig = {
-  professionals: { label: "Profissionais", color: "var(--chart-1)" },
-  companies: { label: "Empresas", color: "var(--chart-2)" },
+  professionals: { label: "Profissionais", color: "var(--nexus-primary)" },
+  companies: { label: "Empresas", color: "var(--nexus-accent)" },
 } satisfies ChartConfig;
 
 export function UserCompositionChart({

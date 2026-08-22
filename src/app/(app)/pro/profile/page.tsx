@@ -149,7 +149,7 @@ export default function ProProfilePage() {
                   {profile.available ? "Disponível" : "Indisponível"}
                 </div>
                 <div className="text-muted-foreground text-xs">
-                  Impacta o score
+                  Afeta o score
                 </div>
               </div>
               <Switch

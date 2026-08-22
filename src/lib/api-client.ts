@@ -19,11 +19,41 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * `ProjectResponseDTO.workMode` chega do backend serializado sob a chave
+ * `"modality"` (`@JsonProperty("modality")` em ProjectResponseDTO.java no
+ * backend — mantido de propósito porque o nexus-frontend legado ainda
+ * consome esse mesmo endpoint esperando essa chave). Todo o resto deste
+ * frontend — tipos, filtros de mapa/oportunidades, telas — já assume
+ * `workMode` desde o início; em vez de espalhar esse detalhe de
+ * serialização por ~15 hooks e telas diferentes (e continuar arriscando
+ * esquecer um), corrige aqui, no único ponto por onde toda resposta JSON
+ * passa (`apiFetch` e `backendFetch`). Reviver do `JSON.parse` percorre a
+ * árvore de baixo pra cima sozinho, então cobre objeto único, listas e o
+ * `match.project` aninhado, sem precisar andar a árvore na mão.
+ */
+function reviveWorkMode(_key: string, value: unknown): unknown {
+  if (
+    value !== null &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    "modality" in value &&
+    !("workMode" in value)
+  ) {
+    (value as Record<string, unknown>).workMode = (
+      value as Record<string, unknown>
+    ).modality;
+  }
+  return value;
+}
+
 async function parseResponse<T>(response: Response): Promise<T> {
   const isJson = response.headers
     .get("content-type")
     ?.includes("application/json");
-  const payload = isJson ? await response.json() : await response.text();
+  const payload = isJson
+    ? JSON.parse(await response.text(), reviveWorkMode)
+    : await response.text();
 
   if (!response.ok) {
     const message =

@@ -205,7 +205,7 @@ export default function ProjectRankingPage() {
               }))
             }
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="UF" />
             </SelectTrigger>
             <SelectContent>
@@ -226,7 +226,7 @@ export default function ProjectRankingPage() {
               }))
             }
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Experiência" />
             </SelectTrigger>
             <SelectContent>
@@ -251,7 +251,7 @@ export default function ProjectRankingPage() {
               }))
             }
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Disponibilidade" />
             </SelectTrigger>
             <SelectContent>

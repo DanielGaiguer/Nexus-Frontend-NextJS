@@ -11,11 +11,12 @@ export default function RegisterSuccessPage() {
   return (
     <AuthCard
       icon={CheckCircle2}
+      iconClassName="bg-success/10 text-success"
       title="Cadastro enviado!"
       description="Sua solicitação foi recebida com sucesso."
     >
-      <div className="bg-info/10 text-foreground flex items-start gap-2 rounded-md p-3 text-sm">
-        <Clock4 className="text-info mt-0.5 size-4 shrink-0" />
+      <div className="bg-primary/5 border-primary/15 text-foreground flex items-start gap-2 rounded-md border p-3 text-sm">
+        <Clock4 className="text-primary mt-0.5 size-4 shrink-0" />
         <div>
           <p className="font-medium">Aprovação pendente</p>
           <p className="text-muted-foreground text-xs">

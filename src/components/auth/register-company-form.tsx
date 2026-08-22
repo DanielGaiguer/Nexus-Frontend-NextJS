@@ -77,6 +77,7 @@ export function RegisterCompanyForm() {
     <AuthCard
       icon={Building2}
       eyebrow="Sou Empresa"
+      eyebrowClassName="bg-nexus-accent/10 text-nexus-accent border-nexus-accent/20"
       title="Cadastre sua empresa"
       description="Encontre os melhores profissionais para seus projetos de TI."
       footer={
@@ -91,8 +92,8 @@ export function RegisterCompanyForm() {
         </>
       }
     >
-      <div className="bg-info/10 text-foreground flex items-start gap-2 rounded-md p-3 text-sm">
-        <Info className="text-info mt-0.5 size-4 shrink-0" />
+      <div className="bg-primary/5 border-primary/15 text-foreground flex items-start gap-2 rounded-md border p-3 text-sm">
+        <Info className="text-primary mt-0.5 size-4 shrink-0" />
         <div>
           <p className="font-medium">Prazo de aprovação</p>
           <p className="text-muted-foreground text-xs">

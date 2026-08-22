@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Users } from "lucide-react";
+import { Search, Star, Users } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -92,6 +92,33 @@ export default function AdminProfessionalsPage() {
                       {experienceLabels[professional.experienceLevel] ??
                         professional.experienceLevel}
                     </Badge>
+                  )}
+                  <div className="mt-1 flex items-center gap-1">
+                    {professional.reputation != null ? (
+                      <>
+                        <Star className="fill-warning text-warning size-3.5" />
+                        <span className="text-xs font-medium">
+                          {professional.reputation.toFixed(1)}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">
+                        Sem avaliações ainda
+                      </span>
+                    )}
+                  </div>
+                  {professional.skills.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {professional.skills.slice(0, 5).map((skill) => (
+                        <Badge
+                          key={skill}
+                          variant="outline"
+                          className="text-[11px]"
+                        >
+                          {skill}
+                        </Badge>
+                      ))}
+                    </div>
                   )}
                 </div>
               </CardContent>

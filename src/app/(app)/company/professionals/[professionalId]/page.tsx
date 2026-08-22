@@ -5,6 +5,7 @@ import {
   Briefcase,
   Code2,
   FileText,
+  Handshake,
   History,
   Lock,
   LockOpen,
@@ -12,7 +13,9 @@ import {
   Phone,
   Star,
 } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
+import { toast } from "sonner";
 
 import { credentialColorHex } from "@/components/professional/credential-color";
 import { ReputationCard } from "@/components/professional/reputation-card";
@@ -22,8 +25,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCompanyShowInterest } from "@/hooks/mutations/useCompanyMatchActions";
 import { useProfessionalContact } from "@/hooks/queries/useProfessionalContact";
 import { usePublicProfessional } from "@/hooks/queries/usePublicProfessional";
+import { ApiError } from "@/lib/api-client";
 import type { CredentialType } from "@/types/professional";
 
 const credentialTypeConfig: Record<
@@ -61,9 +66,24 @@ function formatMoney(value: number | null) {
 }
 
 export default function CompanyProfessionalViewPage() {
+  return (
+    <Suspense fallback={null}>
+      <CompanyProfessionalViewContent />
+    </Suspense>
+  );
+}
+
+function CompanyProfessionalViewContent() {
   const { professionalId } = useParams<{ professionalId: string }>();
   const id = Number(professionalId);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Presentes só quando se chega aqui a partir da tela de comparação
+  // (company/projects/[projectId]/compare) num match ainda "WAITING" —
+  // habilitam o botão de demonstrar interesse, com volta pra comparação.
+  const matchId = searchParams.get("matchId");
+  const returnTo = searchParams.get("returnTo");
+  const showInterest = useCompanyShowInterest();
 
   const { data: professional, isLoading } = usePublicProfessional(id);
   // O backend só libera o contato de fato se houver match confirmado — aqui
@@ -82,14 +102,39 @@ export default function CompanyProfessionalViewPage() {
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
-      <button
-        type="button"
-        onClick={() => router.back()}
-        className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm"
-      >
-        <ArrowLeft className="size-4" />
-        Voltar
-      </button>
+      <div className="flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm"
+        >
+          <ArrowLeft className="size-4" />
+          Voltar
+        </button>
+        {matchId && returnTo && (
+          <Button
+            size="sm"
+            disabled={showInterest.isPending}
+            onClick={() =>
+              showInterest.mutate(Number(matchId), {
+                onSuccess: () => {
+                  toast.success("Convite enviado ao profissional!");
+                  router.push(returnTo);
+                },
+                onError: (error) =>
+                  toast.error(
+                    error instanceof ApiError
+                      ? error.message
+                      : "Não foi possível enviar o convite."
+                  ),
+              })
+            }
+          >
+            <Handshake className="size-3.5" />
+            Demonstrar interesse
+          </Button>
+        )}
+      </div>
 
       <div className="grid min-w-0 gap-4 lg:grid-cols-[320px_1fr]">
         <div className="flex min-w-0 flex-col gap-4">
@@ -350,7 +395,7 @@ export default function CompanyProfessionalViewPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-sm">
                 <History className="text-primary size-4" />
-                Projetos anteriores
+                Oportunidades anteriores
                 <Badge variant="secondary">
                   {professional.previousProjects.length}
                 </Badge>

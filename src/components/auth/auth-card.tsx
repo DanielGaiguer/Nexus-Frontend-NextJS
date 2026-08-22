@@ -2,13 +2,18 @@ import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 interface AuthCardProps {
   /** Ícone em círculo — usado nas telas de cadastro (mesmo padrão de `.auth-logo` do app antigo). Omitir quando `wordmark` for true. */
   icon?: LucideIcon;
+  /** Cor do ícone/círculo — default é o roxo de marca (`.auth-logo`/`.badge-glow` do app antigo). register/success passa a variante verde (checkmark de sucesso). */
+  iconClassName?: string;
   /** Login.html não tem `.auth-logo`, só a wordmark "nexus." grande acima do título — único caso assim entre as telas de auth. */
   wordmark?: boolean;
   eyebrow?: string;
+  /** Cor do badge do eyebrow — default roxo (`.badge-glow`); register-company/linkedin passam a variante ciano (mesmo tom de `#67e8f9` do app antigo). */
+  eyebrowClassName?: string;
   title: string;
   description: string;
   children: ReactNode;
@@ -19,8 +24,10 @@ interface AuthCardProps {
 /** Wrapper visual compartilhado pelas telas de login/cadastro. */
 export function AuthCard({
   icon: Icon,
+  iconClassName,
   wordmark,
   eyebrow,
+  eyebrowClassName,
   title,
   description,
   children,
@@ -36,13 +43,23 @@ export function AuthCard({
           </div>
         ) : (
           Icon && (
-            <div className="bg-primary/10 text-primary flex size-14 items-center justify-center rounded-full">
+            <div
+              className={cn(
+                "flex size-14 items-center justify-center rounded-full",
+                iconClassName ?? "bg-primary/10 text-primary"
+              )}
+            >
               <Icon className="size-6" />
             </div>
           )
         )}
         {eyebrow && (
-          <span className="bg-accent text-accent-foreground rounded-full px-3 py-1 text-xs font-medium">
+          <span
+            className={cn(
+              "rounded-full border px-3 py-1 text-xs font-medium",
+              eyebrowClassName ?? "bg-primary/10 text-primary border-primary/20"
+            )}
+          >
             {eyebrow}
           </span>
         )}
