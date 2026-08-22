@@ -90,9 +90,7 @@ function formatDate(iso: string) {
 }
 
 export function ProjectCard({ project }: { project: ProjectResponseDTO }) {
-  const closeProject = useCloseProject();
   const deleteProject = useDeleteProject();
-  const [confirmClose, setConfirmClose] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
@@ -243,50 +241,18 @@ export function ProjectCard({ project }: { project: ProjectResponseDTO }) {
           </Button>
 
           {project.status === "OPEN" && (
-            <AlertDialog open={confirmClose} onOpenChange={setConfirmClose}>
-              <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  <StopCircle className="size-3.5" />
-                  Encerrar
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Encerrar oportunidade</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Isso encerra <strong>{project.title}</strong> e cancela os
-                    matches pendentes (nunca confirmados). Matches já
-                    confirmados não são afetados.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction
-                    disabled={closeProject.isPending}
-                    onClick={() =>
-                      closeProject.mutate(project.id, {
-                        onSuccess: () => {
-                          toast.success("Oportunidade encerrada.");
-                          setConfirmClose(false);
-                        },
-                        onError: (error) =>
-                          toast.error(
-                            error instanceof ApiError
-                              ? error.message
-                              : "Não foi possível encerrar."
-                          ),
-                      })
-                    }
-                  >
-                    {closeProject.isPending ? "Encerrando…" : "Encerrar"}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <CloseProjectDialog project={project} />
           )}
 
           {project.status === "PAUSED" && (
-            <ResumeProjectDialog project={project} />
+            <>
+              <ResumeProjectDialog project={project} />
+              {/* Vagas preenchidas e a empresa não quer abrir mais posições
+                  — precisa poder encerrar direto daqui, sem passar pelo
+                  modal automático (que só aparece uma vez, pro primeiro
+                  projeto pausado). */}
+              <CloseProjectDialog project={project} />
+            </>
           )}
           {project.status === "CLOSED" && (
             <ReopenProjectDialog project={project} />
@@ -332,6 +298,54 @@ export function ProjectCard({ project }: { project: ProjectResponseDTO }) {
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function CloseProjectDialog({ project }: { project: ProjectResponseDTO }) {
+  const closeProject = useCloseProject();
+  const [open, setOpen] = useState(false);
+
+  return (
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild>
+        <Button variant="ghost" size="sm">
+          <StopCircle className="size-3.5" />
+          Encerrar
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Encerrar oportunidade</AlertDialogTitle>
+          <AlertDialogDescription>
+            Isso encerra <strong>{project.title}</strong> e cancela os matches
+            pendentes (nunca confirmados). Matches já confirmados não são
+            afetados.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={closeProject.isPending}
+            onClick={() =>
+              closeProject.mutate(project.id, {
+                onSuccess: () => {
+                  toast.success("Oportunidade encerrada.");
+                  setOpen(false);
+                },
+                onError: (error) =>
+                  toast.error(
+                    error instanceof ApiError
+                      ? error.message
+                      : "Não foi possível encerrar."
+                  ),
+              })
+            }
+          >
+            {closeProject.isPending ? "Encerrando…" : "Encerrar"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 

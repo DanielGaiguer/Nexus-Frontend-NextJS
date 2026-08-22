@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
+import { PausedProjectDialog } from "@/components/company/paused-project-dialog";
 import { ProjectCard } from "@/components/company/project-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Badge } from "@/components/ui/badge";
@@ -182,6 +183,8 @@ export default function ProjectsPage() {
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
+      <PausedProjectDialog projects={projects} />
+
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Meus Projetos</h1>
