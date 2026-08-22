@@ -95,30 +95,27 @@ export default function CompanyMatchesPage() {
       </div>
 
       <Tabs defaultValue="received">
-        <div className="overflow-x-auto">
-          <TabsList>
-            <TabsTrigger value="received">
-              Convites Recebidos{" "}
-              <Badge variant="secondary">{received.data?.length ?? 0}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="sent">
-              Convites Enviados{" "}
-              <Badge variant="secondary">{sent.data?.length ?? 0}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="confirmed">
-              Confirmados{" "}
-              <Badge variant="secondary">{confirmed.data?.length ?? 0}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="previous">
-              Oportunidades Anteriores{" "}
-              <Badge variant="secondary">{previous.data?.length ?? 0}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="rejected">
-              Recusados{" "}
-              <Badge variant="secondary">{rejected.data?.length ?? 0}</Badge>
-            </TabsTrigger>
-          </TabsList>
-        </div>
+        <TabsList>
+          <TabsTrigger value="received">
+            Recebidos{" "}
+            <Badge variant="secondary">{received.data?.length ?? 0}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="sent">
+            Enviados <Badge variant="secondary">{sent.data?.length ?? 0}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="confirmed">
+            Confirmados{" "}
+            <Badge variant="secondary">{confirmed.data?.length ?? 0}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="previous">
+            Anteriores{" "}
+            <Badge variant="secondary">{previous.data?.length ?? 0}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="rejected">
+            Recusados{" "}
+            <Badge variant="secondary">{rejected.data?.length ?? 0}</Badge>
+          </TabsTrigger>
+        </TabsList>
 
         <TabsContent value="received" className="flex flex-col gap-3">
           <ReceivedList
