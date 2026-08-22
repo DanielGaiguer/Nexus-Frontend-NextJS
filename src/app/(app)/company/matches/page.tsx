@@ -97,7 +97,7 @@ export default function CompanyMatchesPage() {
       <Tabs defaultValue="received">
         {/* Mobile (< md): 3 linhas -- Confirmados sozinho em cima (é o mais
             importante), Recebidos+Enviados no meio, o resto embaixo. */}
-        <div className="flex flex-col gap-1.5 md:hidden">
+        <div className="mb-[3px] flex flex-col gap-1.5 md:hidden">
           <TabsList className="w-full">
             <TabsTrigger value="confirmed">
               Confirmados{" "}
@@ -128,7 +128,7 @@ export default function CompanyMatchesPage() {
 
         {/* Desktop (>= md): uma linha só, Confirmados primeiro, depois
             Recebidos, Enviados, Anteriores, Recusados. */}
-        <TabsList className="hidden md:inline-flex">
+        <TabsList className="mb-[3px] hidden md:inline-flex">
           <TabsTrigger value="confirmed">
             Confirmados{" "}
             <Badge variant="secondary">{confirmed.data?.length ?? 0}</Badge>
