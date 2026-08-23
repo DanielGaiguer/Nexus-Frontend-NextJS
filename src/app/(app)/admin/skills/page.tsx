@@ -20,12 +20,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateSkillDialog } from "@/components/admin/create-skill-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDeleteSkill } from "@/hooks/mutations/useAdminSkillActions";
 import { useAdminSkills } from "@/hooks/queries/useAdminSkills";
 import { ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import type { AdminSkillDTO } from "@/types/admin";
+
+// Mesma cor por categoria do admin-skills.html original — cada grupo tinha
+// seu próprio ícone colorido, não o mesmo `text-primary` repetido em todos.
+const categoryIconColor: Record<string, string> = {
+  Backend: "text-primary",
+  Frontend: "text-nexus-accent",
+  Mobile: "text-[#f472b6]",
+  DevOps: "text-success",
+  Database: "text-warning",
+  Data: "text-secondary",
+};
 
 export default function AdminSkillsPage() {
   const { data: skills, isLoading } = useAdminSkills();
@@ -69,12 +81,14 @@ export default function AdminSkillsPage() {
         <CreateSkillDialog existingCategories={categories} />
       </div>
 
-      <Input
-        placeholder="Buscar por nome ou categoria..."
-        className="max-w-sm"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
+      <div className="max-w-sm space-y-1">
+        <Label className="text-xs">Buscar</Label>
+        <Input
+          placeholder="Buscar por nome ou categoria..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
 
       <div className="flex flex-wrap gap-2">
         <button
@@ -133,7 +147,12 @@ export default function AdminSkillsPage() {
           <Card key={cat}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-sm">
-                <Tag className="text-primary size-4" />
+                <Tag
+                  className={cn(
+                    "size-4",
+                    categoryIconColor[cat] ?? "text-muted-foreground"
+                  )}
+                />
                 {cat}
                 <Badge variant="secondary">{items.length}</Badge>
               </CardTitle>

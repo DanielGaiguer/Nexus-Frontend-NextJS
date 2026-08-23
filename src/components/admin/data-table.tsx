@@ -16,6 +16,7 @@ import {
 } from "@/components/admin/table-features";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -29,6 +30,7 @@ import {
 export function DataTable<TData extends RowData>({
   columns,
   data,
+  searchLabel = "Buscar",
   searchPlaceholder = "Buscar...",
   emptyMessage = "Nenhum resultado encontrado.",
   hideSearch = false,
@@ -38,6 +40,7 @@ export function DataTable<TData extends RowData>({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   columns: ColumnDef<AdminTableFeatures, TData, any>[];
   data: TData[];
+  searchLabel?: string;
   searchPlaceholder?: string;
   emptyMessage?: string;
   /** Pra telas que já têm seu próprio campo "Buscar" fora da tabela (ex.: admin/projects, que espelha o painel de filtros único do admin-projects.html original) — evita um segundo campo de busca redundante. */
@@ -55,14 +58,17 @@ export function DataTable<TData extends RowData>({
   return (
     <div className="flex min-w-0 flex-col gap-3">
       {!hideSearch && (
-        <div className="relative max-w-sm">
-          <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-          <Input
-            placeholder={searchPlaceholder}
-            className="pl-9"
-            value={table.state.globalFilter ?? ""}
-            onChange={(e) => table.setGlobalFilter(e.target.value)}
-          />
+        <div className="max-w-sm space-y-1">
+          <Label className="text-xs">{searchLabel}</Label>
+          <div className="relative">
+            <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+            <Input
+              placeholder={searchPlaceholder}
+              className="pl-9"
+              value={table.state.globalFilter ?? ""}
+              onChange={(e) => table.setGlobalFilter(e.target.value)}
+            />
+          </div>
         </div>
       )}
 

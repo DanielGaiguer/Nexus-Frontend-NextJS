@@ -5,8 +5,8 @@ import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 
 import { OpportunityFilterFields } from "@/components/map/opportunity-filter-fields";
-import { RadiusSelector } from "@/components/map/radius-selector";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { MapEntityType } from "@/components/professional/nexus-map";
 import {
@@ -15,7 +15,6 @@ import {
   useMapProfessionals,
 } from "@/hooks/queries/useMapData";
 import { useSkillCatalog } from "@/hooks/queries/useSkillCatalog";
-import { DEFAULT_MAP_CENTER, distanceKm } from "@/lib/geo";
 import {
   emptyOpportunityFilters,
   matchesOpportunityFilters,
@@ -27,7 +26,7 @@ import { cn } from "@/lib/utils";
 const legendItems = [
   { color: "bg-primary", label: "Profissional" },
   { color: "bg-warning", label: "Empresa" },
-  { color: "bg-[#a78bfa]", label: "Projeto" },
+  { color: "bg-info", label: "Projeto" },
   { color: "bg-success", label: "Vaga de emprego" },
 ];
 
@@ -69,7 +68,6 @@ export default function AdminMapPage() {
   const [cityInput, setCityInput] = useState("");
   const [city, setCity] = useState("");
   const [selected, setSelected] = useState<"all" | MapEntityType>("all");
-  const [radius, setRadius] = useState(50);
   const [oppType, setOppType] = useState<"" | "PROJECT" | "JOB">("");
   const [oppFilters, setOppFilters] = useState(emptyOpportunityFilters);
 
@@ -78,40 +76,25 @@ export default function AdminMapPage() {
   const opportunities = useMapOpportunities({ city });
   const { data: skillCatalog } = useSkillCatalog();
 
-  const center = DEFAULT_MAP_CENTER;
-
   const visibleTypes = useMemo<Set<MapEntityType>>(() => {
     if (selected === "all")
       return new Set(["professionals", "companies", "opportunities"]);
     return new Set([selected]);
   }, [selected]);
 
-  const filteredProfessionals = useMemo(
-    () =>
-      (professionals.data ?? []).filter(
-        (p) =>
-          distanceKm(center.lat, center.lng, p.latitude, p.longitude) <= radius
-      ),
-    [professionals.data, center.lat, center.lng, radius]
-  );
-  const filteredCompanies = useMemo(
-    () =>
-      (companies.data ?? []).filter(
-        (c) =>
-          distanceKm(center.lat, center.lng, c.latitude, c.longitude) <= radius
-      ),
-    [companies.data, center.lat, center.lng, radius]
-  );
+  // Sem filtro de distância aqui — o admin não tem localização própria (o
+  // raio só faz sentido pra profissional/empresa filtrando "perto de mim"),
+  // espelha admin-map.html (DEFAULT_RADIUS = Infinity, sem seletor de raio).
+  const filteredProfessionals = professionals.data ?? [];
+  const filteredCompanies = companies.data ?? [];
   const filteredOpportunities = useMemo(
     () =>
       (opportunities.data ?? []).filter(
         (o) =>
-          distanceKm(center.lat, center.lng, o.latitude, o.longitude) <=
-            radius &&
           (!oppType || o.opportunityType === oppType) &&
           matchesOpportunityFilters(o, oppFilters)
       ),
-    [opportunities.data, center.lat, center.lng, radius, oppType, oppFilters]
+    [opportunities.data, oppType, oppFilters]
   );
 
   const counts = {
@@ -139,7 +122,7 @@ export default function AdminMapPage() {
 
   return (
     <div className="mx-auto flex h-[calc(100vh-6rem)] max-w-6xl flex-col gap-4 sm:flex-row">
-      <aside className="flex w-full shrink-0 flex-col gap-4 overflow-y-auto sm:w-72">
+      <aside className="scrollbar-hide flex w-full shrink-0 flex-col gap-4 overflow-y-auto sm:w-72">
         <div>
           <h1 className="text-lg font-bold tracking-tight">Mapa de Talentos</h1>
           <p className="text-muted-foreground text-xs">
@@ -152,15 +135,18 @@ export default function AdminMapPage() {
             e.preventDefault();
             setCity(cityInput.trim());
           }}
-          className="relative"
+          className="space-y-1"
         >
-          <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-          <Input
-            placeholder="Buscar por cidade..."
-            className="pl-9"
-            value={cityInput}
-            onChange={(e) => setCityInput(e.target.value)}
-          />
+          <Label className="text-xs">Cidade</Label>
+          <div className="relative">
+            <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+            <Input
+              placeholder="Buscar por cidade..."
+              className="pl-9"
+              value={cityInput}
+              onChange={(e) => setCityInput(e.target.value)}
+            />
+          </div>
         </form>
 
         <div className="space-y-1">
@@ -191,29 +177,34 @@ export default function AdminMapPage() {
                 Tipo de oportunidade
               </div>
               {[
-                { value: "", label: "Todos" },
-                { value: "PROJECT", label: "Projetos" },
-                { value: "JOB", label: "Vagas de emprego" },
+                {
+                  value: "",
+                  label: "Todos",
+                  dot: "bg-gradient-to-br from-info to-success",
+                },
+                { value: "PROJECT", label: "Projetos", dot: "bg-info" },
+                { value: "JOB", label: "Vagas de emprego", dot: "bg-success" },
               ].map((opt) => (
                 <button
                   key={opt.value}
                   type="button"
                   onClick={() => setOppType(opt.value as typeof oppType)}
                   className={cn(
-                    "block w-full rounded px-1.5 py-1 text-left text-xs",
+                    "flex w-full items-center gap-2 rounded px-1.5 py-1 text-left text-xs",
                     oppType === opt.value
                       ? "bg-primary/10 text-foreground"
                       : "text-muted-foreground"
                   )}
                 >
+                  <span
+                    className={cn("size-2 shrink-0 rounded-full", opt.dot)}
+                  />
                   {opt.label}
                 </button>
               ))}
             </div>
           )}
         </div>
-
-        <RadiusSelector value={radius} onChange={setRadius} />
 
         <OpportunityFilterFields
           filters={oppFilters}

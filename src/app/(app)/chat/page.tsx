@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useChatMatches } from "@/hooks/queries/useChat";
 import { cn } from "@/lib/utils";
@@ -69,14 +70,17 @@ export default function ChatListPage() {
         <h1 className="text-2xl font-bold tracking-tight">Conversas</h1>
       </div>
 
-      <div className="relative">
-        <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-        <Input
-          placeholder="Buscar por nome ou projeto..."
-          className="pl-9"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      <div className="space-y-1">
+        <Label className="text-xs">Buscar</Label>
+        <div className="relative">
+          <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+          <Input
+            placeholder="Buscar por nome ou projeto..."
+            className="pl-9"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
       </div>
 
       {isLoading && (
@@ -151,7 +155,10 @@ export default function ChatListPage() {
                     {chat.lastMessage ?? "Nenhuma mensagem ainda"}
                   </span>
                   {chat.unreadCount > 0 && !isEnded && (
-                    <Badge className="h-5 min-w-5 shrink-0 justify-center rounded-full px-1.5 text-[11px]">
+                    <Badge
+                      variant="destructive"
+                      className="h-5 min-w-5 shrink-0 justify-center rounded-full px-1.5 text-[11px]"
+                    >
                       {chat.unreadCount > 99 ? "99+" : chat.unreadCount}
                     </Badge>
                   )}

@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCompanyDirectory } from "@/hooks/queries/useCompanyDirectory";
 
@@ -27,14 +28,17 @@ export default function AdminCompaniesPage() {
         </p>
       </div>
 
-      <div className="relative max-w-sm">
-        <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-        <Input
-          placeholder="Buscar por nome..."
-          className="pl-9"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      <div className="max-w-sm space-y-1">
+        <Label className="text-xs">Buscar</Label>
+        <div className="relative">
+          <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+          <Input
+            placeholder="Buscar por nome..."
+            className="pl-9"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
       </div>
 
       {directory.isLoading && (
@@ -91,6 +95,11 @@ export default function AdminCompaniesPage() {
                       </span>
                     )}
                   </div>
+                  {company.description && (
+                    <p className="text-muted-foreground mt-2 line-clamp-2 text-xs">
+                      {company.description}
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>

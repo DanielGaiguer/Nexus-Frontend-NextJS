@@ -24,6 +24,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
@@ -207,124 +208,154 @@ export default function ProjectsPage() {
 
       <div className="flex flex-col gap-3 rounded-lg border p-3">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="relative">
-            <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-            <Input
-              placeholder="Buscar por título..."
-              className="pl-9"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+          <div className="space-y-1">
+            <Label className="text-xs">Buscar</Label>
+            <div className="relative">
+              <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+              <Input
+                placeholder="Buscar por título..."
+                className="pl-9"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
           </div>
-          <Select
-            value={modality || "ALL"}
-            onValueChange={(v) => setModality(v === "ALL" ? "" : v)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Modalidade" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Todas</SelectItem>
-              <SelectItem value="REMOTE">Remoto</SelectItem>
-              <SelectItem value="ONSITE">Presencial</SelectItem>
-              <SelectItem value="HYBRID">Híbrido</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select
-            value={opportunityType || "ALL"}
-            onValueChange={(v) => {
-              const next = v === "ALL" ? "" : (v as "JOB" | "PROJECT");
-              setOpportunityType(next);
-              setContractType("");
-              setMinBudget("");
-              setMaxBudget("");
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Oportunidade" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Todos</SelectItem>
-              <SelectItem value="PROJECT">Projeto</SelectItem>
-              <SelectItem value="JOB">Vaga</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <MultiSelectPopover
-            label="Experiência"
-            options={experienceLevels}
-            value={expLevels}
-            onChange={setExpLevels}
-          />
-          <Input
-            type="date"
-            value={postedDate}
-            onChange={(e) => setPostedDate(e.target.value)}
-          />
-          <Select
-            value={workType || "ALL"}
-            onValueChange={(v) => setWorkType(v === "ALL" ? "" : v)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Regime de trabalho" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Todos</SelectItem>
-              <SelectItem value="FREELANCE">Freelance</SelectItem>
-              <SelectItem value="FULL_TIME">Tempo integral</SelectItem>
-              <SelectItem value="PART_TIME">Meio período</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <MultiSelectPopover
-          label="Skills"
-          options={(skillCatalog ?? []).map((s) => ({
-            value: s.name,
-            label: s.name,
-          }))}
-          value={skillNames}
-          onChange={setSkillNames}
-        />
-
-        {opportunityType === "JOB" && (
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="space-y-1">
+            <Label className="text-xs">Modalidade</Label>
             <Select
-              value={contractType || "ALL"}
-              onValueChange={(v) => setContractType(v === "ALL" ? "" : v)}
+              value={modality || "ALL"}
+              onValueChange={(v) => setModality(v === "ALL" ? "" : v)}
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Tipo de contrato" />
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Modalidade" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Todas</SelectItem>
+                <SelectItem value="REMOTE">Remoto</SelectItem>
+                <SelectItem value="ONSITE">Presencial</SelectItem>
+                <SelectItem value="HYBRID">Híbrido</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Oportunidade</Label>
+            <Select
+              value={opportunityType || "ALL"}
+              onValueChange={(v) => {
+                const next = v === "ALL" ? "" : (v as "JOB" | "PROJECT");
+                setOpportunityType(next);
+                setContractType("");
+                setMinBudget("");
+                setMaxBudget("");
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Oportunidade" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">Todos</SelectItem>
-                {contractTypes.map((c) => (
-                  <SelectItem key={c.value} value={c.value}>
-                    {c.label}
-                  </SelectItem>
-                ))}
+                <SelectItem value="PROJECT">Projeto</SelectItem>
+                <SelectItem value="JOB">Vaga</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="space-y-1">
+            <Label className="text-xs">Experiência</Label>
+            <MultiSelectPopover
+              label="Experiência"
+              options={experienceLevels}
+              value={expLevels}
+              onChange={setExpLevels}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Data de postagem</Label>
+            <Input
+              type="date"
+              value={postedDate}
+              onChange={(e) => setPostedDate(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Regime de trabalho</Label>
+            <Select
+              value={workType || "ALL"}
+              onValueChange={(v) => setWorkType(v === "ALL" ? "" : v)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Regime de trabalho" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Todos</SelectItem>
+                <SelectItem value="FREELANCE">Freelance</SelectItem>
+                <SelectItem value="FULL_TIME">Tempo integral</SelectItem>
+                <SelectItem value="PART_TIME">Meio período</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="space-y-1">
+          <Label className="text-xs">Skills</Label>
+          <MultiSelectPopover
+            label="Skills"
+            options={(skillCatalog ?? []).map((s) => ({
+              value: s.name,
+              label: s.name,
+            }))}
+            value={skillNames}
+            onChange={setSkillNames}
+          />
+        </div>
+
+        {opportunityType === "JOB" && (
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="space-y-1">
+              <Label className="text-xs">Tipo de contrato</Label>
+              <Select
+                value={contractType || "ALL"}
+                onValueChange={(v) => setContractType(v === "ALL" ? "" : v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Tipo de contrato" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Todos</SelectItem>
+                  {contractTypes.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>
+                      {c.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             {(contractType === "CLT" || contractType === "PJ") && (
               <>
-                <Input
-                  type="number"
-                  min={0}
-                  step={100}
-                  placeholder="Salário mín. (R$/mês)"
-                  value={minSalary}
-                  onChange={(e) => setMinSalary(e.target.value)}
-                />
-                <Input
-                  type="number"
-                  min={0}
-                  step={100}
-                  placeholder="Salário máx. (R$/mês)"
-                  value={maxSalary}
-                  onChange={(e) => setMaxSalary(e.target.value)}
-                />
+                <div className="space-y-1">
+                  <Label className="text-xs">Salário mín. (R$/mês)</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    step={100}
+                    placeholder="Salário mín. (R$/mês)"
+                    value={minSalary}
+                    onChange={(e) => setMinSalary(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Salário máx. (R$/mês)</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    step={100}
+                    placeholder="Salário máx. (R$/mês)"
+                    value={maxSalary}
+                    onChange={(e) => setMaxSalary(e.target.value)}
+                  />
+                </div>
               </>
             )}
           </div>
@@ -332,22 +363,28 @@ export default function ProjectsPage() {
 
         {opportunityType === "PROJECT" && (
           <div className="grid gap-3 sm:grid-cols-2">
-            <Input
-              type="number"
-              min={0}
-              step={100}
-              placeholder="Orçamento mín. (R$)"
-              value={minBudget}
-              onChange={(e) => setMinBudget(e.target.value)}
-            />
-            <Input
-              type="number"
-              min={0}
-              step={100}
-              placeholder="Orçamento máx. (R$)"
-              value={maxBudget}
-              onChange={(e) => setMaxBudget(e.target.value)}
-            />
+            <div className="space-y-1">
+              <Label className="text-xs">Orçamento mín. (R$)</Label>
+              <Input
+                type="number"
+                min={0}
+                step={100}
+                placeholder="Orçamento mín. (R$)"
+                value={minBudget}
+                onChange={(e) => setMinBudget(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Orçamento máx. (R$)</Label>
+              <Input
+                type="number"
+                min={0}
+                step={100}
+                placeholder="Orçamento máx. (R$)"
+                value={maxBudget}
+                onChange={(e) => setMaxBudget(e.target.value)}
+              />
+            </div>
           </div>
         )}
 
