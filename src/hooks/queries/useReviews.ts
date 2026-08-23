@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { ApiError, apiFetch } from "@/lib/api-client";
 import type {
@@ -97,5 +97,10 @@ export function useReviewsAll(
       return apiFetch<ReviewPageDTO>(`/api/reviews/${type}/${id}/all${qs}`);
     },
     enabled: id != null,
+    // Troca de filtro (rating) muda a queryKey — sem isso, cada filtro nunca
+    // visitado antes mostra o esqueleto (altura diferente da lista real) até
+    // a resposta chegar, dando aquele "pulo". Mantém a lista anterior na
+    // tela nesse meio-tempo, sem esqueleto nem salto de layout.
+    placeholderData: keepPreviousData,
   });
 }

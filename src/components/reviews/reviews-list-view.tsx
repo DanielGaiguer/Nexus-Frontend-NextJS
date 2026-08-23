@@ -29,7 +29,11 @@ export function ReviewsListView({
 }) {
   const router = useRouter();
   const [rating, setRating] = useState<number | null>(null);
-  const { data, isLoading } = useReviewsAll(entityType, entityId, rating);
+  const { data, isLoading, isFetching } = useReviewsAll(
+    entityType,
+    entityId,
+    rating
+  );
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
@@ -108,7 +112,15 @@ export function ReviewsListView({
         </p>
       )}
 
-      <div className="flex flex-col gap-3">
+      <div
+        className={cn(
+          "flex flex-col gap-3 transition-opacity",
+          // Troca de filtro com dados antigos ainda na tela (placeholderData)
+          // — esmaece um pouco enquanto o novo filtro carrega em segundo
+          // plano, em vez de trocar pra esqueleto (o que causava o "pulo").
+          isFetching && "opacity-60"
+        )}
+      >
         {data?.reviews.map((review) => (
           <ReviewCard key={review.id} review={review} />
         ))}
