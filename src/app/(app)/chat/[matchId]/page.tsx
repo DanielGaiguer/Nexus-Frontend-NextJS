@@ -29,7 +29,7 @@ export default function ChatWindowPage() {
   }, [messages]);
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-6rem)] max-w-3xl flex-col overflow-hidden rounded-lg border">
+    <div className="mx-auto flex h-[calc(100vh-6rem)] max-w-[808px] flex-col overflow-hidden rounded-lg border">
       <div className="flex shrink-0 items-center gap-3 border-b p-3">
         <button
           type="button"
