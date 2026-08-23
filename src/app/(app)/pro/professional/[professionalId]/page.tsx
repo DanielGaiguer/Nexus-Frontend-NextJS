@@ -1,9 +1,10 @@
 "use client";
 
-import { ArrowLeft, Briefcase, Code2, History, Star } from "lucide-react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
+import { ArrowLeft, Code2, History, Star } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
 
+import { credentialColorHex } from "@/components/professional/credential-color";
+import { ProfileCard } from "@/components/professional/profile-card";
 import { ReputationCard } from "@/components/professional/reputation-card";
 import { ReviewsPreviewCard } from "@/components/reviews/reviews-preview-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePublicProfessional } from "@/hooks/queries/usePublicProfessional";
+import type { CredentialType } from "@/types/professional";
 
 const experienceLabels: Record<string, string> = {
   INTERNSHIP: "Estágio",
@@ -20,20 +22,19 @@ const experienceLabels: Record<string, string> = {
   SENIOR: "Sênior",
 };
 
-const typeLabels: Record<string, string> = {
-  FREELANCE: "Freelance",
-  FULL_TIME: "CLT",
-  PART_TIME: "Meio período",
+// Mesmo texto de company/professionals/[id] — os dois vêm de
+// public-profile.html no app antigo, que sempre separa Certificados e
+// Eventos em dois cards (cada um com sua própria mensagem de vazio).
+const credentialTypeConfig: Record<
+  CredentialType,
+  { title: string; emptyLabel: string }
+> = {
+  CERTIFICATE: {
+    title: "Certificados",
+    emptyLabel: "Nenhum certificado cadastrado.",
+  },
+  EVENT: { title: "Eventos", emptyLabel: "Nenhum evento cadastrado." },
 };
-
-function formatMoney(value: number | null) {
-  if (value == null) return "—";
-  return value.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    maximumFractionDigits: 0,
-  });
-}
 
 /**
  * `public-profile.html` visto por outro profissional (peer) — mesmo dado
@@ -45,6 +46,7 @@ function formatMoney(value: number | null) {
 export default function PeerProfessionalViewPage() {
   const { professionalId } = useParams<{ professionalId: string }>();
   const id = Number(professionalId);
+  const router = useRouter();
 
   const { data: professional, isLoading } = usePublicProfessional(id);
 
@@ -59,13 +61,14 @@ export default function PeerProfessionalViewPage() {
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
-      <Link
-        href="/pro/professionals"
+      <button
+        type="button"
+        onClick={() => router.back()}
         className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm"
       >
         <ArrowLeft className="size-4" />
         Voltar
-      </Link>
+      </button>
 
       <div className="grid min-w-0 gap-4 lg:grid-cols-[320px_1fr]">
         <div className="flex min-w-0 flex-col gap-4">
@@ -138,6 +141,15 @@ export default function PeerProfessionalViewPage() {
             </CardContent>
           </Card>
 
+          <ProfileCard
+            salary={{
+              kind: "range",
+              min: professional.minimumSalary,
+              max: professional.maximumSalary,
+            }}
+            preferredTypes={professional.preferredTypes}
+          />
+
           <ReputationCard reputation={professional.reputationDetails} />
           <ReviewsPreviewCard
             entityType="professional"
@@ -164,50 +176,80 @@ export default function PeerProfessionalViewPage() {
             </CardContent>
           </Card>
 
-          {professional.credentials.length > 0 && (
+          {(["CERTIFICATE", "EVENT"] as const).map((type) => {
+            const config = credentialTypeConfig[type];
+            const items = professional.credentials.filter(
+              (c) => c.type === type
+            );
+            return (
+              <Card key={type}>
+                <CardHeader>
+                  <CardTitle className="text-sm">{config.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {items.length === 0 ? (
+                    <p className="text-muted-foreground text-sm">
+                      {config.emptyLabel}
+                    </p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {items.map((credential) => (
+                        <Badge
+                          key={credential.id}
+                          variant="outline"
+                          style={{
+                            backgroundColor: `${credentialColorHex[credential.color]}22`,
+                            color: credentialColorHex[credential.color],
+                            borderColor: `${credentialColorHex[credential.color]}55`,
+                          }}
+                        >
+                          {credential.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+
+          {professional.hasGitHub && professional.githubLogin && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">
-                  Certificados e eventos
+                <CardTitle className="flex items-center gap-1.5 text-sm">
+                  <Code2 className="size-4" />
+                  Atividade no GitHub
                 </CardTitle>
               </CardHeader>
-              <CardContent className="flex flex-wrap gap-2">
-                {professional.credentials.map((credential) => (
-                  <Badge key={credential.id} variant="outline">
-                    {credential.name}
-                  </Badge>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
-          {(professional.minimumSalary != null ||
-            professional.maximumSalary != null) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-sm">
-                  <Briefcase className="text-primary size-4" />
-                  Pretensão salarial
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm">
-                {formatMoney(professional.minimumSalary)} –{" "}
-                {formatMoney(professional.maximumSalary)}
-              </CardContent>
-            </Card>
-          )}
-
-          {professional.preferredTypes.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Regimes de interesse</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-wrap gap-2">
-                {professional.preferredTypes.map((type) => (
-                  <Badge key={type} variant="secondary">
-                    {typeLabels[type] ?? type}
-                  </Badge>
-                ))}
+              <CardContent>
+                <a
+                  href={professional.githubUrl ?? "#"}
+                  target="_blank"
+                  rel="noopener"
+                  className="text-muted-foreground mb-2 block text-sm hover:underline"
+                >
+                  @{professional.githubLogin}
+                </a>
+                <div className="overflow-x-auto rounded-md bg-[#161b22] p-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- domínio externo sem loader configurado, só para este gráfico */}
+                  <img
+                    src={`https://ghchart.rshah.org/${professional.githubLogin}`}
+                    alt={`Gráfico de contribuições do GitHub de ${professional.githubLogin}`}
+                    className="block max-w-full rounded"
+                  />
+                </div>
+                <div className="text-muted-foreground mt-2 flex items-center justify-end gap-1 text-[11px]">
+                  <span>Less</span>
+                  <span className="size-2.5 rounded-sm border border-white/10 bg-[#161b22]" />
+                  <span className="size-2.5 rounded-sm bg-[#0e4429]" />
+                  <span className="size-2.5 rounded-sm bg-[#006d32]" />
+                  <span className="size-2.5 rounded-sm bg-[#26a641]" />
+                  <span className="size-2.5 rounded-sm bg-[#39d353]" />
+                  <span>More</span>
+                </div>
+                <p className="text-muted-foreground mt-2 text-[11px]">
+                  Gráfico de contribuições dos últimos 12 meses
+                </p>
               </CardContent>
             </Card>
           )}
@@ -216,7 +258,7 @@ export default function PeerProfessionalViewPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-sm">
                 <History className="text-primary size-4" />
-                Projetos anteriores
+                Projetos entregues
                 <Badge variant="secondary">
                   {professional.previousProjects.length}
                 </Badge>

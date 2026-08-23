@@ -15,9 +15,10 @@ import {
   Star,
 } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 import { credentialColorHex } from "@/components/professional/credential-color";
+import { ProfileCard } from "@/components/professional/profile-card";
 import { ReputationCard } from "@/components/professional/reputation-card";
 import { ReviewsPreviewCard } from "@/components/reviews/reviews-preview-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -40,18 +41,10 @@ const experienceLabels: Record<string, string> = {
   SENIOR: "Sênior",
 };
 
-function money(value: number | null) {
-  if (value == null) return null;
-  return value.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    maximumFractionDigits: 0,
-  });
-}
-
 export default function AdminProfessionalViewPage() {
   const { professionalId } = useParams<{ professionalId: string }>();
   const id = Number(professionalId);
+  const router = useRouter();
 
   const { data: profile, isLoading } = useAdminProfessionalProfile(id);
   const { data: matches } = useAdminProfessionalMatches(id);
@@ -76,13 +69,14 @@ export default function AdminProfessionalViewPage() {
     <div className="mx-auto flex max-w-5xl flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <Link
-            href="/admin/users"
+          <button
+            type="button"
+            onClick={() => router.back()}
             className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-1 text-sm"
           >
             <ArrowLeft className="size-4" />
-            Voltar para Usuários
-          </Link>
+            Voltar
+          </button>
           <h1 className="text-2xl font-bold tracking-tight">
             Perfil do Profissional
           </h1>
@@ -215,8 +209,21 @@ export default function AdminProfessionalViewPage() {
             </CardContent>
           </Card>
 
+          <ProfileCard
+            salary={{
+              kind: "breakdown",
+              clt: profile.expectedSalaryCLT,
+              pj: profile.expectedSalaryPJ,
+              freelanceMin: profile.freelanceMinExpectation,
+              freelanceMax: profile.freelanceMaxExpectation,
+            }}
+            preferredTypes={profile.preferredTypes}
+            preferredOpportunityTypes={profile.preferredOpportunityTypes}
+          />
+
           <ReputationCard
             reputation={publicProfile?.reputationDetails ?? null}
+            title="Análise de qualidade"
           />
         </div>
 
@@ -236,47 +243,6 @@ export default function AdminProfessionalViewPage() {
               />
               <Field label="Telefone" value={profile.phone ?? "—"} />
               <Field label="E-mail" value={profile.email} />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Pretensão salarial</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {!money(profile.expectedSalaryCLT) &&
-              !money(profile.expectedSalaryPJ) &&
-              !money(profile.freelanceMinExpectation) &&
-              !money(profile.freelanceMaxExpectation) ? (
-                <p className="text-muted-foreground text-sm">
-                  Nenhuma pretensão salarial informada.
-                </p>
-              ) : (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {profile.expectedSalaryCLT != null && (
-                    <Field
-                      label="CLT"
-                      value={`${money(profile.expectedSalaryCLT)}/mês`}
-                      accent
-                    />
-                  )}
-                  {profile.expectedSalaryPJ != null && (
-                    <Field
-                      label="PJ"
-                      value={`${money(profile.expectedSalaryPJ)}/mês`}
-                      accent
-                    />
-                  )}
-                  {(profile.freelanceMinExpectation != null ||
-                    profile.freelanceMaxExpectation != null) && (
-                    <Field
-                      label="Por projeto"
-                      value={`${money(profile.freelanceMinExpectation) ?? "—"} — ${money(profile.freelanceMaxExpectation) ?? "—"}`}
-                      accent
-                    />
-                  )}
-                </div>
-              )}
             </CardContent>
           </Card>
 

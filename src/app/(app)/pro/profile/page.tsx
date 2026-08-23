@@ -12,6 +12,7 @@ import {
 import { toast } from "sonner";
 
 import { CredentialsSection } from "@/components/professional/credentials-section";
+import { ProfileCard } from "@/components/professional/profile-card";
 import { ProfileEditDialog } from "@/components/professional/profile-edit-dialog";
 import { ProfilePhoto } from "@/components/professional/profile-photo";
 import { ReputationCard } from "@/components/professional/reputation-card";
@@ -64,15 +65,6 @@ export default function ProProfilePage() {
       }
     );
   }
-
-  const money = (value: number | null) =>
-    value != null
-      ? value.toLocaleString("pt-BR", {
-          style: "currency",
-          currency: "BRL",
-          maximumFractionDigits: 0,
-        })
-      : null;
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-4">
@@ -149,7 +141,7 @@ export default function ProProfilePage() {
                   {profile.available ? "Disponível" : "Indisponível"}
                 </div>
                 <div className="text-muted-foreground text-xs">
-                  Impacta o score
+                  Afeta o score
                 </div>
               </div>
               <Switch
@@ -211,6 +203,18 @@ export default function ProProfilePage() {
             </CardContent>
           </Card>
 
+          <ProfileCard
+            salary={{
+              kind: "breakdown",
+              clt: profile.expectedSalaryCLT,
+              pj: profile.expectedSalaryPJ,
+              freelanceMin: profile.freelanceMinExpectation,
+              freelanceMax: profile.freelanceMaxExpectation,
+            }}
+            preferredTypes={profile.preferredTypes}
+            preferredOpportunityTypes={profile.preferredOpportunityTypes}
+          />
+
           <ReputationCard
             reputation={publicProfile?.reputationDetails ?? null}
             title="Análise de qualidade"
@@ -238,47 +242,6 @@ export default function ProProfilePage() {
               />
               <Field label="Telefone" value={profile.phone ?? "—"} />
               <Field label="E-mail" value={profile.email} />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Pretensão salarial</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {!money(profile.expectedSalaryCLT) &&
-              !money(profile.expectedSalaryPJ) &&
-              !money(profile.freelanceMinExpectation) &&
-              !money(profile.freelanceMaxExpectation) ? (
-                <p className="text-muted-foreground text-sm">
-                  Nenhuma pretensão salarial informada.
-                </p>
-              ) : (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {profile.expectedSalaryCLT != null && (
-                    <Field
-                      label="CLT"
-                      value={`${money(profile.expectedSalaryCLT)}/mês`}
-                      accent
-                    />
-                  )}
-                  {profile.expectedSalaryPJ != null && (
-                    <Field
-                      label="PJ"
-                      value={`${money(profile.expectedSalaryPJ)}/mês`}
-                      accent
-                    />
-                  )}
-                  {(profile.freelanceMinExpectation != null ||
-                    profile.freelanceMaxExpectation != null) && (
-                    <Field
-                      label="Por projeto"
-                      value={`${money(profile.freelanceMinExpectation) ?? "—"} — ${money(profile.freelanceMaxExpectation) ?? "—"}`}
-                      accent
-                    />
-                  )}
-                </div>
-              )}
             </CardContent>
           </Card>
 

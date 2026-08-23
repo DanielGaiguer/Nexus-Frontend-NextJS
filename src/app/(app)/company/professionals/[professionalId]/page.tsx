@@ -2,7 +2,6 @@
 
 import {
   ArrowLeft,
-  Briefcase,
   Code2,
   FileText,
   Handshake,
@@ -19,6 +18,7 @@ import { toast } from "sonner";
 
 import { ProfessionalCompareDialog } from "@/components/company/professional-compare-dialog";
 import { credentialColorHex } from "@/components/professional/credential-color";
+import { ProfileCard } from "@/components/professional/profile-card";
 import { ReputationCard } from "@/components/professional/reputation-card";
 import { ReviewsPreviewCard } from "@/components/reviews/reviews-preview-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -50,21 +50,6 @@ const experienceLabels: Record<string, string> = {
   PLENO: "Pleno",
   SENIOR: "Sênior",
 };
-
-const typeLabels: Record<string, string> = {
-  FREELANCE: "Freelance",
-  FULL_TIME: "CLT",
-  PART_TIME: "Meio período",
-};
-
-function formatMoney(value: number | null) {
-  if (value == null) return "—";
-  return value.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    maximumFractionDigits: 0,
-  });
-}
 
 export default function CompanyProfessionalViewPage() {
   return (
@@ -260,6 +245,15 @@ function CompanyProfessionalViewContent() {
             </CardContent>
           </Card>
 
+          <ProfileCard
+            salary={{
+              kind: "range",
+              min: professional.minimumSalary,
+              max: professional.maximumSalary,
+            }}
+            preferredTypes={professional.preferredTypes}
+          />
+
           <ReputationCard reputation={professional.reputationDetails} />
           <ReviewsPreviewCard
             entityType="professional"
@@ -360,37 +354,6 @@ function CompanyProfessionalViewContent() {
                 <p className="text-muted-foreground mt-2 text-[11px]">
                   Gráfico de contribuições dos últimos 12 meses
                 </p>
-              </CardContent>
-            </Card>
-          )}
-
-          {(professional.minimumSalary != null ||
-            professional.maximumSalary != null) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-sm">
-                  <Briefcase className="text-primary size-4" />
-                  Pretensão salarial
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm">
-                {formatMoney(professional.minimumSalary)} –{" "}
-                {formatMoney(professional.maximumSalary)}
-              </CardContent>
-            </Card>
-          )}
-
-          {professional.preferredTypes.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Regimes de interesse</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-wrap gap-2">
-                {professional.preferredTypes.map((type) => (
-                  <Badge key={type} variant="secondary">
-                    {typeLabels[type] ?? type}
-                  </Badge>
-                ))}
               </CardContent>
             </Card>
           )}
