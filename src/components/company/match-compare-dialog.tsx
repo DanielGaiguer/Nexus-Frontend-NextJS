@@ -174,7 +174,7 @@ export function MatchCompareDialog({ match }: { match: MatchResponseDTO }) {
           Comparar
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="scrollbar-hide max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Profissional × Vaga</DialogTitle>
         </DialogHeader>
