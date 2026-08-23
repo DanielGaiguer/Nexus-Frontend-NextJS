@@ -255,7 +255,7 @@ export default function OpportunitiesPage() {
       )}
 
       <div className="flex flex-col gap-3 rounded-lg border p-3">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <div className="space-y-1 sm:col-span-2">
             <Label className="text-xs">Buscar</Label>
             <div className="relative">
@@ -280,7 +280,7 @@ export default function OpportunitiesPage() {
                 setMaxBudget("");
               }}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Oportunidade" />
               </SelectTrigger>
               <SelectContent>
@@ -296,7 +296,7 @@ export default function OpportunitiesPage() {
               value={modality || "ALL"}
               onValueChange={(v) => setModality(v === "ALL" ? "" : v)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Modalidade" />
               </SelectTrigger>
               <SelectContent>
@@ -307,9 +307,6 @@ export default function OpportunitiesPage() {
               </SelectContent>
             </Select>
           </div>
-        </div>
-
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-1">
             <Label className="text-xs">Experiência</Label>
             <MultiSelectPopover
@@ -319,6 +316,9 @@ export default function OpportunitiesPage() {
               onChange={setExpLevels}
             />
           </div>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <div className="space-y-1">
             <Label className="text-xs">Data de postagem</Label>
             <Input
@@ -333,7 +333,7 @@ export default function OpportunitiesPage() {
               value={workType || "ALL"}
               onValueChange={(v) => setWorkType(v === "ALL" ? "" : v)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Regime de trabalho" />
               </SelectTrigger>
               <SelectContent>
@@ -366,7 +366,7 @@ export default function OpportunitiesPage() {
                 value={contractType || "ALL"}
                 onValueChange={(v) => setContractType(v === "ALL" ? "" : v)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Tipo de contrato" />
                 </SelectTrigger>
                 <SelectContent>
