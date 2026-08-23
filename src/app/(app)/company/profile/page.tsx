@@ -25,6 +25,10 @@ import { ReviewsPreviewCard } from "@/components/reviews/reviews-preview-card";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  useConfirmedCompanyMatches,
+  usePreviousCompanyMatches,
+} from "@/hooks/queries/useCompanyMatches";
 import { useCompanyDashboardSummary } from "@/hooks/queries/useCompanyDashboardSummary";
 import { useCompanyProfile } from "@/hooks/queries/useCompanyProfile";
 import {
@@ -59,6 +63,12 @@ export default function CompanyProfilePage() {
   const closedProjects = useCompanyClosedProjects(
     profile?.status === "APPROVED" ? profile.id : undefined
   );
+  // "Taxa de sucesso" = % dos projetos que já tiveram pelo menos 1 match
+  // confirmado (ativo ou já encerrado) -- nunca passa de 100%, diferente de
+  // matches÷projetos (um projeto pode ter várias posições preenchidas, ou
+  // seja, vários matches confirmados, e passar de 100% nessa conta).
+  const confirmedMatches = useConfirmedCompanyMatches();
+  const previousMatches = usePreviousCompanyMatches();
 
   if (isLoading || !profile) {
     return (
@@ -69,10 +79,14 @@ export default function CompanyProfilePage() {
     );
   }
 
+  const projectsWithMatch = new Set([
+    ...(confirmedMatches.data ?? []).map((m) => m.project.id),
+    ...(previousMatches.data ?? []).map((m) => m.project.id),
+  ]);
   const successRate =
     dashboard.data && dashboard.data.totalProjects > 0
       ? `${Math.round(
-          (dashboard.data.totalMatches / dashboard.data.totalProjects) * 100
+          (projectsWithMatch.size / dashboard.data.totalProjects) * 100
         )}%`
       : "—";
 
