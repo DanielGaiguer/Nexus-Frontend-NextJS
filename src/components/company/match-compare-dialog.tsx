@@ -30,7 +30,10 @@ import {
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCandidateComparison } from "@/hooks/queries/useCandidateComparison";
+import {
+  useCandidateComparison,
+  useMyMatchComparison,
+} from "@/hooks/queries/useCandidateComparison";
 import { cn } from "@/lib/utils";
 import type { MatchResponseDTO } from "@/types/match";
 import type { ScoreBreakdownDTO } from "@/types/match";
@@ -155,12 +158,30 @@ function InfoRow({
  * devolve matchingSkills/missingSkills e o scoreBreakdown calculados pelo
  * backend; os demais dados da vaga (orçamento, modalidade, benefícios,
  * cidade etc.) vêm direto de match.project, sem precisar de outra chamada.
+ *
+ * `viewer="professional"` (usado em pro/opportunities e pro/matches) troca
+ * pra `/api/comparison/candidates/mine` — mesmo formato de resposta, mas o
+ * profissional compara consigo mesmo, num match que já é dele, sem
+ * depender de ser dono do projeto (que é exclusivo de empresa).
  */
-export function MatchCompareDialog({ match }: { match: MatchResponseDTO }) {
+export function MatchCompareDialog({
+  match,
+  viewer = "company",
+}: {
+  match: MatchResponseDTO;
+  viewer?: "company" | "professional";
+}) {
   const [open, setOpen] = useState(false);
-  const comparison = useCandidateComparison(
-    open ? { projectId: match.project.id, matchIds: [match.id] } : undefined
+  const companyComparison = useCandidateComparison(
+    open && viewer === "company"
+      ? { projectId: match.project.id, matchIds: [match.id] }
+      : undefined
   );
+  const professionalComparison = useMyMatchComparison(
+    open && viewer === "professional" ? match.id : undefined
+  );
+  const comparison =
+    viewer === "company" ? companyComparison : professionalComparison;
   const data = comparison.data;
   const candidate = data?.candidates[0];
   const project = match.project;

@@ -13,6 +13,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import { MatchCompareDialog } from "@/components/company/match-compare-dialog";
 import { MatchCard } from "@/components/professional/match-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Badge } from "@/components/ui/badge";
@@ -497,6 +498,7 @@ export default function OpportunitiesPage() {
               mySkills={profile?.skills}
               actions={
                 <>
+                  <MatchCompareDialog match={match} viewer="professional" />
                   {match.project.companyId != null && (
                     <Button variant="ghost" size="sm" asChild>
                       <Link href={`/pro/companies/${match.project.companyId}`}>
