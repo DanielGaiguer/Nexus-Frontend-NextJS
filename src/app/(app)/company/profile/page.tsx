@@ -247,6 +247,28 @@ export default function CompanyProfilePage() {
             </CardContent>
           </Card>
 
+          <div className="grid gap-3 sm:grid-cols-3">
+            <StatCard
+              icon={Briefcase}
+              label="Projetos postados"
+              value={String(dashboard.data?.totalProjects ?? 0)}
+            />
+            <StatCard
+              icon={Handshake}
+              label="Matches realizados"
+              value={String(dashboard.data?.totalMatches ?? 0)}
+              accent="success"
+            />
+            <StatCard
+              icon={TrendingUp}
+              label="Taxa de sucesso"
+              value={successRate}
+              accent="secondary"
+            />
+          </div>
+
+          <ProfileCompletenessCard profile={profile} />
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-sm">
@@ -358,28 +380,6 @@ export default function CompanyProfilePage() {
               )}
             </CardContent>
           </Card>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            <StatCard
-              icon={Briefcase}
-              label="Projetos postados"
-              value={String(dashboard.data?.totalProjects ?? 0)}
-            />
-            <StatCard
-              icon={Handshake}
-              label="Matches realizados"
-              value={String(dashboard.data?.totalMatches ?? 0)}
-              accent="success"
-            />
-            <StatCard
-              icon={TrendingUp}
-              label="Taxa de sucesso"
-              value={successRate}
-              accent="secondary"
-            />
-          </div>
-
-          <ProfileCompletenessCard profile={profile} />
         </div>
       </div>
     </div>
