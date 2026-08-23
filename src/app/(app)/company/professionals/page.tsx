@@ -67,7 +67,7 @@ export default function CompanyProfessionalsPage() {
             className="hover:border-primary/40 flex h-full flex-col transition-colors"
           >
             <Link
-              href={`/company/professionals/${professional.id}`}
+              href={`/company/professionals/${professional.id}?from=directory`}
               className="min-w-0 flex-1"
             >
               <CardContent className="flex items-start gap-3">
@@ -115,7 +115,7 @@ export default function CompanyProfessionalsPage() {
               </CardContent>
             </Link>
             <div className="flex justify-end border-t px-4 py-2">
-              <ProfessionalCompareDialog professional={professional} />
+              <ProfessionalCompareDialog professionalId={professional.id} />
             </div>
           </Card>
         ))}

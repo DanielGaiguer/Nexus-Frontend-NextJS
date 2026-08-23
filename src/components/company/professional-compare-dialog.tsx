@@ -7,11 +7,13 @@ import {
   Check,
   DollarSign,
   GitCompare,
+  Handshake,
   MapPin,
   Star,
   X,
 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -31,9 +33,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCompanyShowInterestByProject } from "@/hooks/mutations/useCompanyMatchActions";
 import { useMyProjects } from "@/hooks/queries/useMyProjects";
 import { usePublicProfessional } from "@/hooks/queries/usePublicProfessional";
-import type { ProfessionalDirectoryItemDTO } from "@/types/professional";
+import { ApiError } from "@/lib/api-client";
 
 const experienceLabels: Record<string, string> = {
   INTERNSHIP: "Estágio",
@@ -96,14 +99,21 @@ function InfoRow({
  * calculado aqui mesmo, no client.
  */
 export function ProfessionalCompareDialog({
-  professional,
+  professionalId,
+  showInterestButton = false,
 }: {
-  professional: ProfessionalDirectoryItemDTO;
+  professionalId: number;
+  /** Só true quando a origem da navegação permite demonstrar interesse
+   * direto por aqui — ver company/professionals/[professionalId]/page.tsx,
+   * que só liga isso quando se chega na página vindo do diretório geral
+   * (/company/professionals). */
+  showInterestButton?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [projectId, setProjectId] = useState<string>("");
   const myProjects = useMyProjects();
-  const detail = usePublicProfessional(open ? professional.id : undefined);
+  const detail = usePublicProfessional(open ? professionalId : undefined);
+  const showInterest = useCompanyShowInterestByProject();
 
   const openProjects = (myProjects.data ?? []).filter(
     (p) => p.status === "OPEN" || p.status === "PAUSED"
@@ -335,6 +345,33 @@ export function ProfessionalCompareDialog({
                 }
               />
             </div>
+
+            {showInterestButton && (
+              <Button
+                className="w-full"
+                disabled={showInterest.isPending}
+                onClick={() =>
+                  showInterest.mutate(
+                    { professionalId, projectId: project.id },
+                    {
+                      onSuccess: () => {
+                        toast.success("Convite enviado ao profissional!");
+                        setOpen(false);
+                      },
+                      onError: (error) =>
+                        toast.error(
+                          error instanceof ApiError
+                            ? error.message
+                            : "Não foi possível enviar o convite."
+                        ),
+                    }
+                  )
+                }
+              >
+                <Handshake className="size-4" />
+                {showInterest.isPending ? "Enviando…" : "Demonstrar interesse"}
+              </Button>
+            )}
           </div>
         )}
       </DialogContent>
