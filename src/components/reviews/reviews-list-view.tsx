@@ -84,7 +84,7 @@ export function ReviewsListView({
                       "size-3.5",
                       rating === value
                         ? "fill-primary-foreground text-primary-foreground"
-                        : "fill-muted-foreground text-muted-foreground"
+                        : "fill-muted-foreground/60 text-muted-foreground/60"
                     )}
                   />
                 ))}
