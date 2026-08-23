@@ -74,7 +74,7 @@ export default function ChatWindowPage() {
         summary?.daysUntilExpiration != null &&
         summary.daysUntilExpiration >= 0 &&
         summary.daysUntilExpiration <= 7 && (
-          <div className="bg-warning/10 text-warning-foreground flex shrink-0 items-center gap-2 px-4 py-2 text-sm">
+          <div className="bg-warning/10 text-warning flex shrink-0 items-center gap-2 px-4 py-2 text-sm">
             <AlertTriangle className="size-4 shrink-0" />
             Este chat encerra em {summary.daysUntilExpiration} dia(s).
           </div>

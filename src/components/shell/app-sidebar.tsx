@@ -72,7 +72,7 @@ export function AppSidebar({ session }: { session: SessionClaims }) {
                       asChild
                       isActive={pathname.startsWith(item.href)}
                       tooltip={item.title}
-                      className="text-muted-foreground hover:bg-primary/8 hover:text-foreground data-[active=true]:bg-primary/15 data-[active=true]:text-foreground h-12! gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors data-[active=true]:font-semibold data-[active=true]:shadow-[inset_3px_0_0_var(--primary)]"
+                      className="text-muted-foreground hover:bg-primary/8 hover:text-foreground data-[active=true]:bg-primary/15 data-[active=true]:text-foreground h-10! gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors data-[active=true]:font-semibold data-[active=true]:shadow-[inset_3px_0_0_var(--primary)]"
                     >
                       <Link href={item.href}>
                         <item.icon />
@@ -82,7 +82,17 @@ export function AppSidebar({ session }: { session: SessionClaims }) {
                     {item.href === "/chat" &&
                       !!unreadChat.data &&
                       unreadChat.data > 0 && (
-                        <SidebarMenuBadge className="bg-primary text-primary-foreground rounded-full">
+                        <SidebarMenuBadge
+                          className={cn(
+                            "bg-primary text-primary-foreground rounded-full",
+                            // SidebarMenuBadge base já vem com
+                            // peer-hover/menu-button:text-sidebar-accent-foreground
+                            // — sem isso, passar o mouse no item "Conversas" troca
+                            // essa cor por cima do texto branco (fica ilegível
+                            // sobre o fundo bg-primary).
+                            "peer-hover/menu-button:text-primary-foreground"
+                          )}
+                        >
                           {unreadChat.data > 99 ? "99+" : unreadChat.data}
                         </SidebarMenuBadge>
                       )}
