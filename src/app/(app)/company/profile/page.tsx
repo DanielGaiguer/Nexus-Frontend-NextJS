@@ -4,7 +4,9 @@ import {
   AlertTriangle,
   Briefcase,
   FileText,
+  FolderOpen,
   Handshake,
+  History,
   Link2,
   Mail,
   MapPin,
@@ -25,7 +27,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCompanyDashboardSummary } from "@/hooks/queries/useCompanyDashboardSummary";
 import { useCompanyProfile } from "@/hooks/queries/useCompanyProfile";
-import { usePublicCompany } from "@/hooks/queries/usePublicCompany";
+import {
+  useCompanyClosedProjects,
+  useCompanyOpenProjects,
+  usePublicCompany,
+} from "@/hooks/queries/usePublicCompany";
 
 const statusLabels: Record<string, string> = {
   PENDING: "Aguardando aprovação",
@@ -43,6 +49,16 @@ export default function CompanyProfilePage() {
   // Mesmos totais do card "Dados da empresa" + estatísticas do
   // company-profile.html original (totalProjects/confirmedMatches).
   const dashboard = useCompanyDashboardSummary();
+  // Mesmos endpoints/cards de company/companies/[companyId] -- o backend
+  // sempre libera os próprios projetos da empresa pra ela mesma, mesmo os
+  // marcados como ocultos para outras empresas (ver ProjectResponseAssembler
+  // #isOwner), então dá pra reaproveitar sem perder nada.
+  const openProjects = useCompanyOpenProjects(
+    profile?.status === "APPROVED" ? profile.id : undefined
+  );
+  const closedProjects = useCompanyClosedProjects(
+    profile?.status === "APPROVED" ? profile.id : undefined
+  );
 
   if (isLoading || !profile) {
     return (
@@ -227,6 +243,118 @@ export default function CompanyProfilePage() {
                 <p className="text-muted-foreground text-sm">
                   Nenhuma descrição cadastrada ainda.
                 </p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <FolderOpen className="text-primary size-4" />
+                Oportunidades abertas
+                <Badge variant="secondary">
+                  {openProjects.data?.length ?? 0}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!openProjects.data || openProjects.data.length === 0 ? (
+                <p className="text-muted-foreground text-sm">
+                  Nenhuma oportunidade aberta no momento.
+                </p>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {openProjects.data.map((project) => (
+                    <div
+                      key={project.id}
+                      className="bg-muted/40 flex items-center justify-between gap-2 rounded-md border p-3"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant={
+                            project.opportunityType === "JOB"
+                              ? "default"
+                              : "secondary"
+                          }
+                        >
+                          {project.opportunityType === "JOB"
+                            ? "Vaga"
+                            : "Projeto"}
+                        </Badge>
+                        <span className="text-sm font-medium">
+                          {project.title}
+                        </span>
+                      </div>
+                      {project.createdAt && (
+                        <span className="text-muted-foreground text-xs">
+                          {new Date(project.createdAt).toLocaleDateString(
+                            "pt-BR",
+                            {
+                              month: "2-digit",
+                              year: "numeric",
+                            }
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <History className="text-primary size-4" />
+                Oportunidades fechadas
+                <Badge variant="secondary">
+                  {closedProjects.data?.length ?? 0}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!closedProjects.data || closedProjects.data.length === 0 ? (
+                <p className="text-muted-foreground text-sm">
+                  Nenhuma oportunidade encerrada ainda.
+                </p>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {closedProjects.data.map((project) => (
+                    <div
+                      key={project.id}
+                      className="bg-muted/40 flex items-center justify-between gap-2 rounded-md border p-3"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant={
+                            project.opportunityType === "JOB"
+                              ? "default"
+                              : "secondary"
+                          }
+                        >
+                          {project.opportunityType === "JOB"
+                            ? "Vaga"
+                            : "Projeto"}
+                        </Badge>
+                        <span className="text-sm font-medium">
+                          {project.title}
+                        </span>
+                      </div>
+                      {project.createdAt && (
+                        <span className="text-muted-foreground text-xs">
+                          {new Date(project.createdAt).toLocaleDateString(
+                            "pt-BR",
+                            {
+                              month: "2-digit",
+                              year: "numeric",
+                            }
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
