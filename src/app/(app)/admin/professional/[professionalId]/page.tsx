@@ -370,7 +370,7 @@ export default function AdminProfessionalViewPage() {
                 >
                   @{profile.githubLogin}
                 </a>
-                <div className="overflow-x-auto rounded-md bg-[#161b22] p-3">
+                <div className="overflow-x-auto rounded-md border bg-white p-3 dark:border-0 dark:bg-[#161b22]">
                   {/* eslint-disable-next-line @next/next/no-img-element -- domínio externo sem loader configurado, só para este gráfico */}
                   <img
                     src={`https://ghchart.rshah.org/${profile.githubLogin}`}

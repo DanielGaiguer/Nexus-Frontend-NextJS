@@ -357,7 +357,7 @@ function CompanyProfessionalViewContent() {
                 >
                   @{professional.githubLogin}
                 </a>
-                <div className="overflow-x-auto rounded-md bg-[#161b22] p-3">
+                <div className="overflow-x-auto rounded-md border bg-white p-3 dark:border-0 dark:bg-[#161b22]">
                   {/* eslint-disable-next-line @next/next/no-img-element -- domínio externo sem loader configurado, só para este gráfico */}
                   <img
                     src={`https://ghchart.rshah.org/${professional.githubLogin}`}
@@ -367,7 +367,7 @@ function CompanyProfessionalViewContent() {
                 </div>
                 <div className="text-muted-foreground mt-2 flex items-center justify-end gap-1 text-[11px]">
                   <span>Less</span>
-                  <span className="size-2.5 rounded-sm border border-white/10 bg-[#161b22]" />
+                  <span className="size-2.5 rounded-sm border border-black/10 bg-[#ebedf0] dark:border-white/10 dark:bg-[#161b22]" />
                   <span className="size-2.5 rounded-sm bg-[#0e4429]" />
                   <span className="size-2.5 rounded-sm bg-[#006d32]" />
                   <span className="size-2.5 rounded-sm bg-[#26a641]" />
