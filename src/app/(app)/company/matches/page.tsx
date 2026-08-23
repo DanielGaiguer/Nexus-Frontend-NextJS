@@ -304,15 +304,17 @@ function SentList({
     <CandidateCard
       key={match.id}
       match={match}
+      badge={
+        <Badge
+          variant="outline"
+          className="border-warning/30 text-warning w-fit"
+        >
+          <Clock className="size-3" />
+          Aguardando resposta do profissional
+        </Badge>
+      }
       actions={
         <>
-          <Badge
-            variant="outline"
-            className="border-warning/30 text-warning mr-auto"
-          >
-            <Clock className="size-3" />
-            Aguardando resposta do profissional
-          </Badge>
           <Button size="sm" variant="ghost" asChild>
             <Link href={`/public/opportunity/${match.project.id}`}>
               <Eye className="size-4" />
