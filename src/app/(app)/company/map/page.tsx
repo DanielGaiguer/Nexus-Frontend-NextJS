@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import { OpportunityFilterFields } from "@/components/map/opportunity-filter-fields";
 import { RadiusSelector } from "@/components/map/radius-selector";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { MapEntityType } from "@/components/professional/nexus-map";
 import { useCompanyProfile } from "@/hooks/queries/useCompanyProfile";
@@ -159,15 +160,18 @@ export default function CompanyMapPage() {
             e.preventDefault();
             setCity(cityInput.trim());
           }}
-          className="relative"
+          className="space-y-1"
         >
-          <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-          <Input
-            placeholder="Buscar por cidade..."
-            className="pl-9"
-            value={cityInput}
-            onChange={(e) => setCityInput(e.target.value)}
-          />
+          <Label className="text-xs">Cidade</Label>
+          <div className="relative">
+            <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+            <Input
+              placeholder="Buscar por cidade..."
+              className="pl-9"
+              value={cityInput}
+              onChange={(e) => setCityInput(e.target.value)}
+            />
+          </div>
         </form>
 
         <div className="space-y-1">

@@ -10,7 +10,6 @@ import {
   MessageCircle,
   Search,
   Send,
-  Star,
   ThumbsDown,
   User,
   X,
@@ -22,11 +21,21 @@ import { toast } from "sonner";
 
 import { CandidateCard } from "@/components/company/candidate-card";
 import { RejectInterestDialog } from "@/components/company/reject-interest-dialog";
+import { ContactDialog } from "@/components/matches/contact-dialog";
 import { MatchHistoryDialog } from "@/components/matches/match-history-dialog";
+import { MatchReviewDialog } from "@/components/matches/match-review-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -45,25 +54,48 @@ import { useReviewedMatchIds } from "@/hooks/queries/useReviews";
 import { ApiError } from "@/lib/api-client";
 import type { MatchResponseDTO } from "@/types/match";
 
-/** Busca única pra todas as abas — por título do projeto ou nome do candidato. */
-function filterBySearch<T extends MatchResponseDTO>(
+const scoreOptions = [
+  { value: "0", label: "Qualquer score" },
+  { value: "90", label: "Acima de 90%" },
+  { value: "80", label: "Acima de 80%" },
+  { value: "70", label: "Acima de 70%" },
+  { value: "60", label: "Acima de 60%" },
+  { value: "50", label: "Acima de 50%" },
+];
+
+/** Busca + score mínimo, únicos pra todas as abas — busca por título do
+ * projeto ou nome do candidato; score compara o final score arredondado do
+ * match (mesmo valor mostrado no ScoreRing dos cards). */
+function filterMatches<T extends MatchResponseDTO>(
   matches: T[] | undefined,
-  term: string
+  term: string,
+  minScore: number
 ): T[] | undefined {
   const trimmed = term.trim().toLowerCase();
-  if (!trimmed) return matches;
-  return matches?.filter(
-    (m) =>
-      m.project.title.toLowerCase().includes(trimmed) ||
-      m.professional.name.toLowerCase().includes(trimmed)
-  );
+  return matches?.filter((m) => {
+    if (trimmed) {
+      const matchesSearch =
+        m.project.title.toLowerCase().includes(trimmed) ||
+        m.professional.name.toLowerCase().includes(trimmed);
+      if (!matchesSearch) return false;
+    }
+    if (minScore > 0) {
+      const score = m.scoreBreakdown
+        ? Math.round(m.scoreBreakdown.finalScore)
+        : null;
+      if (score == null || score < minScore) return false;
+    }
+    return true;
+  });
 }
 
 function ChatAndReviewActions({
   matchId,
+  projectTitle,
   reviewedMatchIds,
 }: {
   matchId: number;
+  projectTitle: string;
   reviewedMatchIds: number[] | undefined;
 }) {
   const reviewed = reviewedMatchIds?.includes(matchId) ?? false;
@@ -81,12 +113,11 @@ function ChatAndReviewActions({
           Avaliado
         </Button>
       ) : (
-        <Button size="sm" variant="ghost" asChild>
-          <Link href={`/matches/${matchId}/review`}>
-            <Star className="size-4" />
-            Avaliar
-          </Link>
-        </Button>
+        <MatchReviewDialog
+          matchId={matchId}
+          authorType="COMPANY"
+          projectTitle={projectTitle}
+        />
       )}
     </>
   );
@@ -100,12 +131,13 @@ export default function CompanyMatchesPage() {
   const previous = usePreviousCompanyMatches();
   const { data: reviewedMatchIds } = useReviewedMatchIds("company");
   const [search, setSearch] = useState("");
+  const [minScore, setMinScore] = useState(0);
 
-  const filteredReceived = filterBySearch(received.data, search);
-  const filteredSent = filterBySearch(sent.data, search);
-  const filteredConfirmed = filterBySearch(confirmed.data, search);
-  const filteredPrevious = filterBySearch(previous.data, search);
-  const filteredRejected = filterBySearch(rejected.data, search);
+  const filteredReceived = filterMatches(received.data, search, minScore);
+  const filteredSent = filterMatches(sent.data, search, minScore);
+  const filteredConfirmed = filterMatches(confirmed.data, search, minScore);
+  const filteredPrevious = filterMatches(previous.data, search, minScore);
+  const filteredRejected = filterMatches(rejected.data, search, minScore);
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
@@ -116,14 +148,37 @@ export default function CompanyMatchesPage() {
         </p>
       </div>
 
-      <div className="relative max-w-sm">
-        <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-        <Input
-          placeholder="Buscar por projeto ou profissional..."
-          className="pl-9"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      <div className="flex flex-wrap gap-3">
+        <div className="max-w-sm flex-1 space-y-1">
+          <Label className="text-xs">Buscar</Label>
+          <div className="relative">
+            <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+            <Input
+              placeholder="Buscar por projeto ou profissional..."
+              className="pl-9"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="w-44 space-y-1">
+          <Label className="text-xs">Score</Label>
+          <Select
+            value={String(minScore)}
+            onValueChange={(v) => setMinScore(Number(v))}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {scoreOptions.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <Tabs defaultValue="received">
@@ -439,7 +494,6 @@ function ConfirmedCandidateCard({
   return (
     <CandidateCard
       match={match}
-      showScore={false}
       badge={
         <div className="flex flex-col gap-1">
           <Badge className="bg-success/15 text-success w-fit">
@@ -463,30 +517,18 @@ function ConfirmedCandidateCard({
       }
       actions={
         <>
-          <div className="flex flex-col items-end gap-1">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setRevealed(true)}
-            >
-              <Mail className="size-4" />
-              Entrar em contato
-            </Button>
-            {revealed && contact.isLoading && (
-              <span className="text-muted-foreground text-xs">Carregando…</span>
-            )}
-            {revealed && contact.data && (
-              <div className="text-muted-foreground text-right text-xs">
-                <div>{contact.data.email}</div>
-                {contact.data.phone && <div>{contact.data.phone}</div>}
-              </div>
-            )}
-            {revealed && contact.isError && (
-              <span className="text-destructive text-xs">
-                Não foi possível carregar o contato.
-              </span>
-            )}
-          </div>
+          <Button size="sm" variant="outline" onClick={() => setRevealed(true)}>
+            <Mail className="size-4" />
+            Entrar em contato
+          </Button>
+          <ContactDialog
+            open={revealed}
+            onOpenChange={setRevealed}
+            isLoading={contact.isLoading}
+            isError={contact.isError}
+            email={contact.data?.email}
+            phone={contact.data?.phone}
+          />
           <Button size="sm" variant="ghost" asChild>
             <Link href={`/public/professional/${match.professional.id}`}>
               <User className="size-4" />
@@ -502,6 +544,7 @@ function ConfirmedCandidateCard({
           <MatchHistoryDialog matchId={match.id} />
           <ChatAndReviewActions
             matchId={match.id}
+            projectTitle={match.project.title}
             reviewedMatchIds={reviewedMatchIds}
           />
           {match.active !== false && (
@@ -565,7 +608,6 @@ function PlainList({
     <CandidateCard
       key={match.id}
       match={match}
-      showScore={false}
       badge={renderBadge?.(match)}
       actions={
         <>
@@ -585,6 +627,7 @@ function PlainList({
           {reviewedMatchIds !== undefined && (
             <ChatAndReviewActions
               matchId={match.id}
+              projectTitle={match.project.title}
               reviewedMatchIds={reviewedMatchIds}
             />
           )}

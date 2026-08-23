@@ -28,7 +28,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useCompanyDashboardSummary } from "@/hooks/queries/useCompanyDashboardSummary";
+import {
+  useCompanyDashboardSummary,
+  useCompanySuccessRate,
+} from "@/hooks/queries/useCompanyDashboardSummary";
 import { useCompanyProfile } from "@/hooks/queries/useCompanyProfile";
 import { useMyProjects } from "@/hooks/queries/useMyProjects";
 import { usePendingStatusCheck } from "@/hooks/queries/useReviews";
@@ -73,13 +76,10 @@ export default function CompanyDashboardPage() {
   const allProjects = projects.data ?? [];
   const openProjects = allProjects.filter((p) => p.status === "OPEN");
   const totalProjects = summary.data?.totalProjects ?? allProjects.length;
-  const projectsWithMatchCount = allProjects.filter(
-    (p) => (p.filledPositions ?? 0) > 0
-  ).length;
-  const successRate =
-    totalProjects > 0
-      ? `${Math.round((projectsWithMatchCount * 100) / totalProjects)}%`
-      : "—";
+  // Mesma "Taxa de sucesso" de company/profile (useCompanySuccessRate) --
+  // antes cada tela calculava esse número do seu próprio jeito e podiam
+  // divergir pra mesma empresa.
+  const successRate = useCompanySuccessRate().value;
 
   const recentProjects = allProjects
     .filter((p) => p.opportunityType !== "JOB")
@@ -207,7 +207,7 @@ function RecentOpportunitiesCard({
 }) {
   return (
     <Card className="gap-0 py-0">
-      <CardHeader className="flex-row items-center justify-between border-b py-4">
+      <CardHeader className="flex flex-row items-center justify-between border-b py-4">
         <div>
           <CardTitle className="flex items-center gap-1.5 text-sm">
             <Icon className={`size-4 ${iconClassName}`} />

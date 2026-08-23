@@ -34,6 +34,7 @@ import {
   useAdminCompanyProjects,
 } from "@/hooks/queries/useAdminCompanyView";
 import { usePublicCompany } from "@/hooks/queries/usePublicCompany";
+import { clampScore } from "@/lib/utils";
 
 const statusLabels: Record<
   string,
@@ -97,13 +98,22 @@ export default function AdminCompanyViewPage() {
   // aqui que fazia esse número (e a Taxa de Sucesso, derivada dele) ficar bem
   // menor que o app antigo pra empresas com matches já encerrados.
   const confirmed = (matches ?? []).filter((m) => m.status === "MATCHED");
-  const rejectedMatches = (matches ?? []).filter(
-    (m) => m.status === "REJECTED"
+  // Mesma "Taxa de sucesso" de company/dashboard e company/profile
+  // (useCompanySuccessRate): % dos projetos que já tiveram pelo menos 1
+  // match confirmado, ativo ou já encerrado -- nunca passa de 100%. Não dá
+  // pra reaproveitar o hook direto (ele busca os matches da empresa
+  // *logada*, e aqui é o admin olhando uma empresa qualquer), mas os dados
+  // já vêm de useAdminCompanyMatches/useAdminCompanyProjects, então é o
+  // mesmo cálculo com outra fonte. Antes essa tela usava confirmados ÷
+  // decididos (confirmados+recusados) -- taxa de aceitação de convites,
+  // uma métrica diferente que divergia da mostrada pra própria empresa.
+  const projectsWithConfirmedMatch = new Set(
+    confirmed.map((m) => m.project.id)
   );
-  const decidedMatches = confirmed.length + rejectedMatches.length;
+  const totalProjects = projects?.length ?? 0;
   const successRate =
-    decidedMatches > 0
-      ? Math.round((confirmed.length * 100) / decidedMatches)
+    totalProjects > 0
+      ? Math.round((projectsWithConfirmedMatch.size / totalProjects) * 100)
       : null;
   const previous = (matches ?? []).filter(
     (m) => m.status === "MATCHED" && m.active === false
@@ -490,7 +500,10 @@ export default function AdminCompanyViewPage() {
                       </div>
                       {match.scoreBreakdown && (
                         <Badge variant="secondary" className="tabular-nums">
-                          {Math.round(match.scoreBreakdown.finalScore)}%
+                          {Math.round(
+                            clampScore(match.scoreBreakdown.finalScore)
+                          )}
+                          %
                         </Badge>
                       )}
                     </Link>
@@ -581,7 +594,10 @@ export default function AdminCompanyViewPage() {
                         </span>
                         {match.scoreBreakdown && (
                           <Badge variant="secondary" className="tabular-nums">
-                            {Math.round(match.scoreBreakdown.finalScore)}%
+                            {Math.round(
+                              clampScore(match.scoreBreakdown.finalScore)
+                            )}
+                            %
                           </Badge>
                         )}
                       </div>

@@ -12,7 +12,6 @@ import {
   MessageCircle,
   Search,
   Send,
-  Star,
   ThumbsDown,
   X,
 } from "lucide-react";
@@ -21,13 +20,23 @@ import type { ReactNode } from "react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { ContactDialog } from "@/components/matches/contact-dialog";
 import { MatchHistoryDialog } from "@/components/matches/match-history-dialog";
+import { MatchReviewDialog } from "@/components/matches/match-review-dialog";
 import { MatchCard } from "@/components/professional/match-card";
 import { RejectMatchDialog } from "@/components/professional/reject-match-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -46,25 +55,48 @@ import { useReviewedMatchIds } from "@/hooks/queries/useReviews";
 import { ApiError } from "@/lib/api-client";
 import type { MatchResponseDTO } from "@/types/match";
 
-/** Busca única pra todas as abas — por título do projeto ou nome da empresa. */
-function filterBySearch<T extends MatchResponseDTO>(
+const scoreOptions = [
+  { value: "0", label: "Qualquer score" },
+  { value: "90", label: "Acima de 90%" },
+  { value: "80", label: "Acima de 80%" },
+  { value: "70", label: "Acima de 70%" },
+  { value: "60", label: "Acima de 60%" },
+  { value: "50", label: "Acima de 50%" },
+];
+
+/** Busca + score mínimo, únicos pra todas as abas — busca por título do
+ * projeto ou nome da empresa; score compara o final score arredondado do
+ * match (mesmo valor mostrado no ScoreRing dos cards). */
+function filterMatches<T extends MatchResponseDTO>(
   matches: T[] | undefined,
-  term: string
+  term: string,
+  minScore: number
 ): T[] | undefined {
   const trimmed = term.trim().toLowerCase();
-  if (!trimmed) return matches;
-  return matches?.filter(
-    (m) =>
-      m.project.title.toLowerCase().includes(trimmed) ||
-      m.project.companyName.toLowerCase().includes(trimmed)
-  );
+  return matches?.filter((m) => {
+    if (trimmed) {
+      const matchesSearch =
+        m.project.title.toLowerCase().includes(trimmed) ||
+        m.project.companyName.toLowerCase().includes(trimmed);
+      if (!matchesSearch) return false;
+    }
+    if (minScore > 0) {
+      const score = m.scoreBreakdown
+        ? Math.round(m.scoreBreakdown.finalScore)
+        : null;
+      if (score == null || score < minScore) return false;
+    }
+    return true;
+  });
 }
 
 function ChatAndReviewActions({
   matchId,
+  projectTitle,
   reviewedMatchIds,
 }: {
   matchId: number;
+  projectTitle: string;
   reviewedMatchIds: number[] | undefined;
 }) {
   const reviewed = reviewedMatchIds?.includes(matchId) ?? false;
@@ -82,12 +114,11 @@ function ChatAndReviewActions({
           Avaliado
         </Button>
       ) : (
-        <Button size="sm" variant="ghost" asChild>
-          <Link href={`/matches/${matchId}/review`}>
-            <Star className="size-4" />
-            Avaliar
-          </Link>
-        </Button>
+        <MatchReviewDialog
+          matchId={matchId}
+          authorType="PROFESSIONAL"
+          projectTitle={projectTitle}
+        />
       )}
     </>
   );
@@ -101,6 +132,7 @@ export default function MatchesPage() {
   const previous = usePreviousMatches();
   const { data: reviewedMatchIds } = useReviewedMatchIds("professional");
   const [search, setSearch] = useState("");
+  const [minScore, setMinScore] = useState(0);
 
   // Confirmados = MATCHED e ainda ativo -- os já encerrados (active=false)
   // saem daqui e aparecem em "Anteriores" (usePreviousMatches já filtra por
@@ -112,11 +144,11 @@ export default function MatchesPage() {
     (m) => m.status === "REJECTED"
   );
 
-  const filteredInvites = filterBySearch(invites.data, search);
-  const filteredSent = filterBySearch(sent.data, search);
-  const filteredConfirmed = filterBySearch(confirmed, search);
-  const filteredPrevious = filterBySearch(previous.data, search);
-  const filteredRejected = filterBySearch(rejected, search);
+  const filteredInvites = filterMatches(invites.data, search, minScore);
+  const filteredSent = filterMatches(sent.data, search, minScore);
+  const filteredConfirmed = filterMatches(confirmed, search, minScore);
+  const filteredPrevious = filterMatches(previous.data, search, minScore);
+  const filteredRejected = filterMatches(rejected, search, minScore);
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
@@ -127,35 +159,64 @@ export default function MatchesPage() {
         </p>
       </div>
 
-      <div className="relative max-w-sm">
-        <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-        <Input
-          placeholder="Buscar por projeto ou empresa..."
-          className="pl-9"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      <div className="flex flex-wrap gap-3">
+        <div className="max-w-sm flex-1 space-y-1">
+          <Label className="text-xs">Buscar</Label>
+          <div className="relative">
+            <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+            <Input
+              placeholder="Buscar por projeto ou empresa..."
+              className="pl-9"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="w-44 space-y-1">
+          <Label className="text-xs">Score</Label>
+          <Select
+            value={String(minScore)}
+            onValueChange={(v) => setMinScore(Number(v))}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {scoreOptions.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <Tabs defaultValue="invites">
-        <div className="overflow-x-auto">
-          <TabsList>
-            <TabsTrigger value="invites">
-              Convites Pendentes{" "}
-              <Badge variant="secondary">{filteredInvites?.length ?? 0}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="sent">
-              Interesses Enviados{" "}
-              <Badge variant="secondary">{filteredSent?.length ?? 0}</Badge>
-            </TabsTrigger>
+        {/* Mobile (< md): 3 linhas -- Confirmados sozinho em cima (é o mais
+            importante), Convites+Interesses no meio, o resto embaixo. */}
+        <div className="mb-[3px] flex flex-col gap-1.5 md:hidden">
+          <TabsList className="w-full">
             <TabsTrigger value="confirmed">
-              Matches Confirmados{" "}
+              Confirmados{" "}
               <Badge variant="secondary">
                 {filteredConfirmed?.length ?? 0}
               </Badge>
             </TabsTrigger>
+          </TabsList>
+          <TabsList className="w-full">
+            <TabsTrigger value="invites">
+              Pendentes{" "}
+              <Badge variant="secondary">{filteredInvites?.length ?? 0}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="sent">
+              Enviados{" "}
+              <Badge variant="secondary">{filteredSent?.length ?? 0}</Badge>
+            </TabsTrigger>
+          </TabsList>
+          <TabsList className="w-full">
             <TabsTrigger value="previous">
-              Oportunidades Anteriores{" "}
+              Anteriores{" "}
               <Badge variant="secondary">{filteredPrevious?.length ?? 0}</Badge>
             </TabsTrigger>
             <TabsTrigger value="rejected">
@@ -164,6 +225,31 @@ export default function MatchesPage() {
             </TabsTrigger>
           </TabsList>
         </div>
+
+        {/* Desktop (>= md): uma linha só, Confirmados primeiro, depois
+            Pendentes, Enviados, Anteriores, Recusados. */}
+        <TabsList className="mb-[3px] hidden md:inline-flex">
+          <TabsTrigger value="confirmed">
+            Confirmados{" "}
+            <Badge variant="secondary">{filteredConfirmed?.length ?? 0}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="invites">
+            Pendentes{" "}
+            <Badge variant="secondary">{filteredInvites?.length ?? 0}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="sent">
+            Enviados{" "}
+            <Badge variant="secondary">{filteredSent?.length ?? 0}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="previous">
+            Anteriores{" "}
+            <Badge variant="secondary">{filteredPrevious?.length ?? 0}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="rejected">
+            Recusados{" "}
+            <Badge variant="secondary">{filteredRejected?.length ?? 0}</Badge>
+          </TabsTrigger>
+        </TabsList>
 
         <TabsContent value="invites" className="flex flex-col gap-3">
           <InvitesList
@@ -446,7 +532,6 @@ function ConfirmedMatchCard({
     <MatchCard
       match={match}
       mySkills={mySkills}
-      showScore={false}
       badge={
         <div className="flex flex-col gap-1">
           <Badge className="bg-success/15 text-success w-fit">
@@ -470,30 +555,18 @@ function ConfirmedMatchCard({
       }
       actions={
         <>
-          <div className="flex flex-col items-end gap-1">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setRevealed(true)}
-            >
-              <Mail className="size-4" />
-              Entrar em contato
-            </Button>
-            {revealed && contact.isLoading && (
-              <span className="text-muted-foreground text-xs">Carregando…</span>
-            )}
-            {revealed && contact.data && (
-              <div className="text-muted-foreground text-right text-xs">
-                <div>{contact.data.email}</div>
-                {contact.data.phone && <div>{contact.data.phone}</div>}
-              </div>
-            )}
-            {revealed && contact.isError && (
-              <span className="text-destructive text-xs">
-                Não foi possível carregar o contato.
-              </span>
-            )}
-          </div>
+          <Button size="sm" variant="outline" onClick={() => setRevealed(true)}>
+            <Mail className="size-4" />
+            Entrar em contato
+          </Button>
+          <ContactDialog
+            open={revealed}
+            onOpenChange={setRevealed}
+            isLoading={contact.isLoading}
+            isError={contact.isError}
+            email={contact.data?.email}
+            phone={contact.data?.phone}
+          />
           {match.project.companyId != null && (
             <Button size="sm" variant="ghost" asChild>
               <Link href={`/pro/companies/${match.project.companyId}`}>
@@ -505,6 +578,7 @@ function ConfirmedMatchCard({
           <MatchHistoryDialog matchId={match.id} />
           <ChatAndReviewActions
             matchId={match.id}
+            projectTitle={match.project.title}
             reviewedMatchIds={reviewedMatchIds}
           />
           {match.active !== false && (
@@ -571,7 +645,6 @@ function PlainList({
       key={match.id}
       match={match}
       mySkills={mySkills}
-      showScore={false}
       badge={renderBadge?.(match)}
       actions={
         <>
@@ -587,6 +660,7 @@ function PlainList({
           {reviewedMatchIds !== undefined && (
             <ChatAndReviewActions
               matchId={match.id}
+              projectTitle={match.project.title}
               reviewedMatchIds={reviewedMatchIds}
             />
           )}

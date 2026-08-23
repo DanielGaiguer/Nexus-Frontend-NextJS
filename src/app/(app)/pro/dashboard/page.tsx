@@ -23,6 +23,7 @@ import { useMatchInvites, useMatches } from "@/hooks/queries/useMatches";
 import { usePreviousProjects } from "@/hooks/queries/usePreviousProjects";
 import { useProfessionalProfile } from "@/hooks/queries/useProfessionalProfile";
 import { useProfessionalStats } from "@/hooks/queries/useProfessionalStats";
+import { clampScore } from "@/lib/utils";
 
 export default function ProDashboardPage() {
   const profile = useProfessionalProfile();
@@ -153,7 +154,10 @@ export default function ProDashboardPage() {
                     </div>
                     {match.scoreBreakdown && (
                       <Badge variant="secondary" className="tabular-nums">
-                        {Math.round(match.scoreBreakdown.finalScore)}%
+                        {Math.round(
+                          clampScore(match.scoreBreakdown.finalScore)
+                        )}
+                        %
                       </Badge>
                     )}
                   </div>

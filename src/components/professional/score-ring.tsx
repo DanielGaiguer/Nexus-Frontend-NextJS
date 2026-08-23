@@ -1,16 +1,17 @@
-import { cn } from "@/lib/utils";
+import { clampScore, cn } from "@/lib/utils";
 
 const RADIUS = 46;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 /** Porte do anel de score em SVG (nexus-score-ring) — usado nos cards de match/oportunidade. */
 export function ScoreRing({
-  score,
+  score: rawScore,
   size = 96,
 }: {
   score: number;
   size?: number;
 }) {
+  const score = clampScore(rawScore);
   const tier = score >= 85 ? "high" : score >= 70 ? "medium" : "low";
   const colorClass = {
     high: "text-success",

@@ -2,7 +2,6 @@
 
 import {
   ArrowLeft,
-  Briefcase,
   Code2,
   FileText,
   Handshake,
@@ -19,6 +18,7 @@ import { toast } from "sonner";
 
 import { ProfessionalCompareDialog } from "@/components/company/professional-compare-dialog";
 import { credentialColorHex } from "@/components/professional/credential-color";
+import { ProfileCard } from "@/components/professional/profile-card";
 import { ReputationCard } from "@/components/professional/reputation-card";
 import { ReviewsPreviewCard } from "@/components/reviews/reviews-preview-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCompanyShowInterest } from "@/hooks/mutations/useCompanyMatchActions";
+import { useMatch } from "@/hooks/queries/useMatch";
 import { useProfessionalContact } from "@/hooks/queries/useProfessionalContact";
 import { usePublicProfessional } from "@/hooks/queries/usePublicProfessional";
 import { ApiError } from "@/lib/api-client";
@@ -51,21 +52,6 @@ const experienceLabels: Record<string, string> = {
   SENIOR: "Sênior",
 };
 
-const typeLabels: Record<string, string> = {
-  FREELANCE: "Freelance",
-  FULL_TIME: "CLT",
-  PART_TIME: "Meio período",
-};
-
-function formatMoney(value: number | null) {
-  if (value == null) return "—";
-  return value.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    maximumFractionDigits: 0,
-  });
-}
-
 export default function CompanyProfessionalViewPage() {
   return (
     <Suspense fallback={null}>
@@ -85,16 +71,19 @@ function CompanyProfessionalViewContent() {
   const matchId = searchParams.get("matchId");
   const returnTo = searchParams.get("returnTo");
   const showInterest = useCompanyShowInterest();
-  // Só true vindo do diretório geral (/company/professionals) -- lá não há
-  // vaga fixa nem match garantido, então "demonstrar interesse" fica dentro
-  // da própria janela de comparação (escolhe o projeto e envia por ali).
-  const fromDirectory = searchParams.get("from") === "directory";
 
   const { data: professional, isLoading } = usePublicProfessional(id);
   // O backend só libera o contato de fato se houver match confirmado — aqui
   // só chutamos "true" pra tentar; um 403 vira "contato bloqueado" na UI.
   const contact = useProfessionalContact(id, true);
   const hasContact = !!contact.data;
+  // Só existe um projeto "em contexto" quando se chega aqui a partir da tela
+  // de comparação (matchId acima) -- por isso o orçamento no card Perfil só
+  // aparece nesse caso, não na navegação direta pelo diretório geral.
+  const matchIdNum = matchId ? Number(matchId) : undefined;
+  const { data: matchDetail } = useMatch(matchIdNum ?? 0, matchIdNum != null);
+  const contextProject = matchDetail?.project;
+  const contextProjectIsJob = contextProject?.opportunityType === "JOB";
 
   if (isLoading || !professional) {
     return (
@@ -117,10 +106,7 @@ function CompanyProfessionalViewContent() {
           Voltar
         </button>
         <div className="flex items-center gap-2">
-          <ProfessionalCompareDialog
-            professionalId={id}
-            showInterestButton={fromDirectory}
-          />
+          <ProfessionalCompareDialog professionalId={id} />
           {matchId && returnTo && (
             <Button
               size="sm"
@@ -267,6 +253,30 @@ function CompanyProfessionalViewContent() {
             </CardContent>
           </Card>
 
+          <ProfileCard
+            salary={{
+              kind: "range",
+              min: professional.minimumSalary,
+              max: professional.maximumSalary,
+            }}
+            preferredTypes={professional.preferredTypes}
+            projectBudget={
+              contextProject
+                ? {
+                    label: contextProjectIsJob
+                      ? "Salário da vaga"
+                      : "Orçamento do projeto",
+                    min: contextProjectIsJob
+                      ? contextProject.monthlySalaryMin
+                      : contextProject.minimumBudget,
+                    max: contextProjectIsJob
+                      ? contextProject.monthlySalaryMax
+                      : contextProject.maximumBudget,
+                  }
+                : undefined
+            }
+          />
+
           <ReputationCard reputation={professional.reputationDetails} />
           <ReviewsPreviewCard
             entityType="professional"
@@ -347,7 +357,7 @@ function CompanyProfessionalViewContent() {
                 >
                   @{professional.githubLogin}
                 </a>
-                <div className="overflow-x-auto rounded-md bg-[#161b22] p-3">
+                <div className="overflow-x-auto rounded-md border bg-white p-3 dark:border-0 dark:bg-[#161b22]">
                   {/* eslint-disable-next-line @next/next/no-img-element -- domínio externo sem loader configurado, só para este gráfico */}
                   <img
                     src={`https://ghchart.rshah.org/${professional.githubLogin}`}
@@ -357,7 +367,7 @@ function CompanyProfessionalViewContent() {
                 </div>
                 <div className="text-muted-foreground mt-2 flex items-center justify-end gap-1 text-[11px]">
                   <span>Less</span>
-                  <span className="size-2.5 rounded-sm border border-white/10 bg-[#161b22]" />
+                  <span className="size-2.5 rounded-sm border border-black/10 bg-[#ebedf0] dark:border-white/10 dark:bg-[#161b22]" />
                   <span className="size-2.5 rounded-sm bg-[#0e4429]" />
                   <span className="size-2.5 rounded-sm bg-[#006d32]" />
                   <span className="size-2.5 rounded-sm bg-[#26a641]" />
@@ -367,37 +377,6 @@ function CompanyProfessionalViewContent() {
                 <p className="text-muted-foreground mt-2 text-[11px]">
                   Gráfico de contribuições dos últimos 12 meses
                 </p>
-              </CardContent>
-            </Card>
-          )}
-
-          {(professional.minimumSalary != null ||
-            professional.maximumSalary != null) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-sm">
-                  <Briefcase className="text-primary size-4" />
-                  Pretensão salarial
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm">
-                {formatMoney(professional.minimumSalary)} –{" "}
-                {formatMoney(professional.maximumSalary)}
-              </CardContent>
-            </Card>
-          )}
-
-          {professional.preferredTypes.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Regimes de interesse</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-wrap gap-2">
-                {professional.preferredTypes.map((type) => (
-                  <Badge key={type} variant="secondary">
-                    {typeLabels[type] ?? type}
-                  </Badge>
-                ))}
               </CardContent>
             </Card>
           )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageCircleOff } from "lucide-react";
+import { MessageCircleOff, Star } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -14,8 +14,8 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
-import { usePendingReview } from "@/hooks/queries/useReviews";
 import type { AuthorType } from "@/types/review";
 
 const NEEDS_STATUS_CHECK_MSG =
@@ -23,58 +23,53 @@ const NEEDS_STATUS_CHECK_MSG =
 const NO_CONTACT_MSG = "Reviews are not available when there was no contact.";
 
 /**
- * Auto-abre no dashboard quando há um match encerrado ainda sem avaliação
- * deste lado — espelha o modal #reviewModal de pro-dashboard.html /
- * company-dashboard.html. `active` deixa o dashboard decidir prioridade
- * (a empresa tem também o status-check, que vem primeiro). Mesmo padrão de
- * bloqueio (status check pendente / sem contato) de MatchReviewDialog —
- * mesmo com o pending review resolvido do lado do backend, o mesmo par de
- * condições de bloqueio pode acontecer.
+ * "Avaliar" a partir de qualquer lista de matches -- antes navegava pra
+ * /matches/[matchId]/review (página cheia, ver ReviewPageContent); agora
+ * abre o mesmo formulário num diálogo, sem sair da lista. Mesma lógica de
+ * bloqueio (status check pendente / sem contato) que a página tinha.
  */
-export function PendingReviewDialog({
-  role,
-  active,
+export function MatchReviewDialog({
+  matchId,
+  authorType,
+  projectTitle,
 }: {
-  role: "professional" | "company";
-  active: boolean;
+  matchId: number;
+  authorType: AuthorType;
+  projectTitle: string;
 }) {
-  const { data: pending } = usePendingReview(role);
-  const [dismissed, setDismissed] = useState(false);
+  const [open, setOpen] = useState(false);
   const [blockedReason, setBlockedReason] = useState<
     "status-check" | "no-contact" | null
   >(null);
 
-  const open = active && !dismissed && !!pending;
-  const authorType: AuthorType =
-    role === "professional" ? "PROFESSIONAL" : "COMPANY";
-
-  function dismiss() {
-    setDismissed(true);
-    setBlockedReason(null);
-  }
-
   return (
-    <Dialog open={open} onOpenChange={(next) => !next && dismiss()}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) setBlockedReason(null);
+      }}
+    >
+      <DialogTrigger asChild>
+        <Button size="sm" variant="ghost">
+          <Star className="size-4" />
+          Avaliar
+        </Button>
+      </DialogTrigger>
       <DialogContent className="thin-scrollbar max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Avaliar Match</DialogTitle>
-          {pending && (
-            <DialogDescription>
-              Seu match com {pending.otherPartyName} no projeto &quot;
-              {pending.projectTitle}
-              &quot; foi encerrado. Compartilhe sua experiência.
-            </DialogDescription>
-          )}
+          <DialogDescription>Avaliando: {projectTitle}</DialogDescription>
         </DialogHeader>
 
-        {blockedReason === "status-check" && pending && (
+        {blockedReason === "status-check" && (
           <Card>
             <CardContent className="flex flex-col items-center gap-3 py-6 text-center">
               <p className="text-muted-foreground text-sm">
                 Antes de avaliar, responda como foi o match.
               </p>
               <Button asChild>
-                <Link href={`/matches/${pending.matchId}/status-check`}>
+                <Link href={`/matches/${matchId}/status-check`}>
                   Responder agora
                 </Link>
               </Button>
@@ -90,13 +85,13 @@ export function PendingReviewDialog({
           />
         )}
 
-        {!blockedReason && pending && (
+        {!blockedReason && (
           <ReviewForm
-            matchId={pending.matchId}
+            matchId={matchId}
             authorType={authorType}
-            cancelLabel="Responder depois"
-            onCancel={dismiss}
-            onSubmitted={dismiss}
+            cancelLabel="Cancelar"
+            onCancel={() => setOpen(false)}
+            onSubmitted={() => setOpen(false)}
             onBlockedError={(message) => {
               if (message === NEEDS_STATUS_CHECK_MSG) {
                 setBlockedReason("status-check");

@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProfessionalDirectory } from "@/hooks/queries/useProfessionalDirectory";
 
@@ -44,14 +45,17 @@ export default function ProProfessionalsPage() {
         </p>
       </div>
 
-      <div className="relative max-w-sm">
-        <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-        <Input
-          placeholder="Buscar por nome..."
-          className="pl-9"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      <div className="max-w-sm space-y-1">
+        <Label className="text-xs">Buscar</Label>
+        <div className="relative">
+          <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+          <Input
+            placeholder="Buscar por nome..."
+            className="pl-9"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
       </div>
 
       {directory.isLoading && (
@@ -114,19 +118,6 @@ export default function ProProfessionalsPage() {
                       </span>
                     )}
                   </div>
-                  {professional.skills.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {professional.skills.slice(0, 5).map((skill) => (
-                        <Badge
-                          key={skill}
-                          variant="outline"
-                          className="text-[11px]"
-                        >
-                          {skill}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
                 </div>
               </CardContent>
             </Card>

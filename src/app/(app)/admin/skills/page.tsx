@@ -20,6 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateSkillDialog } from "@/components/admin/create-skill-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDeleteSkill } from "@/hooks/mutations/useAdminSkillActions";
 import { useAdminSkills } from "@/hooks/queries/useAdminSkills";
@@ -80,12 +81,14 @@ export default function AdminSkillsPage() {
         <CreateSkillDialog existingCategories={categories} />
       </div>
 
-      <Input
-        placeholder="Buscar por nome ou categoria..."
-        className="max-w-sm"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
+      <div className="max-w-sm space-y-1">
+        <Label className="text-xs">Buscar</Label>
+        <Input
+          placeholder="Buscar por nome ou categoria..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
 
       <div className="flex flex-wrap gap-2">
         <button

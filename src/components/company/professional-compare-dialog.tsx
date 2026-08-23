@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCompanyShowInterestByProject } from "@/hooks/mutations/useCompanyMatchActions";
+import { useMatchStatusByPair } from "@/hooks/queries/useMatchStatusByPair";
 import { useMyProjects } from "@/hooks/queries/useMyProjects";
 import { usePublicProfessional } from "@/hooks/queries/usePublicProfessional";
 import { ApiError } from "@/lib/api-client";
@@ -100,14 +101,8 @@ function InfoRow({
  */
 export function ProfessionalCompareDialog({
   professionalId,
-  showInterestButton = false,
 }: {
   professionalId: number;
-  /** Só true quando a origem da navegação permite demonstrar interesse
-   * direto por aqui — ver company/professionals/[professionalId]/page.tsx,
-   * que só liga isso quando se chega na página vindo do diretório geral
-   * (/company/professionals). */
-  showInterestButton?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [projectId, setProjectId] = useState<string>("");
@@ -120,6 +115,15 @@ export function ProfessionalCompareDialog({
   );
   const project = openProjects.find((p) => p.id === Number(projectId));
   const isJob = project?.opportunityType === "JOB";
+
+  // "Demonstrar interesse" só aparece quando os dois ainda não têm nenhum
+  // envolvimento nesse projeto -- sem match ainda, ou só o WAITING gerado
+  // automaticamente pelo ranking. Já em andamento (*_INTERESTED/MATCHED) ou
+  // recusado (REJECTED), o botão some.
+  const matchStatus = useMatchStatusByPair(professionalId, project?.id);
+  const showInterestButton =
+    !!project &&
+    (matchStatus.data?.status == null || matchStatus.data.status === "WAITING");
 
   const professionalSkillsLower = new Set(
     (detail.data?.skills ?? []).map((s) => s.toLowerCase())
@@ -347,30 +351,34 @@ export function ProfessionalCompareDialog({
             </div>
 
             {showInterestButton && (
-              <Button
-                className="w-full"
-                disabled={showInterest.isPending}
-                onClick={() =>
-                  showInterest.mutate(
-                    { professionalId, projectId: project.id },
-                    {
-                      onSuccess: () => {
-                        toast.success("Convite enviado ao profissional!");
-                        setOpen(false);
-                      },
-                      onError: (error) =>
-                        toast.error(
-                          error instanceof ApiError
-                            ? error.message
-                            : "Não foi possível enviar o convite."
-                        ),
-                    }
-                  )
-                }
-              >
-                <Handshake className="size-4" />
-                {showInterest.isPending ? "Enviando…" : "Demonstrar interesse"}
-              </Button>
+              <div className="flex justify-end border-t pt-3">
+                <Button
+                  size="sm"
+                  disabled={showInterest.isPending}
+                  onClick={() =>
+                    showInterest.mutate(
+                      { professionalId, projectId: project.id },
+                      {
+                        onSuccess: () => {
+                          toast.success("Convite enviado ao profissional!");
+                          setOpen(false);
+                        },
+                        onError: (error) =>
+                          toast.error(
+                            error instanceof ApiError
+                              ? error.message
+                              : "Não foi possível enviar o convite."
+                          ),
+                      }
+                    )
+                  }
+                >
+                  <Handshake className="size-4" />
+                  {showInterest.isPending
+                    ? "Enviando…"
+                    : "Demonstrar interesse"}
+                </Button>
+              </div>
             )}
           </div>
         )}

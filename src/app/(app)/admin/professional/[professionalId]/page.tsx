@@ -18,6 +18,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 
 import { credentialColorHex } from "@/components/professional/credential-color";
+import { ProfileCard } from "@/components/professional/profile-card";
 import { ReputationCard } from "@/components/professional/reputation-card";
 import { ReviewsPreviewCard } from "@/components/reviews/reviews-preview-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -31,6 +32,7 @@ import {
   useAdminProfessionalProjects,
 } from "@/hooks/queries/useAdminProfessionalView";
 import { usePublicProfessional } from "@/hooks/queries/usePublicProfessional";
+import { clampScore } from "@/lib/utils";
 
 const experienceLabels: Record<string, string> = {
   INTERNSHIP: "Estágio",
@@ -39,15 +41,6 @@ const experienceLabels: Record<string, string> = {
   PLENO: "Pleno",
   SENIOR: "Sênior",
 };
-
-function money(value: number | null) {
-  if (value == null) return null;
-  return value.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    maximumFractionDigits: 0,
-  });
-}
 
 export default function AdminProfessionalViewPage() {
   const { professionalId } = useParams<{ professionalId: string }>();
@@ -72,6 +65,11 @@ export default function AdminProfessionalViewPage() {
   const invites = (matches ?? []).filter(
     (m) => m.status === "COMPANY_INTERESTED"
   );
+  // Só existe um projeto "em contexto" quando há um match confirmado -- se
+  // houver mais de um, mostra o do mais recente (matches já vêm ordenados
+  // por createdAt DESC).
+  const contextProject = confirmed[0]?.project;
+  const contextProjectIsJob = contextProject?.opportunityType === "JOB";
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-4">
@@ -217,6 +215,33 @@ export default function AdminProfessionalViewPage() {
             </CardContent>
           </Card>
 
+          <ProfileCard
+            salary={{
+              kind: "breakdown",
+              clt: profile.expectedSalaryCLT,
+              pj: profile.expectedSalaryPJ,
+              freelanceMin: profile.freelanceMinExpectation,
+              freelanceMax: profile.freelanceMaxExpectation,
+            }}
+            preferredTypes={profile.preferredTypes}
+            preferredOpportunityTypes={profile.preferredOpportunityTypes}
+            projectBudget={
+              contextProject
+                ? {
+                    label: contextProjectIsJob
+                      ? "Salário da vaga"
+                      : "Orçamento do projeto",
+                    min: contextProjectIsJob
+                      ? contextProject.monthlySalaryMin
+                      : contextProject.minimumBudget,
+                    max: contextProjectIsJob
+                      ? contextProject.monthlySalaryMax
+                      : contextProject.maximumBudget,
+                  }
+                : undefined
+            }
+          />
+
           <ReputationCard
             reputation={publicProfile?.reputationDetails ?? null}
             title="Análise de qualidade"
@@ -239,47 +264,6 @@ export default function AdminProfessionalViewPage() {
               />
               <Field label="Telefone" value={profile.phone ?? "—"} />
               <Field label="E-mail" value={profile.email} />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Pretensão salarial</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {!money(profile.expectedSalaryCLT) &&
-              !money(profile.expectedSalaryPJ) &&
-              !money(profile.freelanceMinExpectation) &&
-              !money(profile.freelanceMaxExpectation) ? (
-                <p className="text-muted-foreground text-sm">
-                  Nenhuma pretensão salarial informada.
-                </p>
-              ) : (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {profile.expectedSalaryCLT != null && (
-                    <Field
-                      label="CLT"
-                      value={`${money(profile.expectedSalaryCLT)}/mês`}
-                      accent
-                    />
-                  )}
-                  {profile.expectedSalaryPJ != null && (
-                    <Field
-                      label="PJ"
-                      value={`${money(profile.expectedSalaryPJ)}/mês`}
-                      accent
-                    />
-                  )}
-                  {(profile.freelanceMinExpectation != null ||
-                    profile.freelanceMaxExpectation != null) && (
-                    <Field
-                      label="Por projeto"
-                      value={`${money(profile.freelanceMinExpectation) ?? "—"} — ${money(profile.freelanceMaxExpectation) ?? "—"}`}
-                      accent
-                    />
-                  )}
-                </div>
-              )}
             </CardContent>
           </Card>
 
@@ -387,7 +371,7 @@ export default function AdminProfessionalViewPage() {
                 >
                   @{profile.githubLogin}
                 </a>
-                <div className="overflow-x-auto rounded-md bg-[#161b22] p-3">
+                <div className="overflow-x-auto rounded-md border bg-white p-3 dark:border-0 dark:bg-[#161b22]">
                   {/* eslint-disable-next-line @next/next/no-img-element -- domínio externo sem loader configurado, só para este gráfico */}
                   <img
                     src={`https://ghchart.rshah.org/${profile.githubLogin}`}
@@ -436,7 +420,10 @@ export default function AdminProfessionalViewPage() {
                       </div>
                       {match.scoreBreakdown && (
                         <Badge variant="secondary" className="tabular-nums">
-                          {Math.round(match.scoreBreakdown.finalScore)}%
+                          {Math.round(
+                            clampScore(match.scoreBreakdown.finalScore)
+                          )}
+                          %
                         </Badge>
                       )}
                     </Link>
@@ -477,7 +464,10 @@ export default function AdminProfessionalViewPage() {
                       </div>
                       {match.scoreBreakdown && (
                         <Badge variant="secondary" className="tabular-nums">
-                          {Math.round(match.scoreBreakdown.finalScore)}%
+                          {Math.round(
+                            clampScore(match.scoreBreakdown.finalScore)
+                          )}
+                          %
                         </Badge>
                       )}
                     </Link>

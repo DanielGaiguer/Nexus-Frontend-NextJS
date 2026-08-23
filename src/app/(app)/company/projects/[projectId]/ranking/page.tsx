@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -122,8 +123,8 @@ export default function ProjectRankingPage() {
   }
 
   function goToComparison() {
-    if (selected.length < 2) {
-      toast.error("Selecione ao menos 2 candidatos para comparar.");
+    if (selected.length < 1) {
+      toast.error("Selecione ao menos 1 candidato para comparar.");
       return;
     }
     router.push(
@@ -189,108 +190,133 @@ export default function ProjectRankingPage() {
 
       <div className="flex flex-col gap-3 rounded-lg border p-3">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Input
-            placeholder="Cidade (ex: São Paulo)"
-            value={pendingFilters.city ?? ""}
-            onChange={(e) =>
-              setPendingFilters((f) => ({ ...f, city: e.target.value }))
-            }
-          />
-          <Select
-            value={pendingFilters.uf ?? "ALL"}
-            onValueChange={(v) =>
-              setPendingFilters((f) => ({
-                ...f,
-                uf: v === "ALL" ? undefined : v,
-              }))
-            }
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="UF" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Todos</SelectItem>
-              {ufList.map((uf) => (
-                <SelectItem key={uf} value={uf}>
-                  {uf}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={pendingFilters.experienceLevel ?? "ALL"}
-            onValueChange={(v) =>
-              setPendingFilters((f) => ({
-                ...f,
-                experienceLevel: v === "ALL" ? undefined : v,
-              }))
-            }
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Experiência" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Todos</SelectItem>
-              {experienceLevels.map((e) => (
-                <SelectItem key={e.value} value={e.value}>
-                  {e.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={
-              pendingFilters.available == null
-                ? "ALL"
-                : String(pendingFilters.available)
-            }
-            onValueChange={(v) =>
-              setPendingFilters((f) => ({
-                ...f,
-                available: v === "ALL" ? undefined : v === "true",
-              }))
-            }
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Disponibilidade" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Todos</SelectItem>
-              <SelectItem value="true">Disponível</SelectItem>
-              <SelectItem value="false">Indisponível</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="space-y-1">
+            <Label className="text-xs">Cidade</Label>
+            <Input
+              placeholder="Cidade (ex: São Paulo)"
+              value={pendingFilters.city ?? ""}
+              onChange={(e) =>
+                setPendingFilters((f) => ({ ...f, city: e.target.value }))
+              }
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">UF</Label>
+            <Select
+              value={pendingFilters.uf ?? "ALL"}
+              onValueChange={(v) =>
+                setPendingFilters((f) => ({
+                  ...f,
+                  uf: v === "ALL" ? undefined : v,
+                }))
+              }
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="UF" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Todos</SelectItem>
+                {ufList.map((uf) => (
+                  <SelectItem key={uf} value={uf}>
+                    {uf}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Experiência</Label>
+            <Select
+              value={pendingFilters.experienceLevel ?? "ALL"}
+              onValueChange={(v) =>
+                setPendingFilters((f) => ({
+                  ...f,
+                  experienceLevel: v === "ALL" ? undefined : v,
+                }))
+              }
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Experiência" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Todos</SelectItem>
+                {experienceLevels.map((e) => (
+                  <SelectItem key={e.value} value={e.value}>
+                    {e.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Disponibilidade</Label>
+            <Select
+              value={
+                pendingFilters.available == null
+                  ? "ALL"
+                  : String(pendingFilters.available)
+              }
+              onValueChange={(v) =>
+                setPendingFilters((f) => ({
+                  ...f,
+                  available: v === "ALL" ? undefined : v === "true",
+                }))
+              }
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Disponibilidade" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Todos</SelectItem>
+                <SelectItem value="true">Disponível</SelectItem>
+                <SelectItem value="false">Indisponível</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <div className="grid gap-3 sm:grid-cols-3">
-          <Input
-            type="number"
-            placeholder="Salário mín."
-            value={pendingFilters.minSalary ?? ""}
-            onChange={(e) =>
-              setPendingFilters((f) => ({
-                ...f,
-                minSalary: e.target.value ? Number(e.target.value) : undefined,
-              }))
-            }
-          />
-          <Input
-            type="number"
-            placeholder="Salário máx."
-            value={pendingFilters.maxSalary ?? ""}
-            onChange={(e) =>
-              setPendingFilters((f) => ({
-                ...f,
-                maxSalary: e.target.value ? Number(e.target.value) : undefined,
-              }))
-            }
-          />
-          <Input
-            placeholder="Skill (ex: Java)"
-            value={pendingFilters.skill ?? ""}
-            onChange={(e) =>
-              setPendingFilters((f) => ({ ...f, skill: e.target.value }))
-            }
-          />
+          <div className="space-y-1">
+            <Label className="text-xs">Salário mín.</Label>
+            <Input
+              type="number"
+              placeholder="Salário mín."
+              value={pendingFilters.minSalary ?? ""}
+              onChange={(e) =>
+                setPendingFilters((f) => ({
+                  ...f,
+                  minSalary: e.target.value
+                    ? Number(e.target.value)
+                    : undefined,
+                }))
+              }
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Salário máx.</Label>
+            <Input
+              type="number"
+              placeholder="Salário máx."
+              value={pendingFilters.maxSalary ?? ""}
+              onChange={(e) =>
+                setPendingFilters((f) => ({
+                  ...f,
+                  maxSalary: e.target.value
+                    ? Number(e.target.value)
+                    : undefined,
+                }))
+              }
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Skill</Label>
+            <Input
+              placeholder="Skill (ex: Java)"
+              value={pendingFilters.skill ?? ""}
+              onChange={(e) =>
+                setPendingFilters((f) => ({ ...f, skill: e.target.value }))
+              }
+            />
+          </div>
         </div>
         <div className="flex justify-end gap-2">
           <Button
@@ -417,6 +443,20 @@ export default function ProjectRankingPage() {
           );
         })}
       </div>
+
+      {/* Mesmo botão da barra "Comparar selecionados" acima, só que fixo no
+          canto da tela -- em listas longas, evita ter que rolar de volta pro
+          topo depois de marcar os candidatos lá embaixo. */}
+      {selected.length > 0 && (
+        <Button
+          size="lg"
+          className="fixed right-6 bottom-6 z-40 shadow-lg"
+          onClick={goToComparison}
+        >
+          <GitCompare className="size-4" />
+          Comparar ({selected.length})
+        </Button>
+      )}
     </div>
   );
 }

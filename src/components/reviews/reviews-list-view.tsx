@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { ReviewCard } from "@/components/reviews/review-card";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useReviewsAll } from "@/hooks/queries/useReviews";
 import { cn } from "@/lib/utils";
@@ -61,41 +62,44 @@ export function ReviewsListView({
         )}
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {ratingFilters.map((value) => (
-          <Button
-            key={value ?? "all"}
-            size="sm"
-            variant={rating === value ? "default" : "outline"}
-            className={
-              rating === value
-                ? // Mesmo bg-primary de sempre é agressivo demais aqui (cinco
-                  // desses lado a lado) — escurece e satura menos, sem mexer
-                  // no --primary global usado no resto do app.
-                  "bg-[color-mix(in_srgb,var(--primary)_70%,black)] hover:bg-[color-mix(in_srgb,var(--primary)_60%,black)]"
-                : undefined
-            }
-            onClick={() => setRating(value)}
-          >
-            {value == null ? (
-              "Todas"
-            ) : (
-              <span className="flex items-center gap-0.5">
-                {Array.from({ length: value }).map((_, i) => (
-                  <Star
-                    key={i}
-                    className={cn(
-                      "size-3.5",
-                      rating === value
-                        ? "fill-primary-foreground text-primary-foreground"
-                        : "fill-muted-foreground/60 text-muted-foreground/60"
-                    )}
-                  />
-                ))}
-              </span>
-            )}
-          </Button>
-        ))}
+      <div className="space-y-1">
+        <Label className="text-xs">Filtrar por nota</Label>
+        <div className="flex flex-wrap gap-2">
+          {ratingFilters.map((value) => (
+            <Button
+              key={value ?? "all"}
+              size="sm"
+              variant={rating === value ? "default" : "outline"}
+              className={
+                rating === value
+                  ? // Mesmo bg-primary de sempre é agressivo demais aqui (cinco
+                    // desses lado a lado) — escurece e satura menos, sem mexer
+                    // no --primary global usado no resto do app.
+                    "bg-[color-mix(in_srgb,var(--primary)_70%,black)] hover:bg-[color-mix(in_srgb,var(--primary)_60%,black)]"
+                  : undefined
+              }
+              onClick={() => setRating(value)}
+            >
+              {value == null ? (
+                "Todas"
+              ) : (
+                <span className="flex items-center gap-0.5">
+                  {Array.from({ length: value }).map((_, i) => (
+                    <Star
+                      key={i}
+                      className={cn(
+                        "size-3.5",
+                        rating === value
+                          ? "fill-primary-foreground text-primary-foreground"
+                          : "fill-muted-foreground/60 text-muted-foreground/60"
+                      )}
+                    />
+                  ))}
+                </span>
+              )}
+            </Button>
+          ))}
+        </div>
       </div>
 
       {isLoading && (

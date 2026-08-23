@@ -26,10 +26,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  useConfirmedCompanyMatches,
-  usePreviousCompanyMatches,
-} from "@/hooks/queries/useCompanyMatches";
-import { useCompanyDashboardSummary } from "@/hooks/queries/useCompanyDashboardSummary";
+  useCompanyDashboardSummary,
+  useCompanySuccessRate,
+} from "@/hooks/queries/useCompanyDashboardSummary";
 import { useCompanyProfile } from "@/hooks/queries/useCompanyProfile";
 import {
   useCompanyClosedProjects,
@@ -63,12 +62,10 @@ export default function CompanyProfilePage() {
   const closedProjects = useCompanyClosedProjects(
     profile?.status === "APPROVED" ? profile.id : undefined
   );
-  // "Taxa de sucesso" = % dos projetos que já tiveram pelo menos 1 match
-  // confirmado (ativo ou já encerrado) -- nunca passa de 100%, diferente de
-  // matches÷projetos (um projeto pode ter várias posições preenchidas, ou
-  // seja, vários matches confirmados, e passar de 100% nessa conta).
-  const confirmedMatches = useConfirmedCompanyMatches();
-  const previousMatches = usePreviousCompanyMatches();
+  // Mesma "Taxa de sucesso" de company/dashboard (useCompanySuccessRate) --
+  // antes cada tela calculava esse número do seu próprio jeito e podiam
+  // divergir pra mesma empresa.
+  const successRate = useCompanySuccessRate().value;
 
   if (isLoading || !profile) {
     return (
@@ -78,17 +75,6 @@ export default function CompanyProfilePage() {
       </div>
     );
   }
-
-  const projectsWithMatch = new Set([
-    ...(confirmedMatches.data ?? []).map((m) => m.project.id),
-    ...(previousMatches.data ?? []).map((m) => m.project.id),
-  ]);
-  const successRate =
-    dashboard.data && dashboard.data.totalProjects > 0
-      ? `${Math.round(
-          (projectsWithMatch.size / dashboard.data.totalProjects) * 100
-        )}%`
-      : "—";
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">

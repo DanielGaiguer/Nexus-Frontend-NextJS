@@ -11,11 +11,13 @@ import {
   DollarSign,
   FileText,
   GitCompare,
+  Handshake,
   MapPin,
   Star,
   X,
 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { ScoreRing } from "@/components/professional/score-ring";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -30,7 +32,13 @@ import {
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCandidateComparison } from "@/hooks/queries/useCandidateComparison";
+import { useCompanyShowInterest } from "@/hooks/mutations/useCompanyMatchActions";
+import { useShowInterest } from "@/hooks/mutations/useShowInterest";
+import {
+  useCandidateComparison,
+  useMyMatchComparison,
+} from "@/hooks/queries/useCandidateComparison";
+import { ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import type { MatchResponseDTO } from "@/types/match";
 import type { ScoreBreakdownDTO } from "@/types/match";
@@ -155,14 +163,71 @@ function InfoRow({
  * devolve matchingSkills/missingSkills e o scoreBreakdown calculados pelo
  * backend; os demais dados da vaga (orçamento, modalidade, benefícios,
  * cidade etc.) vêm direto de match.project, sem precisar de outra chamada.
+ *
+ * `viewer="professional"` (usado em pro/opportunities e pro/matches) troca
+ * pra `/api/comparison/candidates/mine` — mesmo formato de resposta, mas o
+ * profissional compara consigo mesmo, num match que já é dele, sem
+ * depender de ser dono do projeto (que é exclusivo de empresa).
  */
-export function MatchCompareDialog({ match }: { match: MatchResponseDTO }) {
+export function MatchCompareDialog({
+  match,
+  viewer = "company",
+}: {
+  match: MatchResponseDTO;
+  viewer?: "company" | "professional";
+}) {
   const [open, setOpen] = useState(false);
-  const comparison = useCandidateComparison(
-    open ? { projectId: match.project.id, matchIds: [match.id] } : undefined
+  const companyComparison = useCandidateComparison(
+    open && viewer === "company"
+      ? { projectId: match.project.id, matchIds: [match.id] }
+      : undefined
   );
+  const professionalComparison = useMyMatchComparison(
+    open && viewer === "professional" ? match.id : undefined
+  );
+  const comparison =
+    viewer === "company" ? companyComparison : professionalComparison;
   const data = comparison.data;
   const candidate = data?.candidates[0];
+
+  // "Demonstrar interesse" só faz sentido quando ainda não há nenhum
+  // envolvimento entre os dois -- WAITING é só o match gerado
+  // automaticamente pelo ranking, sem ação de nenhum lado ainda. Já em
+  // andamento (COMPANY_INTERESTED/PROFESSIONAL_INTERESTED/MATCHED) ou
+  // recusado (REJECTED), o botão some.
+  const canShowInterest = match.status === "WAITING";
+  const companyShowInterest = useCompanyShowInterest();
+  const professionalShowInterest = useShowInterest();
+  const showInterestPending =
+    viewer === "company"
+      ? companyShowInterest.isPending
+      : professionalShowInterest.isPending;
+
+  function handleShowInterest() {
+    const onError = (error: unknown) =>
+      toast.error(
+        error instanceof ApiError
+          ? error.message
+          : "Não foi possível enviar o interesse."
+      );
+    if (viewer === "company") {
+      companyShowInterest.mutate(match.id, {
+        onSuccess: () => {
+          toast.success("Convite enviado ao profissional!");
+          setOpen(false);
+        },
+        onError,
+      });
+    } else {
+      professionalShowInterest.mutate(match.project.id, {
+        onSuccess: () => {
+          toast.success("Interesse enviado à empresa!");
+          setOpen(false);
+        },
+        onError,
+      });
+    }
+  }
   const project = match.project;
   const isJob = project.opportunityType === "JOB";
 
@@ -469,6 +534,19 @@ export function MatchCompareDialog({ match }: { match: MatchResponseDTO }) {
                 </div>
               )}
             </div>
+
+            {canShowInterest && (
+              <div className="flex justify-end border-t pt-3">
+                <Button
+                  size="sm"
+                  disabled={showInterestPending}
+                  onClick={handleShowInterest}
+                >
+                  <Handshake className="size-4" />
+                  {showInterestPending ? "Enviando…" : "Demonstrar interesse"}
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </DialogContent>

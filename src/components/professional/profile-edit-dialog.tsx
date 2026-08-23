@@ -87,7 +87,7 @@ export function ProfileEditDialog({
     defaultValues: {
       name: profile.name,
       phone: profile.phone ?? "",
-      cep: "",
+      cep: profile.cep ?? "",
       experienceLevel: profile.experienceLevel ?? "",
       preferredTypes: profile.preferredTypes,
       preferredOpportunityTypes: profile.preferredOpportunityTypes,

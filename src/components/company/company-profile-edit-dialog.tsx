@@ -48,7 +48,7 @@ export function CompanyProfileEditDialog({
       companyName: profile.companyName,
       taxId: profile.taxId ?? "",
       phone: profile.phone ?? "",
-      cep: "",
+      cep: profile.cep ?? "",
       description: profile.description ?? "",
       linkedinUrl: profile.linkedinUrl ?? "",
     },

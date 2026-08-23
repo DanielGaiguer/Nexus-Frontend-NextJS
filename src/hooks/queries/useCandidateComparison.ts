@@ -42,3 +42,24 @@ export function useCandidateComparison(
     enabled: request != null && request.matchIds.length > 0,
   });
 }
+
+export const myMatchComparisonKey = (matchId: number | undefined) =>
+  ["professional", "comparison", matchId] as const;
+
+/**
+ * Mesma resposta de `useCandidateComparison` (um único candidato — o
+ * próprio profissional logado), mas do lado do profissional: ele só pode
+ * comparar consigo mesmo, com um match que já é dele (ver
+ * `/api/comparison/candidates/mine` no backend).
+ */
+export function useMyMatchComparison(matchId: number | undefined) {
+  return useQuery({
+    queryKey: myMatchComparisonKey(matchId),
+    queryFn: () =>
+      apiFetch<CandidateComparisonResponseDTO>(
+        `/api/comparison/candidates/mine?matchId=${matchId}`,
+        { method: "POST" }
+      ),
+    enabled: matchId != null,
+  });
+}

@@ -8,10 +8,11 @@ export const matchHistoryKey = (matchId: number) =>
   ["matches", matchId, "history"] as const;
 
 /** Match único por id, role-agnóstico — backend valida participação (GET /api/matches/{matchId}). */
-export function useMatch(matchId: number) {
+export function useMatch(matchId: number, enabled = true) {
   return useQuery({
     queryKey: matchKey(matchId),
     queryFn: () => apiFetch<MatchResponseDTO>(`/api/matches/${matchId}`),
+    enabled,
   });
 }
 

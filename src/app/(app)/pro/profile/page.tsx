@@ -12,6 +12,7 @@ import {
 import { toast } from "sonner";
 
 import { CredentialsSection } from "@/components/professional/credentials-section";
+import { ProfileCard } from "@/components/professional/profile-card";
 import { ProfileEditDialog } from "@/components/professional/profile-edit-dialog";
 import { ProfilePhoto } from "@/components/professional/profile-photo";
 import { ReputationCard } from "@/components/professional/reputation-card";
@@ -64,15 +65,6 @@ export default function ProProfilePage() {
       }
     );
   }
-
-  const money = (value: number | null) =>
-    value != null
-      ? value.toLocaleString("pt-BR", {
-          style: "currency",
-          currency: "BRL",
-          maximumFractionDigits: 0,
-        })
-      : null;
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-4">
@@ -211,6 +203,18 @@ export default function ProProfilePage() {
             </CardContent>
           </Card>
 
+          <ProfileCard
+            salary={{
+              kind: "breakdown",
+              clt: profile.expectedSalaryCLT,
+              pj: profile.expectedSalaryPJ,
+              freelanceMin: profile.freelanceMinExpectation,
+              freelanceMax: profile.freelanceMaxExpectation,
+            }}
+            preferredTypes={profile.preferredTypes}
+            preferredOpportunityTypes={profile.preferredOpportunityTypes}
+          />
+
           <ReputationCard
             reputation={publicProfile?.reputationDetails ?? null}
             title="Análise de qualidade"
@@ -238,47 +242,6 @@ export default function ProProfilePage() {
               />
               <Field label="Telefone" value={profile.phone ?? "—"} />
               <Field label="E-mail" value={profile.email} />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Pretensão salarial</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {!money(profile.expectedSalaryCLT) &&
-              !money(profile.expectedSalaryPJ) &&
-              !money(profile.freelanceMinExpectation) &&
-              !money(profile.freelanceMaxExpectation) ? (
-                <p className="text-muted-foreground text-sm">
-                  Nenhuma pretensão salarial informada.
-                </p>
-              ) : (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {profile.expectedSalaryCLT != null && (
-                    <Field
-                      label="CLT"
-                      value={`${money(profile.expectedSalaryCLT)}/mês`}
-                      accent
-                    />
-                  )}
-                  {profile.expectedSalaryPJ != null && (
-                    <Field
-                      label="PJ"
-                      value={`${money(profile.expectedSalaryPJ)}/mês`}
-                      accent
-                    />
-                  )}
-                  {(profile.freelanceMinExpectation != null ||
-                    profile.freelanceMaxExpectation != null) && (
-                    <Field
-                      label="Por projeto"
-                      value={`${money(profile.freelanceMinExpectation) ?? "—"} — ${money(profile.freelanceMaxExpectation) ?? "—"}`}
-                      accent
-                    />
-                  )}
-                </div>
-              )}
             </CardContent>
           </Card>
 
@@ -332,7 +295,7 @@ export default function ProProfilePage() {
                 >
                   @{profile.githubLogin}
                 </a>
-                <div className="overflow-x-auto rounded-md bg-[#161b22] p-3">
+                <div className="overflow-x-auto rounded-md border bg-white p-3 dark:border-0 dark:bg-[#161b22]">
                   {/* eslint-disable-next-line @next/next/no-img-element -- domínio externo sem loader configurado, só para este gráfico */}
                   <img
                     src={`https://ghchart.rshah.org/${profile.githubLogin}`}
@@ -342,7 +305,7 @@ export default function ProProfilePage() {
                 </div>
                 <div className="text-muted-foreground mt-2 flex items-center justify-end gap-1 text-[11px]">
                   <span>Less</span>
-                  <span className="size-2.5 rounded-sm border border-white/10 bg-[#161b22]" />
+                  <span className="size-2.5 rounded-sm border border-black/10 bg-[#ebedf0] dark:border-white/10 dark:bg-[#161b22]" />
                   <span className="size-2.5 rounded-sm bg-[#0e4429]" />
                   <span className="size-2.5 rounded-sm bg-[#006d32]" />
                   <span className="size-2.5 rounded-sm bg-[#26a641]" />
