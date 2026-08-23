@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCompanyShowInterest } from "@/hooks/mutations/useCompanyMatchActions";
+import { useMatch } from "@/hooks/queries/useMatch";
 import { useProfessionalContact } from "@/hooks/queries/useProfessionalContact";
 import { usePublicProfessional } from "@/hooks/queries/usePublicProfessional";
 import { ApiError } from "@/lib/api-client";
@@ -76,6 +77,13 @@ function CompanyProfessionalViewContent() {
   // só chutamos "true" pra tentar; um 403 vira "contato bloqueado" na UI.
   const contact = useProfessionalContact(id, true);
   const hasContact = !!contact.data;
+  // Só existe um projeto "em contexto" quando se chega aqui a partir da tela
+  // de comparação (matchId acima) -- por isso o orçamento no card Perfil só
+  // aparece nesse caso, não na navegação direta pelo diretório geral.
+  const matchIdNum = matchId ? Number(matchId) : undefined;
+  const { data: matchDetail } = useMatch(matchIdNum ?? 0, matchIdNum != null);
+  const contextProject = matchDetail?.project;
+  const contextProjectIsJob = contextProject?.opportunityType === "JOB";
 
   if (isLoading || !professional) {
     return (
@@ -252,6 +260,21 @@ function CompanyProfessionalViewContent() {
               max: professional.maximumSalary,
             }}
             preferredTypes={professional.preferredTypes}
+            projectBudget={
+              contextProject
+                ? {
+                    label: contextProjectIsJob
+                      ? "Salário da vaga"
+                      : "Orçamento do projeto",
+                    min: contextProjectIsJob
+                      ? contextProject.monthlySalaryMin
+                      : contextProject.minimumBudget,
+                    max: contextProjectIsJob
+                      ? contextProject.monthlySalaryMax
+                      : contextProject.maximumBudget,
+                  }
+                : undefined
+            }
           />
 
           <ReputationCard reputation={professional.reputationDetails} />

@@ -64,6 +64,11 @@ export default function AdminProfessionalViewPage() {
   const invites = (matches ?? []).filter(
     (m) => m.status === "COMPANY_INTERESTED"
   );
+  // Só existe um projeto "em contexto" quando há um match confirmado -- se
+  // houver mais de um, mostra o do mais recente (matches já vêm ordenados
+  // por createdAt DESC).
+  const contextProject = confirmed[0]?.project;
+  const contextProjectIsJob = contextProject?.opportunityType === "JOB";
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-4">
@@ -219,6 +224,21 @@ export default function AdminProfessionalViewPage() {
             }}
             preferredTypes={profile.preferredTypes}
             preferredOpportunityTypes={profile.preferredOpportunityTypes}
+            projectBudget={
+              contextProject
+                ? {
+                    label: contextProjectIsJob
+                      ? "Salário da vaga"
+                      : "Orçamento do projeto",
+                    min: contextProjectIsJob
+                      ? contextProject.monthlySalaryMin
+                      : contextProject.minimumBudget,
+                    max: contextProjectIsJob
+                      ? contextProject.monthlySalaryMax
+                      : contextProject.maximumBudget,
+                  }
+                : undefined
+            }
           />
 
           <ReputationCard
