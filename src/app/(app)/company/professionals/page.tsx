@@ -4,7 +4,6 @@ import { MapPin, Search, Star, Users } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
-import { ProfessionalCompareDialog } from "@/components/company/professional-compare-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -62,14 +61,12 @@ export default function CompanyProfessionalsPage() {
 
       <div className="grid min-w-0 gap-3 sm:grid-cols-2">
         {professionals.map((professional) => (
-          <Card
+          <Link
             key={professional.id}
-            className="hover:border-primary/40 flex h-full flex-col transition-colors"
+            href={`/company/professionals/${professional.id}?from=directory`}
+            className="block min-w-0"
           >
-            <Link
-              href={`/company/professionals/${professional.id}?from=directory`}
-              className="min-w-0 flex-1"
-            >
+            <Card className="hover:border-primary/40 h-full transition-colors">
               <CardContent className="flex items-start gap-3">
                 <Avatar className="size-14 shrink-0">
                   <AvatarImage
@@ -113,11 +110,8 @@ export default function CompanyProfessionalsPage() {
                   )}
                 </div>
               </CardContent>
-            </Link>
-            <div className="flex justify-end border-t px-4 py-2">
-              <ProfessionalCompareDialog professionalId={professional.id} />
-            </div>
-          </Card>
+            </Card>
+          </Link>
         ))}
       </div>
 
