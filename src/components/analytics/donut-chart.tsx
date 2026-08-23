@@ -79,7 +79,7 @@ export function DonutChart({
               style={{ backgroundColor: d.color }}
             />
             <span className="truncate">{d.label}</span>
-            <span className="text-muted-foreground ml-auto shrink-0 text-xs">
+            <span className="text-muted-foreground mr-3 ml-auto shrink-0 text-xs">
               {legendMeta ? legendMeta(d) : unitLabel(d)}
             </span>
           </div>
