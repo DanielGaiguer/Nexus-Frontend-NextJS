@@ -171,20 +171,22 @@ export default function AdminApprovalsPage() {
       </div>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
-        <TabsList className="flex-wrap">
-          <TabsTrigger value="all">
-            Todas <Badge variant="secondary">{counts.all}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="PENDING">
-            Pendentes <Badge variant="secondary">{counts.PENDING}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="APPROVED">
-            Aprovadas <Badge variant="secondary">{counts.APPROVED}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="REJECTED">
-            Rejeitadas <Badge variant="secondary">{counts.REJECTED}</Badge>
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto">
+          <TabsList>
+            <TabsTrigger value="all">
+              Todas <Badge variant="secondary">{counts.all}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="PENDING">
+              Pendentes <Badge variant="secondary">{counts.PENDING}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="APPROVED">
+              Aprovadas <Badge variant="secondary">{counts.APPROVED}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="REJECTED">
+              Rejeitadas <Badge variant="secondary">{counts.REJECTED}</Badge>
+            </TabsTrigger>
+          </TabsList>
+        </div>
       </Tabs>
 
       {isLoading ? (

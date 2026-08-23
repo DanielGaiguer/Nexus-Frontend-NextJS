@@ -63,7 +63,7 @@ export default function CompanyProfessionalsPage() {
         {professionals.map((professional) => (
           <Link
             key={professional.id}
-            href={`/company/professionals/${professional.id}`}
+            href={`/company/professionals/${professional.id}?from=directory`}
             className="block min-w-0"
           >
             <Card className="hover:border-primary/40 h-full transition-colors">
@@ -107,11 +107,6 @@ export default function CompanyProfessionalsPage() {
                       {experienceLabels[professional.experienceLevel] ??
                         professional.experienceLevel}
                     </Badge>
-                  )}
-                  {professional.skills.length > 0 && (
-                    <p className="text-muted-foreground mt-2 line-clamp-2 text-xs">
-                      {professional.skills.join(", ")}
-                    </p>
                   )}
                 </div>
               </CardContent>

@@ -1,0 +1,265 @@
+"use client";
+
+import { ArrowLeft, Building2, FolderOpen, History, Star } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+
+import { ReputationCard } from "@/components/professional/reputation-card";
+import { ReviewsPreviewCard } from "@/components/reviews/reviews-preview-card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  useCompanyClosedProjects,
+  useCompanyOpenProjects,
+  usePublicCompany,
+} from "@/hooks/queries/usePublicCompany";
+
+/**
+ * Espelha pro/companies/[companyId] — mesma visão pública de empresa, mas
+ * sem o card de Contato: contato só é liberado depois de um match
+ * confirmado (MatchController), e matches são sempre empresa↔profissional,
+ * nunca empresa↔empresa, então esse card nunca teria o que mostrar aqui.
+ */
+export default function CompanyCompanyViewPage() {
+  const { companyId } = useParams<{ companyId: string }>();
+  const id = Number(companyId);
+  const router = useRouter();
+
+  const { data: company, isLoading } = usePublicCompany(id);
+  const { data: openProjects } = useCompanyOpenProjects(id);
+  const { data: closedProjects } = useCompanyClosedProjects(id);
+
+  if (isLoading || !company) {
+    return (
+      <div className="mx-auto grid max-w-4xl gap-4 lg:grid-cols-[320px_1fr]">
+        <Skeleton className="h-80" />
+        <Skeleton className="h-80" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto flex max-w-4xl flex-col gap-4">
+      <button
+        type="button"
+        onClick={() => router.back()}
+        className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm"
+      >
+        <ArrowLeft className="size-4" />
+        Voltar
+      </button>
+
+      <div className="grid min-w-0 gap-4 lg:grid-cols-[320px_1fr]">
+        <div className="flex min-w-0 flex-col gap-4">
+          <Card>
+            <CardContent className="flex flex-col items-center gap-2 text-center">
+              <Avatar className="size-24 rounded-xl">
+                <AvatarImage
+                  src={company.profilePhotoUrl ?? undefined}
+                  alt=""
+                />
+                <AvatarFallback className="rounded-xl text-2xl">
+                  {company.companyName.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="text-lg font-bold">{company.companyName}</div>
+              {company.city && (
+                <div className="text-muted-foreground text-sm">
+                  {company.city}
+                  {company.uf ? ` / ${company.uf}` : ""}
+                </div>
+              )}
+              {company.reputation != null && company.reputation > 0 ? (
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star
+                      key={i}
+                      className={
+                        i < Math.round(company.reputation!)
+                          ? "fill-warning text-warning size-3.5"
+                          : "text-muted-foreground/30 size-3.5"
+                      }
+                    />
+                  ))}
+                  <span className="text-warning ml-1 text-sm font-semibold tabular-nums">
+                    {company.reputation.toFixed(1)}
+                  </span>
+                </div>
+              ) : (
+                <span className="text-muted-foreground text-xs">
+                  Sem avaliações ainda
+                </span>
+              )}
+            </CardContent>
+          </Card>
+
+          <ReputationCard reputation={company.reputationDetails} />
+          <ReviewsPreviewCard
+            entityType="company"
+            entityId={id}
+            viewAllHref={`/public/company/${id}/reviews`}
+          />
+        </div>
+
+        <div className="flex min-w-0 flex-col gap-4">
+          {company.description && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <Building2 className="text-primary size-4" />
+                  Sobre a empresa
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground text-sm whitespace-pre-line">
+                  {company.description}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <FolderOpen className="text-primary size-4" />
+                Oportunidades abertas
+                <Badge variant="secondary">{openProjects?.length ?? 0}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!openProjects || openProjects.length === 0 ? (
+                <p className="text-muted-foreground text-sm">
+                  Nenhuma oportunidade aberta no momento.
+                </p>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {openProjects.map((project) => (
+                    <div
+                      key={project.id}
+                      className="bg-muted/40 flex items-center justify-between gap-2 rounded-md border p-3"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant={
+                            project.opportunityType === "JOB"
+                              ? "default"
+                              : "secondary"
+                          }
+                        >
+                          {project.opportunityType === "JOB"
+                            ? "Vaga"
+                            : "Projeto"}
+                        </Badge>
+                        <span className="text-sm font-medium">
+                          {project.title}
+                        </span>
+                      </div>
+                      {project.createdAt && (
+                        <span className="text-muted-foreground text-xs">
+                          {new Date(project.createdAt).toLocaleDateString(
+                            "pt-BR",
+                            {
+                              month: "2-digit",
+                              year: "numeric",
+                            }
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <History className="text-primary size-4" />
+                Oportunidades fechadas
+                <Badge variant="secondary">{closedProjects?.length ?? 0}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!closedProjects || closedProjects.length === 0 ? (
+                <p className="text-muted-foreground text-sm">
+                  Nenhuma oportunidade encerrada ainda.
+                </p>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {closedProjects.map((project) => (
+                    <div
+                      key={project.id}
+                      className="bg-muted/40 flex items-center justify-between gap-2 rounded-md border p-3"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant={
+                            project.opportunityType === "JOB"
+                              ? "default"
+                              : "secondary"
+                          }
+                        >
+                          {project.opportunityType === "JOB"
+                            ? "Vaga"
+                            : "Projeto"}
+                        </Badge>
+                        <span className="text-sm font-medium">
+                          {project.title}
+                        </span>
+                      </div>
+                      {project.createdAt && (
+                        <span className="text-muted-foreground text-xs">
+                          {new Date(project.createdAt).toLocaleDateString(
+                            "pt-BR",
+                            {
+                              month: "2-digit",
+                              year: "numeric",
+                            }
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {company.previousProjects.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <History className="text-primary size-4" />
+                  Oportunidades anteriores
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-2">
+                {company.previousProjects.map((project) => (
+                  <div
+                    key={project.id}
+                    className="bg-muted/40 flex items-center justify-between rounded-md border p-3"
+                  >
+                    <span className="text-sm font-medium">
+                      {project.projectTitle}
+                    </span>
+                    <span className="text-muted-foreground text-xs">
+                      {new Date(project.completedAt).toLocaleDateString(
+                        "pt-BR",
+                        {
+                          month: "2-digit",
+                          year: "numeric",
+                        }
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

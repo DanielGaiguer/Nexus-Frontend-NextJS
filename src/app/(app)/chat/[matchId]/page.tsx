@@ -29,7 +29,7 @@ export default function ChatWindowPage() {
   }, [messages]);
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-6rem)] max-w-3xl flex-col overflow-hidden rounded-lg border">
+    <div className="mx-auto flex h-[calc(100vh-6rem)] max-w-[848px] flex-col overflow-hidden rounded-lg border">
       <div className="flex shrink-0 items-center gap-3 border-b p-3">
         <button
           type="button"
@@ -74,7 +74,7 @@ export default function ChatWindowPage() {
         summary?.daysUntilExpiration != null &&
         summary.daysUntilExpiration >= 0 &&
         summary.daysUntilExpiration <= 7 && (
-          <div className="bg-warning/10 text-warning-foreground flex shrink-0 items-center gap-2 px-4 py-2 text-sm">
+          <div className="bg-warning/10 text-warning flex shrink-0 items-center gap-2 px-4 py-2 text-sm">
             <AlertTriangle className="size-4 shrink-0" />
             Este chat encerra em {summary.daysUntilExpiration} dia(s).
           </div>
@@ -97,7 +97,7 @@ export default function ChatWindowPage() {
 
       <div
         ref={scrollRef}
-        className="flex flex-1 flex-col gap-3 overflow-y-auto p-4"
+        className="thin-scrollbar flex flex-1 flex-col gap-3 overflow-y-auto p-4"
       >
         {isLoading &&
           Array.from({ length: 4 }).map((_, i) => (

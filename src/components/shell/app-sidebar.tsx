@@ -82,7 +82,17 @@ export function AppSidebar({ session }: { session: SessionClaims }) {
                     {item.href === "/chat" &&
                       !!unreadChat.data &&
                       unreadChat.data > 0 && (
-                        <SidebarMenuBadge className="bg-primary text-primary-foreground rounded-full">
+                        <SidebarMenuBadge
+                          className={cn(
+                            "bg-primary text-primary-foreground rounded-full",
+                            // SidebarMenuBadge base já vem com
+                            // peer-hover/menu-button:text-sidebar-accent-foreground
+                            // — sem isso, passar o mouse no item "Conversas" troca
+                            // essa cor por cima do texto branco (fica ilegível
+                            // sobre o fundo bg-primary).
+                            "peer-hover/menu-button:text-primary-foreground"
+                          )}
+                        >
                           {unreadChat.data > 99 ? "99+" : unreadChat.data}
                         </SidebarMenuBadge>
                       )}

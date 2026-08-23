@@ -347,9 +347,11 @@ export function OpportunityDetailContent({
                   </span>
                 )}
                 {companyHref && (
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={companyHref}>Ver mais</Link>
-                  </Button>
+                  <div className="flex justify-end">
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={companyHref}>Ver mais</Link>
+                    </Button>
+                  </div>
                 )}
               </CardContent>
             </Card>

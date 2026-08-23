@@ -147,12 +147,14 @@ export default function AdminUsersPage() {
       </div>
 
       <Tabs value={type} onValueChange={(v) => setType(v as typeof type)}>
-        <TabsList className="flex-wrap">
-          <TabsTrigger value="all">Todos</TabsTrigger>
-          <TabsTrigger value="PROFESSIONAL">Professional</TabsTrigger>
-          <TabsTrigger value="COMPANY">Company</TabsTrigger>
-          <TabsTrigger value="ADMIN">Admin</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto">
+          <TabsList>
+            <TabsTrigger value="all">Todos</TabsTrigger>
+            <TabsTrigger value="PROFESSIONAL">Professional</TabsTrigger>
+            <TabsTrigger value="COMPANY">Company</TabsTrigger>
+            <TabsTrigger value="ADMIN">Admin</TabsTrigger>
+          </TabsList>
+        </div>
       </Tabs>
 
       {isLoading ? (

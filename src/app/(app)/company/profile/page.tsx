@@ -2,20 +2,28 @@
 
 import {
   AlertTriangle,
+  Briefcase,
   FileText,
+  Handshake,
   Link2,
   Mail,
   MapPin,
   Phone,
+  ShieldCheck,
   Star,
+  TrendingUp,
 } from "lucide-react";
 
 import { CompanyPhoto } from "@/components/company/company-photo";
 import { CompanyProfileEditDialog } from "@/components/company/company-profile-edit-dialog";
+import { ProfileCompletenessCard } from "@/components/company/profile-completeness-card";
+import { StatCard } from "@/components/dashboard/stat-card";
 import { ReputationCard } from "@/components/professional/reputation-card";
 import { ReviewsPreviewCard } from "@/components/reviews/reviews-preview-card";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCompanyDashboardSummary } from "@/hooks/queries/useCompanyDashboardSummary";
 import { useCompanyProfile } from "@/hooks/queries/useCompanyProfile";
 import { usePublicCompany } from "@/hooks/queries/usePublicCompany";
 
@@ -32,6 +40,9 @@ export default function CompanyProfilePage() {
   const { data: publicProfile } = usePublicCompany(
     profile?.status === "APPROVED" ? profile.id : undefined
   );
+  // Mesmos totais do card "Dados da empresa" + estatísticas do
+  // company-profile.html original (totalProjects/confirmedMatches).
+  const dashboard = useCompanyDashboardSummary();
 
   if (isLoading || !profile) {
     return (
@@ -41,6 +52,13 @@ export default function CompanyProfilePage() {
       </div>
     );
   }
+
+  const successRate =
+    dashboard.data && dashboard.data.totalProjects > 0
+      ? `${Math.round(
+          (dashboard.data.totalMatches / dashboard.data.totalProjects) * 100
+        )}%`
+      : "—";
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
@@ -107,6 +125,12 @@ export default function CompanyProfilePage() {
                   Sem avaliações ainda
                 </span>
               )}
+              {profile.status === "APPROVED" && (
+                <Badge className="bg-success/15 text-success">
+                  <ShieldCheck className="size-3" />
+                  Empresa verificada
+                </Badge>
+              )}
             </CardContent>
           </Card>
 
@@ -158,6 +182,40 @@ export default function CompanyProfilePage() {
         <div className="flex flex-col gap-4">
           <Card>
             <CardHeader>
+              <CardTitle className="text-sm">Dados da empresa</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <div className="text-muted-foreground text-xs">
+                  Nome da Empresa
+                </div>
+                <div className="font-medium">{profile.companyName}</div>
+              </div>
+              <div>
+                <div className="text-muted-foreground text-xs">CNPJ</div>
+                <div className="font-medium tabular-nums">
+                  {profile.taxId ?? "—"}
+                </div>
+              </div>
+              <div>
+                <div className="text-muted-foreground text-xs">Cidade</div>
+                <div className="font-medium">
+                  {[profile.city, profile.uf].filter(Boolean).join(", ") || "—"}
+                </div>
+              </div>
+              <div>
+                <div className="text-muted-foreground text-xs">Telefone</div>
+                <div className="font-medium">{profile.phone ?? "—"}</div>
+              </div>
+              <div>
+                <div className="text-muted-foreground text-xs">E-mail</div>
+                <div className="font-medium">{profile.email}</div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <CardTitle className="text-sm">Sobre a empresa</CardTitle>
             </CardHeader>
             <CardContent>
@@ -172,6 +230,28 @@ export default function CompanyProfilePage() {
               )}
             </CardContent>
           </Card>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <StatCard
+              icon={Briefcase}
+              label="Projetos postados"
+              value={String(dashboard.data?.totalProjects ?? 0)}
+            />
+            <StatCard
+              icon={Handshake}
+              label="Matches realizados"
+              value={String(dashboard.data?.totalMatches ?? 0)}
+              accent="success"
+            />
+            <StatCard
+              icon={TrendingUp}
+              label="Taxa de sucesso"
+              value={successRate}
+              accent="secondary"
+            />
+          </div>
+
+          <ProfileCompletenessCard profile={profile} />
         </div>
       </div>
     </div>

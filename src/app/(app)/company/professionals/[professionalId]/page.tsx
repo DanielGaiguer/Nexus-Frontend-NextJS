@@ -17,6 +17,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { toast } from "sonner";
 
+import { ProfessionalCompareDialog } from "@/components/company/professional-compare-dialog";
 import { credentialColorHex } from "@/components/professional/credential-color";
 import { ReputationCard } from "@/components/professional/reputation-card";
 import { ReviewsPreviewCard } from "@/components/reviews/reviews-preview-card";
@@ -84,6 +85,10 @@ function CompanyProfessionalViewContent() {
   const matchId = searchParams.get("matchId");
   const returnTo = searchParams.get("returnTo");
   const showInterest = useCompanyShowInterest();
+  // Só true vindo do diretório geral (/company/professionals) -- lá não há
+  // vaga fixa nem match garantido, então "demonstrar interesse" fica dentro
+  // da própria janela de comparação (escolhe o projeto e envia por ali).
+  const fromDirectory = searchParams.get("from") === "directory";
 
   const { data: professional, isLoading } = usePublicProfessional(id);
   // O backend só libera o contato de fato se houver match confirmado — aqui
@@ -111,29 +116,35 @@ function CompanyProfessionalViewContent() {
           <ArrowLeft className="size-4" />
           Voltar
         </button>
-        {matchId && returnTo && (
-          <Button
-            size="sm"
-            disabled={showInterest.isPending}
-            onClick={() =>
-              showInterest.mutate(Number(matchId), {
-                onSuccess: () => {
-                  toast.success("Convite enviado ao profissional!");
-                  router.push(returnTo);
-                },
-                onError: (error) =>
-                  toast.error(
-                    error instanceof ApiError
-                      ? error.message
-                      : "Não foi possível enviar o convite."
-                  ),
-              })
-            }
-          >
-            <Handshake className="size-3.5" />
-            Demonstrar interesse
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          <ProfessionalCompareDialog
+            professionalId={id}
+            showInterestButton={fromDirectory}
+          />
+          {matchId && returnTo && (
+            <Button
+              size="sm"
+              disabled={showInterest.isPending}
+              onClick={() =>
+                showInterest.mutate(Number(matchId), {
+                  onSuccess: () => {
+                    toast.success("Convite enviado ao profissional!");
+                    router.push(returnTo);
+                  },
+                  onError: (error) =>
+                    toast.error(
+                      error instanceof ApiError
+                        ? error.message
+                        : "Não foi possível enviar o convite."
+                    ),
+                })
+              }
+            >
+              <Handshake className="size-3.5" />
+              Demonstrar interesse
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="grid min-w-0 gap-4 lg:grid-cols-[320px_1fr]">

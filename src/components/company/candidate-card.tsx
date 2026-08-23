@@ -1,6 +1,7 @@
-import { Star } from "lucide-react";
+import { Briefcase, Building2, Star } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { MatchCompareDialog } from "@/components/company/match-compare-dialog";
 import { ScoreRing } from "@/components/professional/score-ring";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -54,8 +55,26 @@ export function CandidateCard({
             <div>
               <div className="font-semibold">{professional.name}</div>
               {showProject && (
-                <div className="text-muted-foreground text-sm">
-                  {match.project.title}
+                <div className="mt-1 flex flex-col items-start gap-1">
+                  <Badge
+                    variant={
+                      match.project.opportunityType === "JOB"
+                        ? "default"
+                        : "secondary"
+                    }
+                  >
+                    {match.project.opportunityType === "JOB" ? (
+                      <Building2 className="size-3" />
+                    ) : (
+                      <Briefcase className="size-3" />
+                    )}
+                    {match.project.opportunityType === "JOB"
+                      ? "Vaga"
+                      : "Projeto"}
+                  </Badge>
+                  <span className="text-muted-foreground text-sm">
+                    {match.project.title}
+                  </span>
                 </div>
               )}
               {professional.reputation != null && (
@@ -69,16 +88,6 @@ export function CandidateCard({
             </div>
 
             {badge}
-
-            {professional.skills.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {professional.skills.map((skill) => (
-                  <Badge key={skill} variant="outline" className="text-[11px]">
-                    {skill}
-                  </Badge>
-                ))}
-              </div>
-            )}
 
             {match.rejectionReasons && match.rejectionReasons.length > 0 && (
               <div>
@@ -131,11 +140,10 @@ export function CandidateCard({
           </div>
         )}
       </CardContent>
-      {actions && (
-        <div className="flex flex-wrap justify-end gap-2 border-t px-6 py-3">
-          {actions}
-        </div>
-      )}
+      <div className="flex flex-wrap justify-end gap-2 border-t px-6 py-3">
+        <MatchCompareDialog match={match} />
+        {actions}
+      </div>
     </Card>
   );
 }

@@ -264,3 +264,32 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Edge */
 }
+
+/*
+ * Barra de rolagem fina e temática, no lugar da padrão do browser — usada
+ * onde a rolagem em si é útil de ver (ex.: painel de mensagens do chat,
+ * ao contrário do .scrollbar-hide acima). Cores vêm dos tokens do tema
+ * (--muted-foreground/--primary), então acompanham claro/escuro sozinha.
+ */
+.thin-scrollbar {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: var(--muted-foreground) transparent;
+}
+
+.thin-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--muted-foreground);
+  border-radius: 9999px;
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: var(--primary);
+}

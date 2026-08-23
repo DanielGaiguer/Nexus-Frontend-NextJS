@@ -6,6 +6,8 @@ import type { ProjectResponseDTO } from "@/types/project";
 
 export const publicCompanyKey = (id: number) =>
   ["public", "company", id] as const;
+export const companyOpenProjectsKey = (id: number) =>
+  ["public", "company", id, "projects", "open"] as const;
 export const companyClosedProjectsKey = (id: number) =>
   ["public", "company", id, "projects", "closed"] as const;
 
@@ -13,6 +15,15 @@ export function usePublicCompany(id: number | undefined) {
   return useQuery({
     queryKey: publicCompanyKey(id ?? 0),
     queryFn: () => apiFetch<PublicCompanyDTO>(`/api/public/company/${id}`),
+    enabled: id != null,
+  });
+}
+
+export function useCompanyOpenProjects(id: number | undefined) {
+  return useQuery({
+    queryKey: companyOpenProjectsKey(id ?? 0),
+    queryFn: () =>
+      apiFetch<ProjectResponseDTO[]>(`/api/public/company/${id}/projects`),
     enabled: id != null,
   });
 }

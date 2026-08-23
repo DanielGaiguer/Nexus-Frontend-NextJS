@@ -43,6 +43,30 @@ export function useCompanyShowInterest() {
   });
 }
 
+/**
+ * Mesma ação de useCompanyShowInterest, mas pra quando ainda não existe (ou
+ * não se sabe se existe) um match — ex.: profissional achado pelo diretório
+ * geral (/company/professionals), fora do contexto de um projeto específico.
+ * O backend localiza ou cria o match a partir de professionalId+projectId.
+ */
+export function useCompanyShowInterestByProject() {
+  const invalidate = useInvalidateCompanyMatchLists();
+  return useMutation({
+    mutationFn: ({
+      professionalId,
+      projectId,
+    }: {
+      professionalId: number;
+      projectId: number;
+    }) =>
+      apiFetch<{ message: string }>(
+        `/api/matches/company-interest-by-project?professionalId=${professionalId}&projectId=${projectId}`,
+        { method: "POST" }
+      ),
+    onSuccess: invalidate,
+  });
+}
+
 export function useCompanyAcceptMatch() {
   const invalidate = useInvalidateCompanyMatchLists();
   return useMutation({

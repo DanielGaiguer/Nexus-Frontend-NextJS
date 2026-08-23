@@ -32,7 +32,14 @@ function AvatarImage({
   return (
     <AvatarPrimitive.Image
       data-slot="avatar-image"
-      className={cn("aspect-square size-full", className)}
+      // object-cover é essencial aqui: sem corte client-side no upload (ver
+      // ProfilePhoto/CompanyPhoto — o nexus-frontend antigo cortava a foto
+      // em quadrado com cropperjs antes de enviar, esta versão não), fotos
+      // com proporção diferente de 1:1 chegam como estão. Sem object-fit
+      // explícito, o padrão do browser é "fill", que estica a imagem pra
+      // preencher a caixa quadrada do avatar em vez de cortar — é o que
+      // fazia toda foto do sistema parecer esticada.
+      className={cn("aspect-square size-full object-cover", className)}
       {...props}
     />
   );

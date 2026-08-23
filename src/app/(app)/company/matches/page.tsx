@@ -3,12 +3,12 @@
 import {
   Check,
   CircleCheck,
-  Clock,
   Eye,
   HeartHandshake,
   History,
   Mail,
   MessageCircle,
+  Search,
   Send,
   Star,
   ThumbsDown,
@@ -26,6 +26,7 @@ import { MatchHistoryDialog } from "@/components/matches/match-history-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -43,6 +44,20 @@ import { useProfessionalContact } from "@/hooks/queries/useProfessionalContact";
 import { useReviewedMatchIds } from "@/hooks/queries/useReviews";
 import { ApiError } from "@/lib/api-client";
 import type { MatchResponseDTO } from "@/types/match";
+
+/** Busca única pra todas as abas — por título do projeto ou nome do candidato. */
+function filterBySearch<T extends MatchResponseDTO>(
+  matches: T[] | undefined,
+  term: string
+): T[] | undefined {
+  const trimmed = term.trim().toLowerCase();
+  if (!trimmed) return matches;
+  return matches?.filter(
+    (m) =>
+      m.project.title.toLowerCase().includes(trimmed) ||
+      m.professional.name.toLowerCase().includes(trimmed)
+  );
+}
 
 function ChatAndReviewActions({
   matchId,
@@ -84,6 +99,13 @@ export default function CompanyMatchesPage() {
   const rejected = useRejectedCompanyMatches();
   const previous = usePreviousCompanyMatches();
   const { data: reviewedMatchIds } = useReviewedMatchIds("company");
+  const [search, setSearch] = useState("");
+
+  const filteredReceived = filterBySearch(received.data, search);
+  const filteredSent = filterBySearch(sent.data, search);
+  const filteredConfirmed = filterBySearch(confirmed.data, search);
+  const filteredPrevious = filterBySearch(previous.data, search);
+  const filteredRejected = filterBySearch(rejected.data, search);
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
@@ -94,49 +116,94 @@ export default function CompanyMatchesPage() {
         </p>
       </div>
 
+      <div className="relative max-w-sm">
+        <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+        <Input
+          placeholder="Buscar por projeto ou profissional..."
+          className="pl-9"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+
       <Tabs defaultValue="received">
-        <TabsList className="flex-wrap">
-          <TabsTrigger value="received">
-            Convites Recebidos{" "}
-            <Badge variant="secondary">{received.data?.length ?? 0}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="sent">
-            Convites Enviados{" "}
-            <Badge variant="secondary">{sent.data?.length ?? 0}</Badge>
-          </TabsTrigger>
+        {/* Mobile (< md): 3 linhas -- Confirmados sozinho em cima (é o mais
+            importante), Recebidos+Enviados no meio, o resto embaixo. */}
+        <div className="mb-[3px] flex flex-col gap-1.5 md:hidden">
+          <TabsList className="w-full">
+            <TabsTrigger value="confirmed">
+              Confirmados{" "}
+              <Badge variant="secondary">
+                {filteredConfirmed?.length ?? 0}
+              </Badge>
+            </TabsTrigger>
+          </TabsList>
+          <TabsList className="w-full">
+            <TabsTrigger value="received">
+              Recebidos{" "}
+              <Badge variant="secondary">{filteredReceived?.length ?? 0}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="sent">
+              Enviados{" "}
+              <Badge variant="secondary">{filteredSent?.length ?? 0}</Badge>
+            </TabsTrigger>
+          </TabsList>
+          <TabsList className="w-full">
+            <TabsTrigger value="previous">
+              Anteriores{" "}
+              <Badge variant="secondary">{filteredPrevious?.length ?? 0}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="rejected">
+              Recusados{" "}
+              <Badge variant="secondary">{filteredRejected?.length ?? 0}</Badge>
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        {/* Desktop (>= md): uma linha só, Confirmados primeiro, depois
+            Recebidos, Enviados, Anteriores, Recusados. */}
+        <TabsList className="mb-[3px] hidden md:inline-flex">
           <TabsTrigger value="confirmed">
             Confirmados{" "}
-            <Badge variant="secondary">{confirmed.data?.length ?? 0}</Badge>
+            <Badge variant="secondary">{filteredConfirmed?.length ?? 0}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="received">
+            Recebidos{" "}
+            <Badge variant="secondary">{filteredReceived?.length ?? 0}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="sent">
+            Enviados{" "}
+            <Badge variant="secondary">{filteredSent?.length ?? 0}</Badge>
           </TabsTrigger>
           <TabsTrigger value="previous">
-            Oportunidades Anteriores{" "}
-            <Badge variant="secondary">{previous.data?.length ?? 0}</Badge>
+            Anteriores{" "}
+            <Badge variant="secondary">{filteredPrevious?.length ?? 0}</Badge>
           </TabsTrigger>
           <TabsTrigger value="rejected">
             Recusados{" "}
-            <Badge variant="secondary">{rejected.data?.length ?? 0}</Badge>
+            <Badge variant="secondary">{filteredRejected?.length ?? 0}</Badge>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="received" className="flex flex-col gap-3">
           <ReceivedList
-            matches={received.data}
+            matches={filteredReceived}
             isLoading={received.isLoading}
           />
         </TabsContent>
         <TabsContent value="sent" className="flex flex-col gap-3">
-          <SentList matches={sent.data} isLoading={sent.isLoading} />
+          <SentList matches={filteredSent} isLoading={sent.isLoading} />
         </TabsContent>
         <TabsContent value="confirmed" className="flex flex-col gap-3">
           <ConfirmedList
-            matches={confirmed.data}
+            matches={filteredConfirmed}
             isLoading={confirmed.isLoading}
             reviewedMatchIds={reviewedMatchIds}
           />
         </TabsContent>
         <TabsContent value="previous" className="flex flex-col gap-3">
           <PlainList
-            matches={previous.data}
+            matches={filteredPrevious}
             isLoading={previous.isLoading}
             emptyTitle="Nenhum projeto anterior"
             emptyDescription="Quando um match confirmado for encerrado, ele aparecerá aqui como histórico."
@@ -151,7 +218,7 @@ export default function CompanyMatchesPage() {
         </TabsContent>
         <TabsContent value="rejected" className="flex flex-col gap-3">
           <PlainList
-            matches={rejected.data}
+            matches={filteredRejected}
             isLoading={rejected.isLoading}
             emptyTitle="Nenhum match recusado"
             emptyDescription="Convites e interesses recusados por você ou pelo profissional aparecerão aqui."
@@ -272,15 +339,16 @@ function SentList({
     <CandidateCard
       key={match.id}
       match={match}
+      badge={
+        <Badge
+          variant="outline"
+          className="border-warning/30 text-warning w-fit"
+        >
+          Aguardando resposta do profissional
+        </Badge>
+      }
       actions={
         <>
-          <Badge
-            variant="outline"
-            className="border-warning/30 text-warning mr-auto"
-          >
-            <Clock className="size-3" />
-            Aguardando resposta do profissional
-          </Badge>
           <Button size="sm" variant="ghost" asChild>
             <Link href={`/public/opportunity/${match.project.id}`}>
               <Eye className="size-4" />
