@@ -12,7 +12,6 @@ import {
   MessageCircle,
   Search,
   Send,
-  Star,
   ThumbsDown,
   X,
 } from "lucide-react";
@@ -21,7 +20,9 @@ import type { ReactNode } from "react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { ContactDialog } from "@/components/matches/contact-dialog";
 import { MatchHistoryDialog } from "@/components/matches/match-history-dialog";
+import { MatchReviewDialog } from "@/components/matches/match-review-dialog";
 import { MatchCard } from "@/components/professional/match-card";
 import { RejectMatchDialog } from "@/components/professional/reject-match-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -91,9 +92,11 @@ function filterMatches<T extends MatchResponseDTO>(
 
 function ChatAndReviewActions({
   matchId,
+  projectTitle,
   reviewedMatchIds,
 }: {
   matchId: number;
+  projectTitle: string;
   reviewedMatchIds: number[] | undefined;
 }) {
   const reviewed = reviewedMatchIds?.includes(matchId) ?? false;
@@ -111,12 +114,11 @@ function ChatAndReviewActions({
           Avaliado
         </Button>
       ) : (
-        <Button size="sm" variant="ghost" asChild>
-          <Link href={`/matches/${matchId}/review`}>
-            <Star className="size-4" />
-            Avaliar
-          </Link>
-        </Button>
+        <MatchReviewDialog
+          matchId={matchId}
+          authorType="PROFESSIONAL"
+          projectTitle={projectTitle}
+        />
       )}
     </>
   );
@@ -523,30 +525,18 @@ function ConfirmedMatchCard({
       }
       actions={
         <>
-          <div className="flex flex-col items-end gap-1">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setRevealed(true)}
-            >
-              <Mail className="size-4" />
-              Entrar em contato
-            </Button>
-            {revealed && contact.isLoading && (
-              <span className="text-muted-foreground text-xs">Carregando…</span>
-            )}
-            {revealed && contact.data && (
-              <div className="text-muted-foreground text-right text-xs">
-                <div>{contact.data.email}</div>
-                {contact.data.phone && <div>{contact.data.phone}</div>}
-              </div>
-            )}
-            {revealed && contact.isError && (
-              <span className="text-destructive text-xs">
-                Não foi possível carregar o contato.
-              </span>
-            )}
-          </div>
+          <Button size="sm" variant="outline" onClick={() => setRevealed(true)}>
+            <Mail className="size-4" />
+            Entrar em contato
+          </Button>
+          <ContactDialog
+            open={revealed}
+            onOpenChange={setRevealed}
+            isLoading={contact.isLoading}
+            isError={contact.isError}
+            email={contact.data?.email}
+            phone={contact.data?.phone}
+          />
           {match.project.companyId != null && (
             <Button size="sm" variant="ghost" asChild>
               <Link href={`/pro/companies/${match.project.companyId}`}>
@@ -558,6 +548,7 @@ function ConfirmedMatchCard({
           <MatchHistoryDialog matchId={match.id} />
           <ChatAndReviewActions
             matchId={match.id}
+            projectTitle={match.project.title}
             reviewedMatchIds={reviewedMatchIds}
           />
           {match.active !== false && (
@@ -640,6 +631,7 @@ function PlainList({
           {reviewedMatchIds !== undefined && (
             <ChatAndReviewActions
               matchId={match.id}
+              projectTitle={match.project.title}
               reviewedMatchIds={reviewedMatchIds}
             />
           )}
