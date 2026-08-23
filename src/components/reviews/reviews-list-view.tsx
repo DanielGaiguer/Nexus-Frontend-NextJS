@@ -29,7 +29,11 @@ export function ReviewsListView({
 }) {
   const router = useRouter();
   const [rating, setRating] = useState<number | null>(null);
-  const { data, isLoading } = useReviewsAll(entityType, entityId, rating);
+  const { data, isLoading, isFetching } = useReviewsAll(
+    entityType,
+    entityId,
+    rating
+  );
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
@@ -63,6 +67,14 @@ export function ReviewsListView({
             key={value ?? "all"}
             size="sm"
             variant={rating === value ? "default" : "outline"}
+            className={
+              rating === value
+                ? // Mesmo bg-primary de sempre é agressivo demais aqui (cinco
+                  // desses lado a lado) — escurece e satura menos, sem mexer
+                  // no --primary global usado no resto do app.
+                  "bg-[color-mix(in_srgb,var(--primary)_70%,black)] hover:bg-[color-mix(in_srgb,var(--primary)_60%,black)]"
+                : undefined
+            }
             onClick={() => setRating(value)}
           >
             {value == null ? (
@@ -76,7 +88,7 @@ export function ReviewsListView({
                       "size-3.5",
                       rating === value
                         ? "fill-primary-foreground text-primary-foreground"
-                        : "fill-warning text-warning"
+                        : "fill-muted-foreground/60 text-muted-foreground/60"
                     )}
                   />
                 ))}
@@ -100,7 +112,15 @@ export function ReviewsListView({
         </p>
       )}
 
-      <div className="flex flex-col gap-3">
+      <div
+        className={cn(
+          "flex flex-col gap-3 transition-opacity",
+          // Troca de filtro com dados antigos ainda na tela (placeholderData)
+          // — esmaece um pouco enquanto o novo filtro carrega em segundo
+          // plano, em vez de trocar pra esqueleto (o que causava o "pulo").
+          isFetching && "opacity-60"
+        )}
+      >
         {data?.reviews.map((review) => (
           <ReviewCard key={review.id} review={review} />
         ))}

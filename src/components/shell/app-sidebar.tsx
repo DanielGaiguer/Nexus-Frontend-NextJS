@@ -40,11 +40,22 @@ export function AppSidebar({ session }: { session: SessionClaims }) {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-sidebar-border gap-0 border-b px-4 py-5 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-3">
+        {/* Sidebar aberta: wordmark "nexus."; fechada (collapsible=icon), a
+            wordmark fica espremida na largura estreita — troca pelo ícone
+            quadrado do app antigo (nexus-icon.png), que cabe certinho. */}
         <Link
           href="/"
-          className="text-xl font-bold tracking-tight group-data-[collapsible=icon]:text-base"
+          className="text-xl font-bold tracking-tight group-data-[collapsible=icon]:hidden"
         >
           nexus<span className="text-primary">.</span>
+        </Link>
+        <Link
+          href="/"
+          className="hidden group-data-[collapsible=icon]:block"
+          aria-label="Nexus"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element -- ícone estático pequeno, sem necessidade do Image do Next aqui */}
+          <img src="/nexus-icon.png" alt="" className="size-7 rounded-md" />
         </Link>
       </SidebarHeader>
 

@@ -71,7 +71,7 @@ export function DonutChart({
           </PieChart>
         </ResponsiveContainer>
       </div>
-      <div className="flex max-h-28 w-full flex-col gap-2 overflow-y-auto">
+      <div className="thin-scrollbar flex max-h-28 w-full flex-col gap-2 overflow-y-auto">
         {data.map((d) => (
           <div key={d.key} className="flex items-center gap-2 text-sm">
             <span
@@ -79,7 +79,7 @@ export function DonutChart({
               style={{ backgroundColor: d.color }}
             />
             <span className="truncate">{d.label}</span>
-            <span className="text-muted-foreground ml-auto shrink-0 text-xs">
+            <span className="text-muted-foreground mr-3 ml-auto shrink-0 text-xs">
               {legendMeta ? legendMeta(d) : unitLabel(d)}
             </span>
           </div>
