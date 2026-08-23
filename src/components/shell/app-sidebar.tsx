@@ -98,10 +98,19 @@ export function AppSidebar({ session }: { session: SessionClaims }) {
                             "bg-primary text-primary-foreground rounded-full",
                             // SidebarMenuBadge base já vem com
                             // peer-hover/menu-button:text-sidebar-accent-foreground
-                            // — sem isso, passar o mouse no item "Conversas" troca
-                            // essa cor por cima do texto branco (fica ilegível
-                            // sobre o fundo bg-primary).
-                            "peer-hover/menu-button:text-primary-foreground"
+                            // E peer-data-[active=true]/menu-button:text-sidebar-accent-foreground
+                            // — sem isso, passar o mouse OU o item "Conversas" estar
+                            // selecionado troca essa cor por cima do texto branco
+                            // (fica ilegível/preto sobre o fundo bg-primary),
+                            // independente do tema escolhido.
+                            "peer-hover/menu-button:text-primary-foreground peer-data-[active=true]/menu-button:text-primary-foreground",
+                            // O botão do menu usa h-10! (maior que o h-8 padrão do
+                            // size="default"), mas o offset vertical da badge
+                            // (top-1.5) é calibrado pro h-8 original -- centraliza
+                            // de verdade em vez de um top fixo desatualizado, pra
+                            // acompanhar a altura real do botão e alinhar com o
+                            // título do item.
+                            "peer-data-[size=default]/menu-button:top-1/2 peer-data-[size=default]/menu-button:-translate-y-1/2"
                           )}
                         >
                           {unreadChat.data > 99 ? "99+" : unreadChat.data}
