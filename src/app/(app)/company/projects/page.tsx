@@ -207,7 +207,7 @@ export default function ProjectsPage() {
       </div>
 
       <div className="flex flex-col gap-3 rounded-lg border p-3">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-1">
             <Label className="text-xs">Buscar</Label>
             <div className="relative">
@@ -259,9 +259,6 @@ export default function ProjectsPage() {
               </SelectContent>
             </Select>
           </div>
-        </div>
-
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <div className="space-y-1">
             <Label className="text-xs">Experiência</Label>
             <MultiSelectPopover
@@ -271,6 +268,9 @@ export default function ProjectsPage() {
               onChange={setExpLevels}
             />
           </div>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <div className="space-y-1">
             <Label className="text-xs">Data de postagem</Label>
             <Input
@@ -296,19 +296,18 @@ export default function ProjectsPage() {
               </SelectContent>
             </Select>
           </div>
-        </div>
-
-        <div className="space-y-1">
-          <Label className="text-xs">Skills</Label>
-          <MultiSelectPopover
-            label="Skills"
-            options={(skillCatalog ?? []).map((s) => ({
-              value: s.name,
-              label: s.name,
-            }))}
-            value={skillNames}
-            onChange={setSkillNames}
-          />
+          <div className="space-y-1">
+            <Label className="text-xs">Skills</Label>
+            <MultiSelectPopover
+              label="Skills"
+              options={(skillCatalog ?? []).map((s) => ({
+                value: s.name,
+                label: s.name,
+              }))}
+              value={skillNames}
+              onChange={setSkillNames}
+            />
+          </div>
         </div>
 
         {opportunityType === "JOB" && (
@@ -468,7 +467,7 @@ function MultiSelectPopover({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="justify-between font-normal"
+          className="w-full justify-between font-normal"
         >
           <span className="truncate">
             {value.length > 0 ? `${label} (${value.length})` : label}

@@ -553,7 +553,7 @@ function MultiSelectPopover({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="justify-between font-normal"
+          className="w-full justify-between font-normal"
         >
           <span className="truncate">
             {value.length > 0 ? `${label} (${value.length})` : label}
