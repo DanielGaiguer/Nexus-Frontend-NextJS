@@ -3,7 +3,6 @@
 import {
   Check,
   CircleCheck,
-  Clock,
   Eye,
   HeartHandshake,
   History,
@@ -309,7 +308,6 @@ function SentList({
           variant="outline"
           className="border-warning/30 text-warning w-fit"
         >
-          <Clock className="size-3" />
           Aguardando resposta do profissional
         </Badge>
       }
