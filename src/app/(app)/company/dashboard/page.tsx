@@ -28,7 +28,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useCompanyDashboardSummary } from "@/hooks/queries/useCompanyDashboardSummary";
+import {
+  useCompanyDashboardSummary,
+  useCompanySuccessRate,
+} from "@/hooks/queries/useCompanyDashboardSummary";
 import { useCompanyProfile } from "@/hooks/queries/useCompanyProfile";
 import { useMyProjects } from "@/hooks/queries/useMyProjects";
 import { usePendingStatusCheck } from "@/hooks/queries/useReviews";
@@ -73,13 +76,10 @@ export default function CompanyDashboardPage() {
   const allProjects = projects.data ?? [];
   const openProjects = allProjects.filter((p) => p.status === "OPEN");
   const totalProjects = summary.data?.totalProjects ?? allProjects.length;
-  const projectsWithMatchCount = allProjects.filter(
-    (p) => (p.filledPositions ?? 0) > 0
-  ).length;
-  const successRate =
-    totalProjects > 0
-      ? `${Math.round((projectsWithMatchCount * 100) / totalProjects)}%`
-      : "—";
+  // Mesma "Taxa de sucesso" de company/profile (useCompanySuccessRate) --
+  // antes cada tela calculava esse número do seu próprio jeito e podiam
+  // divergir pra mesma empresa.
+  const successRate = useCompanySuccessRate().value;
 
   const recentProjects = allProjects
     .filter((p) => p.opportunityType !== "JOB")
@@ -140,6 +140,7 @@ export default function CompanyDashboardPage() {
         items={recentProjects}
         emptyTitle="Nenhum projeto publicado ainda"
         createLabel="Criar projeto"
+        titleColumnLabel="Projeto"
         moneyColumnLabel="Orçamento"
         renderMoney={(p) =>
           p.minimumBudget != null && p.maximumBudget != null ? (
@@ -161,6 +162,7 @@ export default function CompanyDashboardPage() {
         items={recentJobs}
         emptyTitle="Nenhuma vaga publicada ainda"
         createLabel="Criar vaga"
+        titleColumnLabel="Vaga"
         moneyColumnLabel="Salário"
         renderMoney={(p) =>
           p.monthlySalaryMin != null ? (
@@ -187,6 +189,7 @@ function RecentOpportunitiesCard({
   items,
   emptyTitle,
   createLabel,
+  titleColumnLabel,
   moneyColumnLabel,
   renderMoney,
 }: {
@@ -198,12 +201,13 @@ function RecentOpportunitiesCard({
   items: ProjectResponseDTO[];
   emptyTitle: string;
   createLabel: string;
+  titleColumnLabel: string;
   moneyColumnLabel: string;
   renderMoney: (project: ProjectResponseDTO) => ReactNode;
 }) {
   return (
     <Card className="gap-0 py-0">
-      <CardHeader className="flex-row items-center justify-between border-b py-4">
+      <CardHeader className="flex flex-row items-center justify-between border-b py-4">
         <div>
           <CardTitle className="flex items-center gap-1.5 text-sm">
             <Icon className={`size-4 ${iconClassName}`} />
@@ -240,7 +244,7 @@ function RecentOpportunitiesCard({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Título</TableHead>
+                  <TableHead>{titleColumnLabel}</TableHead>
                   <TableHead>{moneyColumnLabel}</TableHead>
                   <TableHead>Modalidade</TableHead>
                   <TableHead>Status</TableHead>
