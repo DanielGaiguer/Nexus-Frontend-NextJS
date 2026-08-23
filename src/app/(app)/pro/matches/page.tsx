@@ -10,6 +10,7 @@ import {
   History,
   Mail,
   MessageCircle,
+  Search,
   Send,
   Star,
   ThumbsDown,
@@ -26,6 +27,7 @@ import { RejectMatchDialog } from "@/components/professional/reject-match-dialog
 import { EmptyState } from "@/components/shared/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -43,6 +45,20 @@ import { useProfessionalProfile } from "@/hooks/queries/useProfessionalProfile";
 import { useReviewedMatchIds } from "@/hooks/queries/useReviews";
 import { ApiError } from "@/lib/api-client";
 import type { MatchResponseDTO } from "@/types/match";
+
+/** Busca única pra todas as abas — por título do projeto ou nome da empresa. */
+function filterBySearch<T extends MatchResponseDTO>(
+  matches: T[] | undefined,
+  term: string
+): T[] | undefined {
+  const trimmed = term.trim().toLowerCase();
+  if (!trimmed) return matches;
+  return matches?.filter(
+    (m) =>
+      m.project.title.toLowerCase().includes(trimmed) ||
+      m.project.companyName.toLowerCase().includes(trimmed)
+  );
+}
 
 function ChatAndReviewActions({
   matchId,
@@ -84,13 +100,23 @@ export default function MatchesPage() {
   const allMatches = useMatches();
   const previous = usePreviousMatches();
   const { data: reviewedMatchIds } = useReviewedMatchIds("professional");
+  const [search, setSearch] = useState("");
 
+  // Confirmados = MATCHED e ainda ativo -- os já encerrados (active=false)
+  // saem daqui e aparecem em "Anteriores" (usePreviousMatches já filtra por
+  // active=false do lado do backend), não nos dois ao mesmo tempo.
   const confirmed = (allMatches.data ?? []).filter(
-    (m) => m.status === "MATCHED"
+    (m) => m.status === "MATCHED" && m.active !== false
   );
   const rejected = (allMatches.data ?? []).filter(
     (m) => m.status === "REJECTED"
   );
+
+  const filteredInvites = filterBySearch(invites.data, search);
+  const filteredSent = filterBySearch(sent.data, search);
+  const filteredConfirmed = filterBySearch(confirmed, search);
+  const filteredPrevious = filterBySearch(previous.data, search);
+  const filteredRejected = filterBySearch(rejected, search);
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
@@ -101,34 +127,47 @@ export default function MatchesPage() {
         </p>
       </div>
 
+      <div className="relative max-w-sm">
+        <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+        <Input
+          placeholder="Buscar por projeto ou empresa..."
+          className="pl-9"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+
       <Tabs defaultValue="invites">
         <div className="overflow-x-auto">
           <TabsList>
             <TabsTrigger value="invites">
               Convites Pendentes{" "}
-              <Badge variant="secondary">{invites.data?.length ?? 0}</Badge>
+              <Badge variant="secondary">{filteredInvites?.length ?? 0}</Badge>
             </TabsTrigger>
             <TabsTrigger value="sent">
               Interesses Enviados{" "}
-              <Badge variant="secondary">{sent.data?.length ?? 0}</Badge>
+              <Badge variant="secondary">{filteredSent?.length ?? 0}</Badge>
             </TabsTrigger>
             <TabsTrigger value="confirmed">
               Matches Confirmados{" "}
-              <Badge variant="secondary">{confirmed.length}</Badge>
+              <Badge variant="secondary">
+                {filteredConfirmed?.length ?? 0}
+              </Badge>
             </TabsTrigger>
             <TabsTrigger value="previous">
               Oportunidades Anteriores{" "}
-              <Badge variant="secondary">{previous.data?.length ?? 0}</Badge>
+              <Badge variant="secondary">{filteredPrevious?.length ?? 0}</Badge>
             </TabsTrigger>
             <TabsTrigger value="rejected">
-              Recusados <Badge variant="secondary">{rejected.length}</Badge>
+              Recusados{" "}
+              <Badge variant="secondary">{filteredRejected?.length ?? 0}</Badge>
             </TabsTrigger>
           </TabsList>
         </div>
 
         <TabsContent value="invites" className="flex flex-col gap-3">
           <InvitesList
-            matches={invites.data}
+            matches={filteredInvites}
             isLoading={invites.isLoading}
             mySkills={profile?.skills}
           />
@@ -136,7 +175,7 @@ export default function MatchesPage() {
 
         <TabsContent value="sent" className="flex flex-col gap-3">
           <SentList
-            matches={sent.data}
+            matches={filteredSent}
             isLoading={sent.isLoading}
             mySkills={profile?.skills}
           />
@@ -144,7 +183,7 @@ export default function MatchesPage() {
 
         <TabsContent value="confirmed" className="flex flex-col gap-3">
           <ConfirmedList
-            matches={confirmed}
+            matches={filteredConfirmed ?? []}
             isLoading={allMatches.isLoading}
             mySkills={profile?.skills}
             reviewedMatchIds={reviewedMatchIds}
@@ -153,7 +192,7 @@ export default function MatchesPage() {
 
         <TabsContent value="previous" className="flex flex-col gap-3">
           <PlainList
-            matches={previous.data}
+            matches={filteredPrevious}
             isLoading={previous.isLoading}
             mySkills={profile?.skills}
             emptyTitle="Nenhum projeto anterior"
@@ -170,7 +209,7 @@ export default function MatchesPage() {
 
         <TabsContent value="rejected" className="flex flex-col gap-3">
           <PlainList
-            matches={rejected}
+            matches={filteredRejected}
             isLoading={allMatches.isLoading}
             mySkills={profile?.skills}
             emptyTitle="Nenhum match recusado"
