@@ -19,7 +19,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 import { ReputationCard } from "@/components/professional/reputation-card";
 import { ReviewsPreviewCard } from "@/components/reviews/reviews-preview-card";
@@ -71,6 +71,7 @@ function formatMoney(value: number) {
 export default function AdminCompanyViewPage() {
   const { companyId } = useParams<{ companyId: string }>();
   const id = Number(companyId);
+  const router = useRouter();
 
   const { data: profile, isLoading } = useAdminCompanyProfile(id);
   const { data: projects } = useAdminCompanyProjects(id);
@@ -90,16 +91,28 @@ export default function AdminCompanyViewPage() {
 
   const openProjects = (projects ?? []).filter((p) => p.status === "OPEN");
   const closedProjects = (projects ?? []).filter((p) => p.status === "CLOSED");
-  const confirmed = (matches ?? []).filter(
-    (m) => m.status === "MATCHED" && m.active !== false
+  // "Confirmados" conta todo match MATCHED, ativo ou não (o admin-company-
+  // profile.html original nunca filtra por `active` aqui — só o "Oportunidades
+  // anteriores" abaixo faz isso). Tinha um `&& m.active !== false` sobrando
+  // aqui que fazia esse número (e a Taxa de Sucesso, derivada dele) ficar bem
+  // menor que o app antigo pra empresas com matches já encerrados.
+  const confirmed = (matches ?? []).filter((m) => m.status === "MATCHED");
+  // Mesma "Taxa de sucesso" de company/dashboard e company/profile
+  // (useCompanySuccessRate): % dos projetos que já tiveram pelo menos 1
+  // match confirmado, ativo ou já encerrado -- nunca passa de 100%. Não dá
+  // pra reaproveitar o hook direto (ele busca os matches da empresa
+  // *logada*, e aqui é o admin olhando uma empresa qualquer), mas os dados
+  // já vêm de useAdminCompanyMatches/useAdminCompanyProjects, então é o
+  // mesmo cálculo com outra fonte. Antes essa tela usava confirmados ÷
+  // decididos (confirmados+recusados) -- taxa de aceitação de convites,
+  // uma métrica diferente que divergia da mostrada pra própria empresa.
+  const projectsWithConfirmedMatch = new Set(
+    confirmed.map((m) => m.project.id)
   );
-  const rejectedMatches = (matches ?? []).filter(
-    (m) => m.status === "REJECTED"
-  );
-  const decidedMatches = confirmed.length + rejectedMatches.length;
+  const totalProjects = projects?.length ?? 0;
   const successRate =
-    decidedMatches > 0
-      ? Math.round((confirmed.length * 100) / decidedMatches)
+    totalProjects > 0
+      ? Math.round((projectsWithConfirmedMatch.size / totalProjects) * 100)
       : null;
   const previous = (matches ?? []).filter(
     (m) => m.status === "MATCHED" && m.active === false
@@ -118,13 +131,14 @@ export default function AdminCompanyViewPage() {
     <div className="mx-auto flex max-w-5xl flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <Link
-            href="/admin/users"
+          <button
+            type="button"
+            onClick={() => router.back()}
             className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-1 text-sm"
           >
             <ArrowLeft className="size-4" />
-            Voltar para Usuários
-          </Link>
+            Voltar
+          </button>
           <h1 className="text-2xl font-bold tracking-tight">
             Perfil da Empresa
           </h1>
@@ -234,6 +248,7 @@ export default function AdminCompanyViewPage() {
 
           <ReputationCard
             reputation={publicCompany?.reputationDetails ?? null}
+            title="Análise de qualidade"
           />
         </div>
 
@@ -497,14 +512,14 @@ export default function AdminCompanyViewPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-sm">
-                Interesses pendentes{" "}
+                Matches pendentes{" "}
                 <Badge variant="secondary">{pending.length}</Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
               {pending.length === 0 ? (
                 <p className="text-muted-foreground text-sm">
-                  Nenhum interesse pendente.
+                  Nenhum match pendente.
                 </p>
               ) : (
                 <div className="flex flex-col gap-2">
