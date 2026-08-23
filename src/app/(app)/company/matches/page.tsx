@@ -494,7 +494,6 @@ function ConfirmedCandidateCard({
   return (
     <CandidateCard
       match={match}
-      showScore={false}
       badge={
         <div className="flex flex-col gap-1">
           <Badge className="bg-success/15 text-success w-fit">
@@ -609,7 +608,6 @@ function PlainList({
     <CandidateCard
       key={match.id}
       match={match}
-      showScore={false}
       badge={renderBadge?.(match)}
       actions={
         <>
