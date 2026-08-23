@@ -85,10 +85,6 @@ function CompanyProfessionalViewContent() {
   const matchId = searchParams.get("matchId");
   const returnTo = searchParams.get("returnTo");
   const showInterest = useCompanyShowInterest();
-  // Só true vindo do diretório geral (/company/professionals) -- lá não há
-  // vaga fixa nem match garantido, então "demonstrar interesse" fica dentro
-  // da própria janela de comparação (escolhe o projeto e envia por ali).
-  const fromDirectory = searchParams.get("from") === "directory";
 
   const { data: professional, isLoading } = usePublicProfessional(id);
   // O backend só libera o contato de fato se houver match confirmado — aqui
@@ -117,10 +113,7 @@ function CompanyProfessionalViewContent() {
           Voltar
         </button>
         <div className="flex items-center gap-2">
-          <ProfessionalCompareDialog
-            professionalId={id}
-            showInterestButton={fromDirectory}
-          />
+          <ProfessionalCompareDialog professionalId={id} />
           {matchId && returnTo && (
             <Button
               size="sm"

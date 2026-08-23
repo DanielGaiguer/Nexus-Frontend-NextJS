@@ -11,11 +11,13 @@ import {
   DollarSign,
   FileText,
   GitCompare,
+  Handshake,
   MapPin,
   Star,
   X,
 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { ScoreRing } from "@/components/professional/score-ring";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -30,10 +32,13 @@ import {
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCompanyShowInterest } from "@/hooks/mutations/useCompanyMatchActions";
+import { useShowInterest } from "@/hooks/mutations/useShowInterest";
 import {
   useCandidateComparison,
   useMyMatchComparison,
 } from "@/hooks/queries/useCandidateComparison";
+import { ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import type { MatchResponseDTO } from "@/types/match";
 import type { ScoreBreakdownDTO } from "@/types/match";
@@ -184,6 +189,45 @@ export function MatchCompareDialog({
     viewer === "company" ? companyComparison : professionalComparison;
   const data = comparison.data;
   const candidate = data?.candidates[0];
+
+  // "Demonstrar interesse" só faz sentido quando ainda não há nenhum
+  // envolvimento entre os dois -- WAITING é só o match gerado
+  // automaticamente pelo ranking, sem ação de nenhum lado ainda. Já em
+  // andamento (COMPANY_INTERESTED/PROFESSIONAL_INTERESTED/MATCHED) ou
+  // recusado (REJECTED), o botão some.
+  const canShowInterest = match.status === "WAITING";
+  const companyShowInterest = useCompanyShowInterest();
+  const professionalShowInterest = useShowInterest();
+  const showInterestPending =
+    viewer === "company"
+      ? companyShowInterest.isPending
+      : professionalShowInterest.isPending;
+
+  function handleShowInterest() {
+    const onError = (error: unknown) =>
+      toast.error(
+        error instanceof ApiError
+          ? error.message
+          : "Não foi possível enviar o interesse."
+      );
+    if (viewer === "company") {
+      companyShowInterest.mutate(match.id, {
+        onSuccess: () => {
+          toast.success("Convite enviado ao profissional!");
+          setOpen(false);
+        },
+        onError,
+      });
+    } else {
+      professionalShowInterest.mutate(match.project.id, {
+        onSuccess: () => {
+          toast.success("Interesse enviado à empresa!");
+          setOpen(false);
+        },
+        onError,
+      });
+    }
+  }
   const project = match.project;
   const isJob = project.opportunityType === "JOB";
 
@@ -490,6 +534,19 @@ export function MatchCompareDialog({
                 </div>
               )}
             </div>
+
+            {canShowInterest && (
+              <div className="flex justify-end border-t pt-3">
+                <Button
+                  size="sm"
+                  disabled={showInterestPending}
+                  onClick={handleShowInterest}
+                >
+                  <Handshake className="size-4" />
+                  {showInterestPending ? "Enviando…" : "Demonstrar interesse"}
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </DialogContent>

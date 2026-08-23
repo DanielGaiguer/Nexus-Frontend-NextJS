@@ -123,8 +123,8 @@ export default function ProjectRankingPage() {
   }
 
   function goToComparison() {
-    if (selected.length < 2) {
-      toast.error("Selecione ao menos 2 candidatos para comparar.");
+    if (selected.length < 1) {
+      toast.error("Selecione ao menos 1 candidato para comparar.");
       return;
     }
     router.push(
@@ -443,6 +443,20 @@ export default function ProjectRankingPage() {
           );
         })}
       </div>
+
+      {/* Mesmo botão da barra "Comparar selecionados" acima, só que fixo no
+          canto da tela -- em listas longas, evita ter que rolar de volta pro
+          topo depois de marcar os candidatos lá embaixo. */}
+      {selected.length > 0 && (
+        <Button
+          size="lg"
+          className="fixed right-6 bottom-6 z-40 shadow-lg"
+          onClick={goToComparison}
+        >
+          <GitCompare className="size-4" />
+          Comparar ({selected.length})
+        </Button>
+      )}
     </div>
   );
 }
