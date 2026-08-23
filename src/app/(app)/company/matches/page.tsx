@@ -28,6 +28,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -46,18 +53,39 @@ import { useReviewedMatchIds } from "@/hooks/queries/useReviews";
 import { ApiError } from "@/lib/api-client";
 import type { MatchResponseDTO } from "@/types/match";
 
-/** Busca única pra todas as abas — por título do projeto ou nome do candidato. */
-function filterBySearch<T extends MatchResponseDTO>(
+const scoreOptions = [
+  { value: "0", label: "Qualquer score" },
+  { value: "90", label: "Acima de 90%" },
+  { value: "80", label: "Acima de 80%" },
+  { value: "70", label: "Acima de 70%" },
+  { value: "60", label: "Acima de 60%" },
+  { value: "50", label: "Acima de 50%" },
+];
+
+/** Busca + score mínimo, únicos pra todas as abas — busca por título do
+ * projeto ou nome do candidato; score compara o final score arredondado do
+ * match (mesmo valor mostrado no ScoreRing dos cards). */
+function filterMatches<T extends MatchResponseDTO>(
   matches: T[] | undefined,
-  term: string
+  term: string,
+  minScore: number
 ): T[] | undefined {
   const trimmed = term.trim().toLowerCase();
-  if (!trimmed) return matches;
-  return matches?.filter(
-    (m) =>
-      m.project.title.toLowerCase().includes(trimmed) ||
-      m.professional.name.toLowerCase().includes(trimmed)
-  );
+  return matches?.filter((m) => {
+    if (trimmed) {
+      const matchesSearch =
+        m.project.title.toLowerCase().includes(trimmed) ||
+        m.professional.name.toLowerCase().includes(trimmed);
+      if (!matchesSearch) return false;
+    }
+    if (minScore > 0) {
+      const score = m.scoreBreakdown
+        ? Math.round(m.scoreBreakdown.finalScore)
+        : null;
+      if (score == null || score < minScore) return false;
+    }
+    return true;
+  });
 }
 
 function ChatAndReviewActions({
@@ -101,12 +129,13 @@ export default function CompanyMatchesPage() {
   const previous = usePreviousCompanyMatches();
   const { data: reviewedMatchIds } = useReviewedMatchIds("company");
   const [search, setSearch] = useState("");
+  const [minScore, setMinScore] = useState(0);
 
-  const filteredReceived = filterBySearch(received.data, search);
-  const filteredSent = filterBySearch(sent.data, search);
-  const filteredConfirmed = filterBySearch(confirmed.data, search);
-  const filteredPrevious = filterBySearch(previous.data, search);
-  const filteredRejected = filterBySearch(rejected.data, search);
+  const filteredReceived = filterMatches(received.data, search, minScore);
+  const filteredSent = filterMatches(sent.data, search, minScore);
+  const filteredConfirmed = filterMatches(confirmed.data, search, minScore);
+  const filteredPrevious = filterMatches(previous.data, search, minScore);
+  const filteredRejected = filterMatches(rejected.data, search, minScore);
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
@@ -117,16 +146,36 @@ export default function CompanyMatchesPage() {
         </p>
       </div>
 
-      <div className="max-w-sm space-y-1">
-        <Label className="text-xs">Buscar</Label>
-        <div className="relative">
-          <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-          <Input
-            placeholder="Buscar por projeto ou profissional..."
-            className="pl-9"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      <div className="flex flex-wrap gap-3">
+        <div className="max-w-sm flex-1 space-y-1">
+          <Label className="text-xs">Buscar</Label>
+          <div className="relative">
+            <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+            <Input
+              placeholder="Buscar por projeto ou profissional..."
+              className="pl-9"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="w-44 space-y-1">
+          <Label className="text-xs">Score</Label>
+          <Select
+            value={String(minScore)}
+            onValueChange={(v) => setMinScore(Number(v))}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {scoreOptions.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
