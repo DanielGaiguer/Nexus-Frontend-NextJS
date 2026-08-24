@@ -21,6 +21,7 @@ import { toast } from "sonner";
 
 import { CandidateCard } from "@/components/company/candidate-card";
 import { RejectInterestDialog } from "@/components/company/reject-interest-dialog";
+import { AcceptedProposalPanel } from "@/components/matches/accepted-proposal-panel";
 import { ContactDialog } from "@/components/matches/contact-dialog";
 import { MatchHistoryDialog } from "@/components/matches/match-history-dialog";
 import { MatchReviewDialog } from "@/components/matches/match-review-dialog";
@@ -492,86 +493,95 @@ function ConfirmedCandidateCard({
   const isEnded = match.active === false || remaining <= 0;
 
   return (
-    <CandidateCard
-      match={match}
-      badge={
-        <div className="flex flex-col gap-1">
-          <Badge className="bg-success/15 text-success w-fit">
-            Match Confirmado
-          </Badge>
-          {isEnded ? (
-            <Badge variant="outline" className="text-muted-foreground w-fit">
-              Este match foi encerrado
+    <div className="flex flex-col gap-3">
+      <CandidateCard
+        match={match}
+        badge={
+          <div className="flex flex-col gap-1">
+            <Badge className="bg-success/15 text-success w-fit">
+              Match Confirmado
             </Badge>
-          ) : (
-            remaining <= 15 && (
-              <Badge
-                variant="outline"
-                className="border-warning/30 text-warning w-fit"
-              >
-                ⚠️ Este match expira em {remaining} dias
+            {isEnded ? (
+              <Badge variant="outline" className="text-muted-foreground w-fit">
+                Este match foi encerrado
               </Badge>
-            )
-          )}
-        </div>
-      }
-      actions={
-        <>
-          <Button size="sm" variant="outline" onClick={() => setRevealed(true)}>
-            <Mail className="size-4" />
-            Entrar em contato
-          </Button>
-          <ContactDialog
-            open={revealed}
-            onOpenChange={setRevealed}
-            isLoading={contact.isLoading}
-            isError={contact.isError}
-            email={contact.data?.email}
-            phone={contact.data?.phone}
-          />
-          <Button size="sm" variant="ghost" asChild>
-            <Link href={`/public/professional/${match.professional.id}`}>
-              <User className="size-4" />
-              Ver perfil completo
-            </Link>
-          </Button>
-          <Button size="sm" variant="ghost" asChild>
-            <Link href={`/public/opportunity/${match.project.id}`}>
-              <Eye className="size-4" />
-              Ver oportunidade
-            </Link>
-          </Button>
-          <MatchHistoryDialog matchId={match.id} />
-          <ChatAndReviewActions
-            matchId={match.id}
-            projectTitle={match.project.title}
-            reviewedMatchIds={reviewedMatchIds}
-          />
-          {match.active !== false && (
+            ) : (
+              remaining <= 15 && (
+                <Badge
+                  variant="outline"
+                  className="border-warning/30 text-warning w-fit"
+                >
+                  ⚠️ Este match expira em {remaining} dias
+                </Badge>
+              )
+            )}
+          </div>
+        }
+        actions={
+          <>
             <Button
               size="sm"
               variant="outline"
-              className="text-destructive"
-              disabled={cancelMatch.isPending}
-              onClick={() =>
-                cancelMatch.mutate(match.id, {
-                  onSuccess: () => toast.success("Match cancelado."),
-                  onError: (error) =>
-                    toast.error(
-                      error instanceof ApiError
-                        ? error.message
-                        : "Não foi possível cancelar."
-                    ),
-                })
-              }
+              onClick={() => setRevealed(true)}
             >
-              <X className="size-4" />
-              Cancelar Match
+              <Mail className="size-4" />
+              Entrar em contato
             </Button>
-          )}
-        </>
-      }
-    />
+            <ContactDialog
+              open={revealed}
+              onOpenChange={setRevealed}
+              isLoading={contact.isLoading}
+              isError={contact.isError}
+              email={contact.data?.email}
+              phone={contact.data?.phone}
+            />
+            <Button size="sm" variant="ghost" asChild>
+              <Link href={`/public/professional/${match.professional.id}`}>
+                <User className="size-4" />
+                Ver perfil completo
+              </Link>
+            </Button>
+            <Button size="sm" variant="ghost" asChild>
+              <Link href={`/public/opportunity/${match.project.id}`}>
+                <Eye className="size-4" />
+                Ver oportunidade
+              </Link>
+            </Button>
+            <MatchHistoryDialog matchId={match.id} />
+            <ChatAndReviewActions
+              matchId={match.id}
+              projectTitle={match.project.title}
+              reviewedMatchIds={reviewedMatchIds}
+            />
+            {match.active !== false && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-destructive"
+                disabled={cancelMatch.isPending}
+                onClick={() =>
+                  cancelMatch.mutate(match.id, {
+                    onSuccess: () => toast.success("Match cancelado."),
+                    onError: (error) =>
+                      toast.error(
+                        error instanceof ApiError
+                          ? error.message
+                          : "Não foi possível cancelar."
+                      ),
+                  })
+                }
+              >
+                <X className="size-4" />
+                Cancelar Match
+              </Button>
+            )}
+          </>
+        }
+      />
+      {match.acceptedProposal && (
+        <AcceptedProposalPanel proposal={match.acceptedProposal} />
+      )}
+    </div>
   );
 }
 

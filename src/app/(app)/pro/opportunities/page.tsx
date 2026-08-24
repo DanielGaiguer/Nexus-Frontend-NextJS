@@ -4,6 +4,8 @@ import {
   Check,
   ChevronsUpDown,
   Eye,
+  FileEdit,
+  FileText,
   Handshake,
   Search,
   Sparkles,
@@ -43,6 +45,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useShowInterest } from "@/hooks/mutations/useShowInterest";
 import { useOpportunities } from "@/hooks/queries/useOpportunities";
 import { useProfessionalProfile } from "@/hooks/queries/useProfessionalProfile";
+import { useMyProposals } from "@/hooks/queries/useProposals";
 import { useSkillCatalog } from "@/hooks/queries/useSkillCatalog";
 import { ApiError } from "@/lib/api-client";
 import type { ExperienceLevel } from "@/types/professional";
@@ -93,6 +96,7 @@ export default function OpportunitiesPage() {
   const { data: opportunities, isLoading } = useOpportunities();
   const { data: profile } = useProfessionalProfile();
   const { data: skillCatalog } = useSkillCatalog();
+  const { data: myProposals } = useMyProposals();
   const showInterest = useShowInterest();
   const [search, setSearch] = useState("");
   const [opportunityType, setOpportunityType] = useState<
@@ -491,6 +495,12 @@ export default function OpportunitiesPage() {
           const alreadySent =
             sentIds.includes(match.project.id) ||
             match.professionalStatus === "INTERESTED";
+          const acceptsProposals =
+            match.project.opportunityType === "PROJECT" &&
+            match.project.acceptsProposals === true;
+          const myPendingProposal = myProposals?.find(
+            (p) => p.projectId === match.project.id && p.status === "PENDING"
+          );
           return (
             <MatchCard
               key={match.id}
@@ -512,6 +522,25 @@ export default function OpportunitiesPage() {
                       Ver detalhes
                     </Link>
                   </Button>
+                  {acceptsProposals && (
+                    <Button variant="outline" size="sm" asChild>
+                      <Link
+                        href={`/pro/opportunities/${match.project.id}/proposal`}
+                      >
+                        {myPendingProposal ? (
+                          <>
+                            <FileEdit className="size-4" />
+                            Ver/editar minha proposta
+                          </>
+                        ) : (
+                          <>
+                            <FileText className="size-4" />
+                            Enviar proposta
+                          </>
+                        )}
+                      </Link>
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     disabled={alreadySent || showInterest.isPending}

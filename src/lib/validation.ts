@@ -313,6 +313,8 @@ export const projectFormSchema = z
     visibleToCompanies: z.boolean(),
     salaryVisibleToProfessionals: z.boolean(),
     salaryVisibleToCompanies: z.boolean(),
+
+    acceptsProposals: z.boolean(),
   })
   .superRefine((values, ctx) => {
     if (values.workMode === "") {
@@ -384,6 +386,47 @@ export const projectFormSchema = z
   });
 
 export type ProjectFormValues = z.infer<typeof projectFormSchema>;
+
+// ── pro/opportunities/[projectId]/proposal — envio de Proposal ─────────────
+
+export const proposalFormSchema = z.object({
+  proposedValue: z
+    .string()
+    .trim()
+    .min(1, "Informe o valor proposto.")
+    .refine((v) => !Number.isNaN(Number(v)) && Number(v) > 0, {
+      message: "Informe um valor válido.",
+    }),
+  estimatedDays: z
+    .string()
+    .trim()
+    .refine((v) => Number(v) >= 1, { message: "Informe ao menos 1 dia." }),
+  proposedStartDate: z.string(),
+  proposedDeliveryDate: z.string(),
+  description: z
+    .string()
+    .trim()
+    .min(10, "Descreva como pretende executar o projeto."),
+  relevantExperience: z.string(),
+  skillIds: z.array(z.number()),
+  deliverables: z.string(),
+  // useFieldArray (react-hook-form) exige um array de objetos, não de
+  // primitivos -- cada etapa vira { value: string } aqui e volta pra
+  // string[] só na hora de montar o payload de ProposalRequestDTO.
+  executionSteps: z.array(
+    z.object({ value: z.string().trim().min(1, "Etapa não pode ficar vazia.") })
+  ),
+  paymentTerms: z.string(),
+  validityDays: z
+    .string()
+    .trim()
+    .refine((v) => Number(v) >= 1, {
+      message: "Informe ao menos 1 dia de validade.",
+    }),
+  questionsForCompany: z.string(),
+});
+
+export type ProposalFormValues = z.infer<typeof proposalFormSchema>;
 
 // ── matches/review.html — avaliação pós-match ───────────────────────────
 

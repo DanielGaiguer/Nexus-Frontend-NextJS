@@ -11,6 +11,7 @@ import {
   DollarSign,
   Eye,
   EyeOff,
+  FileEdit,
   FileText,
   MapPin,
   Pencil,
@@ -233,6 +234,14 @@ export function ProjectCard({ project }: { project: ProjectResponseDTO }) {
               Ranking
             </Link>
           </Button>
+          {project.acceptsProposals && (
+            <Button variant="ghost" size="sm" asChild>
+              <Link href={`/company/projects/${project.id}/proposals`}>
+                <FileEdit className="size-3.5" />
+                Propostas
+              </Link>
+            </Button>
+          )}
           <Button variant="ghost" size="sm" asChild>
             <Link href={`/company/projects/${project.id}/edit`}>
               <Pencil className="size-3.5" />

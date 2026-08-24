@@ -94,6 +94,7 @@ function toFormDefaults(project?: ProjectResponseDTO): ProjectFormValues {
     visibleToCompanies: project?.visibleToCompanies ?? true,
     salaryVisibleToProfessionals: project?.salaryVisibleToProfessionals ?? true,
     salaryVisibleToCompanies: project?.salaryVisibleToCompanies ?? true,
+    acceptsProposals: project?.acceptsProposals ?? false,
   };
 }
 
@@ -153,6 +154,7 @@ export function ProjectForm({ editing }: { editing?: ProjectResponseDTO }) {
       visibleToCompanies: values.visibleToCompanies,
       salaryVisibleToProfessionals: values.salaryVisibleToProfessionals,
       salaryVisibleToCompanies: values.salaryVisibleToCompanies,
+      acceptsProposals: isProject ? values.acceptsProposals : false,
     };
 
     const onSettled = {
@@ -444,6 +446,28 @@ export function ProjectForm({ editing }: { editing?: ProjectResponseDTO }) {
                       )}
                     />
                   </div>
+                  <FormField
+                    control={form.control}
+                    name="acceptsProposals"
+                    render={({ field }) => (
+                      <FormItem>
+                        <label className="flex items-center gap-2 text-sm">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          Aceita propostas de profissionais?
+                        </label>
+                        <p className="text-muted-foreground text-xs">
+                          Se marcado, profissionais podem enviar propostas com
+                          valor, prazo e plano de execução — além de demonstrar
+                          interesse pelo match normal.
+                        </p>
+                      </FormItem>
+                    )}
+                  />
                 </div>
               ) : (
                 <div className="space-y-4 border-t pt-4">

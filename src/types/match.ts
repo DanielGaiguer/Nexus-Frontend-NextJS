@@ -1,4 +1,5 @@
 import type { ProjectResponseDTO } from "./project";
+import type { ProposalResponseDTO } from "./proposal";
 
 /** Espelha com.main.nexus.model.enums.InterestStatus. */
 export type InterestStatus = "PENDING" | "INTERESTED" | "REJECTED";
@@ -60,6 +61,8 @@ export interface MatchResponseDTO {
   active: boolean | null;
   rejectionReasons: string[] | null;
   rejectionDescription: string | null;
+  /** Preenchido pra sempre quando este match foi confirmado via aceite de uma Proposal. */
+  acceptedProposal: ProposalResponseDTO | null;
 }
 
 /** Espelha com.main.nexus.model.enums.ProfessionalRejectionReason. */

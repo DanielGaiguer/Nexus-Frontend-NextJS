@@ -60,6 +60,10 @@ export interface ProjectResponseDTO {
   salaryVisibleToCompanies: boolean | null;
   salaryVisible: boolean | null;
 
+  // Exclusivo de PROJECT — libera o fluxo de Proposal (ver types/proposal.ts) além do match
+  // bilateral, que já existe pros dois tipos de oportunidade.
+  acceptsProposals: boolean | null;
+
   company: PublicCompanyDTO | null;
 }
 
@@ -95,6 +99,8 @@ export interface ProjectRequestDTO {
   visibleToCompanies: boolean | null;
   salaryVisibleToProfessionals: boolean | null;
   salaryVisibleToCompanies: boolean | null;
+
+  acceptsProposals: boolean | null;
 }
 
 // ── Autopreenchimento por IA (company-project-form.html :: "Preencher com
