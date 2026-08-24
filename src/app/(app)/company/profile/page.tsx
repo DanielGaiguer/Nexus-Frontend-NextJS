@@ -22,6 +22,7 @@ import { ProfileCompletenessCard } from "@/components/company/profile-completene
 import { StatCard } from "@/components/dashboard/stat-card";
 import { ReputationCard } from "@/components/professional/reputation-card";
 import { ReviewsPreviewCard } from "@/components/reviews/reviews-preview-card";
+import { CompanyTypeBadge } from "@/components/shared/company-type-badge";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -66,6 +67,7 @@ export default function CompanyProfilePage() {
   // antes cada tela calculava esse número do seu próprio jeito e podiam
   // divergir pra mesma empresa.
   const successRate = useCompanySuccessRate().value;
+  const isIndividual = profile?.type === "INDIVIDUAL";
 
   if (isLoading || !profile) {
     return (
@@ -80,11 +82,14 @@ export default function CompanyProfilePage() {
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Perfil da Empresa
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight">
+              Perfil do Contratante
+            </h1>
+            <CompanyTypeBadge type={profile.type} />
+          </div>
           <p className="text-muted-foreground text-sm">
-            Mantenha os dados da empresa atualizados para melhores matches
+            Mantenha seus dados atualizados para melhores matches
           </p>
         </div>
         <CompanyProfileEditDialog profile={profile} />
@@ -98,7 +103,7 @@ export default function CompanyProfilePage() {
               {statusLabels[profile.status] ?? profile.status}
             </p>
             <p className="text-muted-foreground text-xs">
-              Sua empresa ainda não foi aprovada por um administrador — algumas
+              Seu cadastro ainda não foi aprovado por um administrador — algumas
               funcionalidades ficam indisponíveis até lá.
             </p>
           </div>
@@ -144,7 +149,7 @@ export default function CompanyProfilePage() {
               {profile.status === "APPROVED" && (
                 <Badge className="bg-success/15 text-success">
                   <ShieldCheck className="size-3" />
-                  Empresa verificada
+                  Contratante verificado
                 </Badge>
               )}
             </CardContent>
@@ -198,17 +203,19 @@ export default function CompanyProfilePage() {
         <div className="flex flex-col gap-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">Dados da empresa</CardTitle>
+              <CardTitle className="text-sm">Dados do contratante</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <div className="text-muted-foreground text-xs">
-                  Nome da Empresa
+                  {isIndividual ? "Nome Completo" : "Razão Social"}
                 </div>
                 <div className="font-medium">{profile.companyName}</div>
               </div>
               <div>
-                <div className="text-muted-foreground text-xs">CNPJ</div>
+                <div className="text-muted-foreground text-xs">
+                  {isIndividual ? "CPF" : "CNPJ"}
+                </div>
                 <div className="font-medium tabular-nums">
                   {profile.taxId ?? "—"}
                 </div>
@@ -232,7 +239,7 @@ export default function CompanyProfilePage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">Sobre a empresa</CardTitle>
+              <CardTitle className="text-sm">Sobre o contratante</CardTitle>
             </CardHeader>
             <CardContent>
               {profile.description ? (

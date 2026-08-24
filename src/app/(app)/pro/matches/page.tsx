@@ -165,7 +165,7 @@ export default function MatchesPage() {
           <div className="relative">
             <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
             <Input
-              placeholder="Buscar por projeto ou empresa..."
+              placeholder="Buscar por projeto ou contratante..."
               className="pl-9"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -299,13 +299,13 @@ export default function MatchesPage() {
             isLoading={allMatches.isLoading}
             mySkills={profile?.skills}
             emptyTitle="Nenhum match recusado"
-            emptyDescription="Convites recusados por você ou pela empresa aparecerão aqui."
+            emptyDescription="Convites recusados por você ou pelo contratante aparecerão aqui."
             emptyIcon={ThumbsDown}
             renderBadge={(match) => (
               <Badge variant="destructive" className="w-fit">
                 {match.companyStatus !== "REJECTED" &&
                 match.professionalStatus !== "REJECTED"
-                  ? "Oportunidade encerrada pela empresa"
+                  ? "Oportunidade encerrada pelo contratante"
                   : "Recusado"}
               </Badge>
             )}
@@ -343,7 +343,7 @@ function InvitesList({
       <EmptyState
         icon={Mail}
         title="Nenhum convite pendente"
-        description="Quando empresas demonstrarem interesse, os convites aparecerão aqui."
+        description="Quando contratantes demonstrarem interesse, os convites aparecerão aqui."
       />
     );
   }
@@ -368,7 +368,7 @@ function InvitesList({
             <Button size="sm" variant="ghost" asChild>
               <Link href={`/pro/companies/${match.project.companyId}`}>
                 <Building2 className="size-4" />
-                Ver empresa
+                Ver contratante
               </Link>
             </Button>
           )}
@@ -415,7 +415,7 @@ function SentList({
       <EmptyState
         icon={Send}
         title="Nenhum interesse enviado"
-        description="Oportunidades em que você demonstrar interesse aparecerão aqui até que a empresa responda."
+        description="Oportunidades em que você demonstrar interesse aparecerão aqui até que o contratante responda."
       />
     );
   }
@@ -432,7 +432,7 @@ function SentList({
             className="border-warning/30 text-warning mr-auto"
           >
             <Clock className="size-3" />
-            Aguardando resposta da empresa
+            Aguardando resposta do contratante
           </Badge>
           <Button size="sm" variant="ghost" asChild>
             <Link href={`/public/opportunity/${match.project.id}`}>
@@ -444,7 +444,7 @@ function SentList({
             <Button size="sm" variant="ghost" asChild>
               <Link href={`/pro/companies/${match.project.companyId}`}>
                 <Building2 className="size-4" />
-                Ver empresa
+                Ver contratante
               </Link>
             </Button>
           )}
@@ -571,7 +571,7 @@ function ConfirmedMatchCard({
             <Button size="sm" variant="ghost" asChild>
               <Link href={`/pro/companies/${match.project.companyId}`}>
                 <Building2 className="size-4" />
-                Ver perfil da empresa
+                Ver perfil do contratante
               </Link>
             </Button>
           )}
@@ -652,7 +652,7 @@ function PlainList({
             <Button size="sm" variant="ghost" asChild>
               <Link href={`/pro/companies/${match.project.companyId}`}>
                 <Building2 className="size-4" />
-                Ver empresa
+                Ver contratante
               </Link>
             </Button>
           )}

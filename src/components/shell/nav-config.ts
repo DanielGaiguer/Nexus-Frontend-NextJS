@@ -43,7 +43,7 @@ export const navByRole: Record<UserRole, NavSection[]> = {
         { title: "Oportunidades", href: "/pro/opportunities", icon: Sparkles },
         { title: "Matches", href: "/pro/matches", icon: HeartHandshake },
         { title: "Conversas", href: "/chat", icon: MessageCircle },
-        { title: "Empresas", href: "/pro/companies", icon: Building2 },
+        { title: "Contratantes", href: "/pro/companies", icon: Building2 },
         { title: "Profissionais", href: "/pro/professionals", icon: Users },
         { title: "Mapa", href: "/pro/map", icon: MapPin },
       ],
@@ -73,7 +73,7 @@ export const navByRole: Record<UserRole, NavSection[]> = {
         { title: "Matches", href: "/company/matches", icon: HeartHandshake },
         { title: "Conversas", href: "/chat", icon: MessageCircle },
         { title: "Profissionais", href: "/company/professionals", icon: Users },
-        { title: "Empresas", href: "/company/companies", icon: Building2 },
+        { title: "Contratantes", href: "/company/companies", icon: Building2 },
         {
           title: "Oportunidades",
           href: "/company/opportunities",
@@ -98,7 +98,7 @@ export const navByRole: Record<UserRole, NavSection[]> = {
         { title: "Skills", href: "/admin/skills", icon: Tag },
         { title: "Oportunidades", href: "/admin/projects", icon: FolderOpen },
         { title: "Usuários", href: "/admin/users", icon: Users },
-        { title: "Empresas", href: "/admin/companies", icon: Building2 },
+        { title: "Contratantes", href: "/admin/companies", icon: Building2 },
         { title: "Profissionais", href: "/admin/professionals", icon: Users },
         { title: "Mapa", href: "/admin/map", icon: MapPin },
       ],
@@ -108,6 +108,6 @@ export const navByRole: Record<UserRole, NavSection[]> = {
 
 export const roleLabel: Record<UserRole, string> = {
   PROFESSIONAL: "Profissional",
-  COMPANY: "Empresa",
+  COMPANY: "Contratante",
   ADMIN: "Admin",
 };

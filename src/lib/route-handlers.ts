@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { translateApiError } from "@/lib/api-error-messages";
 import {
   ApiError,
   backendFetch,
@@ -31,9 +32,24 @@ export async function proxyBinary(
   });
 
   if (!response.ok) {
-    const message = await response.text();
+    // ApiExceptionHandler no backend sempre devolve JSON (`{status,
+    // message}`), mesmo pros endpoints binários — só cai pro texto cru (ou
+    // pro fallback) se, por algum motivo, o corpo não vier nesse formato.
+    const body = await response.text();
+    let reason = body;
+    try {
+      const parsed = JSON.parse(body) as { message?: unknown };
+      if (parsed && typeof parsed.message === "string") reason = parsed.message;
+    } catch {
+      // corpo não era JSON — usa o texto cru mesmo
+    }
     return NextResponse.json(
-      { message: message || "Não foi possível obter o arquivo." },
+      {
+        message: reason
+          ? translateApiError(response.status, reason)
+          : "Não foi possível obter o arquivo.",
+        reason,
+      },
       { status: response.status }
     );
   }
@@ -85,8 +101,11 @@ export async function proxyToBackend<T, R = T>(
     return NextResponse.json(transform ? transform(data) : data);
   } catch (error) {
     if (error instanceof ApiError) {
+      // `reason` viaja junto (não traduzido) pra quem no client precisa
+      // decidir um fluxo com base no motivo exato que o backend mandou —
+      // ver ApiError/parseResponse em api-client.ts.
       return NextResponse.json(
-        { message: error.message },
+        { message: error.message, reason: error.reason },
         { status: error.status }
       );
     }

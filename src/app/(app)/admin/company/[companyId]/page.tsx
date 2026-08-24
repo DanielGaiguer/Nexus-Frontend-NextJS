@@ -23,6 +23,7 @@ import { useParams, useRouter } from "next/navigation";
 
 import { ReputationCard } from "@/components/professional/reputation-card";
 import { ReviewsPreviewCard } from "@/components/reviews/reviews-preview-card";
+import { CompanyTypeBadge } from "@/components/shared/company-type-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,7 +47,7 @@ const statusLabels: Record<
 };
 
 const approvalStatus: Record<string, { label: string; className: string }> = {
-  APPROVED: { label: "Empresa Verificada", className: "text-success" },
+  APPROVED: { label: "Contratante Verificado", className: "text-success" },
   PENDING: { label: "Aguardando Aprovação", className: "text-warning" },
   REJECTED: { label: "Cadastro Rejeitado", className: "text-destructive" },
 };
@@ -140,9 +141,12 @@ export default function AdminCompanyViewPage() {
             <ArrowLeft className="size-4" />
             Voltar
           </button>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Perfil da Empresa
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight">
+              Perfil do Contratante
+            </h1>
+            <CompanyTypeBadge type={profile.type} />
+          </div>
           <p className="text-muted-foreground text-sm">
             Visualização somente leitura
           </p>
@@ -212,7 +216,9 @@ export default function AdminCompanyViewPage() {
                 {profile.email}
               </div>
               <div className="text-muted-foreground flex items-center gap-2">
-                <span className="font-medium">CNPJ</span>
+                <span className="font-medium">
+                  {profile.type === "INDIVIDUAL" ? "CPF" : "CNPJ"}
+                </span>
                 <span className="tabular-nums">{profile.taxId ?? "—"}</span>
               </div>
               {profile.linkedinUrl && (

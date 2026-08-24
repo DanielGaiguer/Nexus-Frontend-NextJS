@@ -64,7 +64,7 @@ export function OpportunityFilterFields({
         <div className="space-y-1">
           <Label className="text-xs">Buscar</Label>
           <Input
-            placeholder="Título ou empresa..."
+            placeholder="Título ou contratante..."
             value={filters.search}
             onChange={(e) => set("search", e.target.value)}
             className="h-8 text-xs"

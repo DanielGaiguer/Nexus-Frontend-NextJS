@@ -6,21 +6,21 @@ import { cn } from "@/lib/utils";
 import type { CompanyProfileDTO } from "@/types/company";
 
 /** Espelha nexus-profile-completeness.js :: CRITERIA_CO (nexus-frontend antigo) — mesmos campos e pesos. */
-const criteria: {
-  key: keyof CompanyProfileDTO;
-  label: string;
-  weight: number;
-}[] = [
-  { key: "companyName", label: "Nome da empresa", weight: 10 },
-  { key: "phone", label: "Telefone", weight: 8 },
-  { key: "cep", label: "Localização (CEP)", weight: 10 },
-  { key: "profilePhotoUrl", label: "Logo/foto da empresa", weight: 15 },
-  { key: "description", label: "Descrição da empresa", weight: 20 },
-  { key: "taxId", label: "CNPJ", weight: 12 },
-  { key: "email", label: "E-mail de contato", weight: 10 },
-  { key: "city", label: "Cidade e estado", weight: 15 },
-  { key: "linkedinUrl", label: "LinkedIn", weight: 8 },
-];
+function criteriaFor(
+  isIndividual: boolean
+): { key: keyof CompanyProfileDTO; label: string; weight: number }[] {
+  return [
+    { key: "companyName", label: "Nome do contratante", weight: 10 },
+    { key: "phone", label: "Telefone", weight: 8 },
+    { key: "cep", label: "Localização (CEP)", weight: 10 },
+    { key: "profilePhotoUrl", label: "Foto do contratante", weight: 15 },
+    { key: "description", label: "Descrição do contratante", weight: 20 },
+    { key: "taxId", label: isIndividual ? "CPF" : "CNPJ", weight: 12 },
+    { key: "email", label: "E-mail de contato", weight: 10 },
+    { key: "city", label: "Cidade e estado", weight: 15 },
+    { key: "linkedinUrl", label: "LinkedIn", weight: 8 },
+  ];
+}
 
 function isFilled(value: unknown) {
   if (value == null) return false;
@@ -52,6 +52,7 @@ export function ProfileCompletenessCard({
 }: {
   profile: CompanyProfileDTO;
 }) {
+  const criteria = criteriaFor(profile.type === "INDIVIDUAL");
   const totalWeight = criteria.reduce((sum, c) => sum + c.weight, 0);
   const missing = criteria.filter((c) => !isFilled(profile[c.key]));
   const earnedWeight =

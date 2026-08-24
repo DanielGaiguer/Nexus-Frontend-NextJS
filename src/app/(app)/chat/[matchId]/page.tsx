@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react";
 
 import { ChatComposer } from "@/components/chat/chat-composer";
 import { MessageBubble } from "@/components/chat/message-bubble";
+import { CompanyTypeBadge } from "@/components/shared/company-type-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useChatMatches, useChatMessages } from "@/hooks/queries/useChat";
@@ -51,8 +52,13 @@ export default function ChatWindowPage() {
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-semibold">
-                {summary.otherPartyName}
+              <div className="flex items-center gap-1.5">
+                <div className="truncate text-sm font-semibold">
+                  {summary.otherPartyName}
+                </div>
+                {summary.otherPartyType === "COMPANY" && (
+                  <CompanyTypeBadge type={summary.otherPartyCompanyType} />
+                )}
               </div>
               <div className="text-muted-foreground truncate text-xs">
                 {summary.projectTitle}

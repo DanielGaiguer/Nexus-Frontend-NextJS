@@ -102,7 +102,7 @@ export default function ProDashboardPage() {
             <div>
               <CardTitle className="text-sm">Últimos Convites</CardTitle>
               <p className="text-muted-foreground text-xs">
-                Empresas com interesse no seu perfil
+                Contratantes com interesse no seu perfil
               </p>
             </div>
             <Link
@@ -250,7 +250,7 @@ export default function ProDashboardPage() {
           href="/pro/map"
           icon={Map}
           title="Explorar mapa"
-          description="Veja empresas que estão próximas de você"
+          description="Veja contratantes que estão próximos de você"
         />
       </div>
     </div>

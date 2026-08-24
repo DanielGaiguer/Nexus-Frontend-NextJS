@@ -97,8 +97,8 @@ export function CompanyPhoto({
             <AlertDialogHeader>
               <AlertDialogTitle>Remover logo</AlertDialogTitle>
               <AlertDialogDescription>
-                Tem certeza que deseja remover a logo da empresa? Esta ação não
-                pode ser desfeita.
+                Tem certeza que deseja remover a foto do contratante? Esta ação
+                não pode ser desfeita.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

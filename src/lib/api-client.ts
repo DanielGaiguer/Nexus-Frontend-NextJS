@@ -6,16 +6,29 @@
  *
  * `ApiError` normaliza o corpo de erro que o `ApiExceptionHandler` do
  * backend já devolve (`{ "status": 409, "message": "..." }`) numa exceção
- * só, pra quem chama poder jogar `error.message` direto num toast do sonner.
+ * só, pra quem chama poder jogar `error.message` direto num toast do sonner
+ * — `.message` já vem traduzido pro português (ver api-error-messages.ts),
+ * então nenhuma tela precisa se preocupar com isso.
  */
+
+import { translateApiError } from "@/lib/api-error-messages";
 
 export class ApiError extends Error {
   readonly status: number;
+  /**
+   * Texto original que o backend mandou (quase sempre em inglês) — só pra
+   * quem precisa decidir um fluxo com base no motivo exato (ex.:
+   * ReviewForm/ReviewPageContent distinguindo "status check pendente" de
+   * "sem contato"). Nunca deve ir pra UI — pra isso é `.message`, que já
+   * vem traduzido.
+   */
+  readonly reason: string;
 
-  constructor(status: number, message: string) {
+  constructor(status: number, reason: string, message: string = reason) {
     super(message);
     this.name = "ApiError";
     this.status = status;
+    this.reason = reason;
   }
 }
 
@@ -47,7 +60,19 @@ function reviveWorkMode(_key: string, value: unknown): unknown {
   return value;
 }
 
-async function parseResponse<T>(response: Response): Promise<T> {
+/**
+ * `translate` é `true` só pra quem fala direto com o Spring Boot
+ * (`backendFetch`) — é ali que o texto cru em inglês existe e precisa virar
+ * português. `apiFetch` fala com nossos próprios Route Handlers, que já
+ * devolvem `.message` traduzido (ver `proxyToBackend`) — traduzir de novo
+ * ali re-analisaria um texto que já é português e poderia perder
+ * especificidade (ex.: cair no genérico por status em vez da mensagem
+ * exata), então nesse caso o texto só é repassado como está.
+ */
+async function parseResponse<T>(
+  response: Response,
+  translate: boolean
+): Promise<T> {
   const isJson = response.headers
     .get("content-type")
     ?.includes("application/json");
@@ -56,13 +81,23 @@ async function parseResponse<T>(response: Response): Promise<T> {
     : await response.text();
 
   if (!response.ok) {
-    const message =
+    const text =
       isJson && payload && typeof payload === "object" && "message" in payload
         ? String((payload as { message?: unknown }).message)
         : typeof payload === "string" && payload
           ? payload
           : response.statusText;
-    throw new ApiError(response.status, message);
+    // Quando o corpo já carrega o motivo original separado (Route Handler
+    // repassando uma ApiError — ver proxyToBackend), preserva ele em vez do
+    // `text` (que ali já é a versão traduzida) — é o que permite quem
+    // precisa do texto cru (ex.: ReviewForm) continuar funcionando mesmo
+    // depois do Route Handler já ter traduzido `.message`.
+    const reason =
+      isJson && payload && typeof payload === "object" && "reason" in payload
+        ? String((payload as { reason?: unknown }).reason)
+        : text;
+    const message = translate ? translateApiError(response.status, text) : text;
+    throw new ApiError(response.status, reason, message);
   }
 
   return payload as T;
@@ -107,7 +142,7 @@ export async function backendFetch<T>(
     cache: "no-store",
   });
 
-  return parseResponse<T>(response);
+  return parseResponse<T>(response, true);
 }
 
 export interface ApiFetchOptions extends Omit<RequestInit, "body"> {
@@ -140,5 +175,5 @@ export async function apiFetch<T>(
     credentials: "same-origin",
   });
 
-  return parseResponse<T>(response);
+  return parseResponse<T>(response, false);
 }

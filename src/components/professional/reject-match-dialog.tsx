@@ -113,7 +113,7 @@ export function RejectMatchDialog({ matchId }: { matchId: number }) {
           <Textarea
             id="rejectDescription"
             rows={3}
-            placeholder="Opcional — detalhe o motivo pra empresa (ela vai ver isso no card do match recusado)"
+            placeholder="Opcional — detalhe o motivo pro contratante (ele vai ver isso no card do match recusado)"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />

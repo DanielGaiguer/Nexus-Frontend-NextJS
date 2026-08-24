@@ -26,7 +26,7 @@ const steps = [
   {
     icon: UserPlus,
     title: "Crie seu perfil",
-    text: "Profissionais informam skills, pretensão e nível; empresas descrevem a vaga.",
+    text: "Profissionais informam skills, pretensão e nível; contratantes descrevem a vaga.",
   },
   {
     icon: Cpu,
@@ -102,7 +102,7 @@ export default async function Home() {
               </div>
               <div className="text-muted-foreground mt-6 flex flex-wrap gap-x-4 gap-y-1 text-xs sm:text-sm">
                 <span>▪ +2.400 profissionais cadastrados</span>
-                <span>▪ +180 empresas</span>
+                <span>▪ +180 contratantes</span>
                 <span>▪ 94% de taxa de match</span>
               </div>
             </div>
@@ -110,7 +110,7 @@ export default async function Home() {
             <div
               className="mx-auto w-full max-w-sm"
               role="img"
-              aria-label="Visualizador de score de compatibilidade: 94% de match entre empresa e profissional"
+              aria-label="Visualizador de score de compatibilidade: 94% de match entre contratante e profissional"
             >
               <Card>
                 <CardContent className="flex flex-col items-center gap-4">
@@ -240,7 +240,7 @@ export default async function Home() {
                 <h3 className="text-xl font-bold">Para profissionais</h3>
                 <ul className="text-muted-foreground mt-4 space-y-2.5 text-sm">
                   {[
-                    "Seja encontrado por empresas compatíveis",
+                    "Seja encontrado por contratantes compatíveis",
                     "Score de match baseado nas suas skills reais",
                     "Chat direto após confirmação mútua",
                     "Portfólio valorizado a cada projeto concluído",
@@ -259,7 +259,7 @@ export default async function Home() {
 
             <Card id="para-empresas">
               <CardContent>
-                <h3 className="text-xl font-bold">Para empresas</h3>
+                <h3 className="text-xl font-bold">Para contratantes</h3>
                 <ul className="text-muted-foreground mt-4 space-y-2.5 text-sm">
                   {[
                     "Ranking de candidatos por compatibilidade",
@@ -344,7 +344,7 @@ export default async function Home() {
                 <Link href="/register/professional">Sou profissional</Link>
               </Button>
               <Button size="lg" variant="outline" asChild>
-                <Link href="/register/company">Sou empresa</Link>
+                <Link href="/register/company">Sou contratante</Link>
               </Button>
             </div>
           </div>
@@ -376,7 +376,7 @@ export default async function Home() {
               </li>
               <li>
                 <a href="#para-empresas" className="hover:text-foreground">
-                  Para empresas
+                  Para contratantes
                 </a>
               </li>
             </ul>

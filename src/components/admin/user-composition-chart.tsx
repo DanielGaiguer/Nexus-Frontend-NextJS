@@ -15,7 +15,7 @@ import {
 // não a cor lavanda genérica de --chart-2).
 const chartConfig = {
   professionals: { label: "Profissionais", color: "var(--nexus-primary)" },
-  companies: { label: "Empresas", color: "var(--nexus-accent)" },
+  companies: { label: "Contratantes", color: "var(--nexus-accent)" },
 } satisfies ChartConfig;
 
 export function UserCompositionChart({

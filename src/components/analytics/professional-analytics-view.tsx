@@ -149,9 +149,9 @@ export function ProfessionalAnalyticsView({
       <div className="grid gap-4 lg:grid-cols-[7fr_5fr]">
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">Aceitação por Empresa</CardTitle>
+            <CardTitle className="text-sm">Aceitação por Contratante</CardTitle>
             <p className="text-muted-foreground text-xs">
-              Taxa de aceitação e score médio por empresa
+              Taxa de aceitação e score médio por contratante
             </p>
           </CardHeader>
           <CardContent>
@@ -232,13 +232,15 @@ export function ProfessionalAnalyticsView({
       {companyRows.length > 0 && (
         <Card className="gap-0 py-0">
           <CardHeader className="flex-row items-center justify-between border-b py-4">
-            <CardTitle className="text-sm">Desempenho por Empresa</CardTitle>
+            <CardTitle className="text-sm">
+              Desempenho por Contratante
+            </CardTitle>
             <span className="text-muted-foreground text-xs">
-              {companyRows.length} empresa(s)
+              {companyRows.length} contratante(s)
             </span>
           </CardHeader>
           <CardContent className="px-0 pb-0">
-            <AcceptanceRateTable rows={companyRows} nameHeader="Empresa" />
+            <AcceptanceRateTable rows={companyRows} nameHeader="Contratante" />
           </CardContent>
         </Card>
       )}

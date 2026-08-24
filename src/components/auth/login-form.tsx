@@ -38,8 +38,8 @@ const linkedinErrorMessages: Record<string, string> = {
     "Nenhuma conta encontrada com o e-mail do seu LinkedIn. Cadastre-se primeiro.",
   denied: "Login com LinkedIn cancelado.",
   pending_approval:
-    "Cadastro de empresa aguardando aprovação do administrador.",
-  rejected: "Cadastro de empresa foi rejeitado.",
+    "Cadastro de contratante aguardando aprovação do administrador.",
+  rejected: "Cadastro de contratante foi rejeitado.",
   inactive: "Esta conta está inativa.",
   session_expired: "Sua sessão expirou. Faça login novamente.",
   no_email:
@@ -134,7 +134,7 @@ export function LoginForm() {
             <Button variant="outline" size="sm" asChild>
               <Link href="/register/company">
                 <Building2 className="size-4" />
-                Sou Empresa
+                Sou Contratante
               </Link>
             </Button>
           </div>

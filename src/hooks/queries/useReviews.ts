@@ -26,8 +26,8 @@ export const reviewedMatchIdsKey = (role: "professional" | "company") =>
   ["reviews", "reviewed-match-ids", role] as const;
 export const reviewCountKey = (type: "professional" | "company", id: number) =>
   ["reviews", type, id, "count"] as const;
-export const reviewsTop3Key = (type: "professional" | "company", id: number) =>
-  ["reviews", type, id, "top3"] as const;
+export const reviewsTop5Key = (type: "professional" | "company", id: number) =>
+  ["reviews", type, id, "top5"] as const;
 export const reviewsAllKey = (
   type: "professional" | "company",
   id: number,
@@ -73,14 +73,15 @@ export function useReviewCount(
   });
 }
 
-export function useReviewsTop3(
+/** As 5 melhores avaliações (maior nota, desempate por mais recente) — preview do perfil. */
+export function useReviewsTop5(
   type: "professional" | "company",
   id: number | undefined
 ) {
   return useQuery({
-    queryKey: reviewsTop3Key(type, id ?? 0),
+    queryKey: reviewsTop5Key(type, id ?? 0),
     queryFn: () =>
-      apiFetch<ReviewDisplayDTO[]>(`/api/reviews/${type}/${id}/top3`),
+      apiFetch<ReviewDisplayDTO[]>(`/api/reviews/${type}/${id}/top5`),
     enabled: id != null,
   });
 }

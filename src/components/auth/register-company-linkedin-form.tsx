@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Info, Link2 } from "lucide-react";
+import { Building2, Info, Link2, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useRegisterCompanyLinkedin } from "@/hooks/mutations/useRegisterCompanyLinkedin";
 import { ApiError } from "@/lib/api-client";
@@ -39,6 +40,7 @@ export function RegisterCompanyLinkedinForm() {
   const form = useForm<RegisterCompanyLinkedInFormValues>({
     resolver: zodResolver(registerCompanyLinkedInSchema),
     defaultValues: {
+      type: "LEGAL_ENTITY",
       companyName: "",
       taxId: "",
       phone: "",
@@ -46,6 +48,9 @@ export function RegisterCompanyLinkedinForm() {
       description: "",
     },
   });
+
+  const type = form.watch("type");
+  const isIndividual = type === "INDIVIDUAL";
 
   function onSubmit(values: RegisterCompanyLinkedInFormValues) {
     if (!ticket) {
@@ -57,6 +62,7 @@ export function RegisterCompanyLinkedinForm() {
     registerCompanyLinkedin.mutate(
       {
         ticket,
+        type: values.type,
         companyName: values.companyName,
         taxId: toNullable(values.taxId),
         phone: toNullable(values.phone),
@@ -82,7 +88,7 @@ export function RegisterCompanyLinkedinForm() {
       eyebrow="Conectado com LinkedIn"
       eyebrowClassName="bg-nexus-accent/10 text-nexus-accent border-nexus-accent/20"
       title="Falta pouco!"
-      description="O LinkedIn não informa a razão social da empresa — complete os dados abaixo para finalizar o cadastro."
+      description="O LinkedIn não informa todos os dados necessários — complete as informações abaixo para finalizar o cadastro."
       footer={
         <>
           Já tem conta?{" "}
@@ -110,6 +116,24 @@ export function RegisterCompanyLinkedinForm() {
         <Input value={email} readOnly disabled />
       </div>
 
+      <Tabs
+        value={type}
+        onValueChange={(v) =>
+          form.setValue("type", v as RegisterCompanyLinkedInFormValues["type"])
+        }
+      >
+        <TabsList className="w-full">
+          <TabsTrigger value="INDIVIDUAL">
+            <User className="size-4" />
+            Pessoa Física
+          </TabsTrigger>
+          <TabsTrigger value="LEGAL_ENTITY">
+            <Building2 className="size-4" />
+            Empresa
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
@@ -118,9 +142,16 @@ export function RegisterCompanyLinkedinForm() {
               name="companyName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome da empresa</FormLabel>
+                  <FormLabel>
+                    {isIndividual ? "Nome completo" : "Razão Social"}
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder="Minha Empresa Ltda" {...field} />
+                    <Input
+                      placeholder={
+                        isIndividual ? "Maria da Silva" : "Minha Empresa Ltda"
+                      }
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -131,9 +162,14 @@ export function RegisterCompanyLinkedinForm() {
               name="taxId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>CNPJ</FormLabel>
+                  <FormLabel>{isIndividual ? "CPF" : "CNPJ"}</FormLabel>
                   <FormControl>
-                    <Input placeholder="00.000.000/0001-00" {...field} />
+                    <Input
+                      placeholder={
+                        isIndividual ? "000.000.000-00" : "00.000.000/0001-00"
+                      }
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -170,11 +206,11 @@ export function RegisterCompanyLinkedinForm() {
               name="description"
               render={({ field }) => (
                 <FormItem className="sm:col-span-2">
-                  <FormLabel>Descrição da empresa</FormLabel>
+                  <FormLabel>Descrição do contratante</FormLabel>
                   <FormControl>
                     <Textarea
                       rows={3}
-                      placeholder="Fale sobre sua empresa e os projetos que costuma contratar..."
+                      placeholder="Fale sobre você e os projetos que costuma contratar..."
                       {...field}
                       value={field.value ?? ""}
                     />

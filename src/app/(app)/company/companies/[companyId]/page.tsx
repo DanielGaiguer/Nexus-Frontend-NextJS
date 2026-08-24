@@ -1,16 +1,24 @@
 "use client";
 
-import { ArrowLeft, Building2, FolderOpen, History, Star } from "lucide-react";
+import {
+  ArrowLeft,
+  Building2,
+  Eye,
+  FolderOpen,
+  History,
+  Star,
+} from "lucide-react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 
 import { ReputationCard } from "@/components/professional/reputation-card";
 import { ReviewsPreviewCard } from "@/components/reviews/reviews-preview-card";
+import { CompanyTypeBadge } from "@/components/shared/company-type-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  useCompanyClosedProjects,
   useCompanyOpenProjects,
   usePublicCompany,
 } from "@/hooks/queries/usePublicCompany";
@@ -28,7 +36,6 @@ export default function CompanyCompanyViewPage() {
 
   const { data: company, isLoading } = usePublicCompany(id);
   const { data: openProjects } = useCompanyOpenProjects(id);
-  const { data: closedProjects } = useCompanyClosedProjects(id);
 
   if (isLoading || !company) {
     return (
@@ -64,6 +71,7 @@ export default function CompanyCompanyViewPage() {
                 </AvatarFallback>
               </Avatar>
               <div className="text-lg font-bold">{company.companyName}</div>
+              <CompanyTypeBadge type={company.type} />
               {company.city && (
                 <div className="text-muted-foreground text-sm">
                   {company.city}
@@ -108,7 +116,7 @@ export default function CompanyCompanyViewPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-sm">
                   <Building2 className="text-primary size-4" />
-                  Sobre a empresa
+                  Sobre o contratante
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -177,21 +185,24 @@ export default function CompanyCompanyViewPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-sm">
                 <History className="text-primary size-4" />
-                Oportunidades fechadas
-                <Badge variant="secondary">{closedProjects?.length ?? 0}</Badge>
+                Contratações anteriores
+                <Badge variant="secondary">
+                  {company.previousProjects.length}
+                </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {!closedProjects || closedProjects.length === 0 ? (
+              {company.previousProjects.length === 0 ? (
                 <p className="text-muted-foreground text-sm">
-                  Nenhuma oportunidade encerrada ainda.
+                  Nenhuma contratação anterior ainda.
                 </p>
               ) : (
                 <div className="flex flex-col gap-2">
-                  {closedProjects.map((project) => (
-                    <div
+                  {company.previousProjects.map((project) => (
+                    <Link
                       key={project.id}
-                      className="bg-muted/40 flex items-center justify-between gap-2 rounded-md border p-3"
+                      href={`/public/opportunity/${project.projectId}`}
+                      className="bg-muted/40 hover:bg-accent flex items-center justify-between gap-2 rounded-md border p-3"
                     >
                       <div className="flex items-center gap-2">
                         <Badge
@@ -206,58 +217,25 @@ export default function CompanyCompanyViewPage() {
                             : "Projeto"}
                         </Badge>
                         <span className="text-sm font-medium">
-                          {project.title}
+                          {project.projectTitle}
                         </span>
                       </div>
-                      {project.createdAt && (
-                        <span className="text-muted-foreground text-xs">
-                          {new Date(project.createdAt).toLocaleDateString(
-                            "pt-BR",
-                            {
-                              month: "2-digit",
-                              year: "numeric",
-                            }
-                          )}
-                        </span>
-                      )}
-                    </div>
+                      <span className="text-muted-foreground flex items-center gap-2 text-xs">
+                        {new Date(project.completedAt).toLocaleDateString(
+                          "pt-BR",
+                          {
+                            month: "2-digit",
+                            year: "numeric",
+                          }
+                        )}
+                        <Eye className="size-3.5" />
+                      </span>
+                    </Link>
                   ))}
                 </div>
               )}
             </CardContent>
           </Card>
-
-          {company.previousProjects.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-sm">
-                  <History className="text-primary size-4" />
-                  Oportunidades anteriores
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-2">
-                {company.previousProjects.map((project) => (
-                  <div
-                    key={project.id}
-                    className="bg-muted/40 flex items-center justify-between rounded-md border p-3"
-                  >
-                    <span className="text-sm font-medium">
-                      {project.projectTitle}
-                    </span>
-                    <span className="text-muted-foreground text-xs">
-                      {new Date(project.completedAt).toLocaleDateString(
-                        "pt-BR",
-                        {
-                          month: "2-digit",
-                          year: "numeric",
-                        }
-                      )}
-                    </span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
     </div>

@@ -17,7 +17,7 @@ import { useMatchHistory } from "@/hooks/queries/useMatch";
 
 const statusLabel: Record<string, string> = {
   WAITING: "Aguardando",
-  COMPANY_INTERESTED: "Empresa demonstrou interesse",
+  COMPANY_INTERESTED: "Contratante demonstrou interesse",
   PROFESSIONAL_INTERESTED: "Profissional demonstrou interesse",
   MATCHED: "Match confirmado",
   REJECTED: "Recusado",

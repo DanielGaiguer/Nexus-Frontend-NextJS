@@ -4,12 +4,12 @@ import Link from "next/link";
 import { ReviewCard } from "@/components/reviews/review-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useReviewCount, useReviewsTop3 } from "@/hooks/queries/useReviews";
+import { useReviewCount, useReviewsTop5 } from "@/hooks/queries/useReviews";
 
 /**
- * Card de preview (top 3) usado em qualquer perfil — próprio ou de terceiro
- * — com link pra página dedicada. Espelha o `#reviews-preview-mount` do app
- * antigo (populado via fetch de `/app-api/reviews/{type}/{id}/top3`).
+ * Card de preview (top 5 — maior nota, desempate por mais recente) usado em
+ * qualquer perfil, próprio ou de terceiro, seja de empresa ou de profissional
+ * — com link "Ver todas" pra página dedicada com a listagem completa.
  */
 export function ReviewsPreviewCard({
   entityType,
@@ -21,7 +21,7 @@ export function ReviewsPreviewCard({
   viewAllHref: string;
 }) {
   const count = useReviewCount(entityType, entityId);
-  const top3 = useReviewsTop3(entityType, entityId);
+  const top5 = useReviewsTop5(entityType, entityId);
 
   return (
     <Card>
@@ -45,13 +45,13 @@ export function ReviewsPreviewCard({
         )}
       </CardHeader>
       <CardContent className="space-y-3">
-        {top3.isLoading && <Skeleton className="h-24" />}
-        {!top3.isLoading && (!top3.data || top3.data.length === 0) && (
+        {top5.isLoading && <Skeleton className="h-24" />}
+        {!top5.isLoading && (!top5.data || top5.data.length === 0) && (
           <p className="text-muted-foreground text-sm">
             Nenhuma avaliação ainda.
           </p>
         )}
-        {top3.data?.map((review) => (
+        {top5.data?.map((review) => (
           <ReviewCard key={review.id} review={review} />
         ))}
       </CardContent>

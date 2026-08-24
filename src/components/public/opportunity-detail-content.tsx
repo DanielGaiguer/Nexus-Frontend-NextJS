@@ -22,6 +22,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { ScoreRing } from "@/components/professional/score-ring";
+import { CompanyTypeBadge } from "@/components/shared/company-type-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -295,7 +296,7 @@ export function OpportunityDetailContent({
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <VisibilityRow
-                  label="Visível para outras empresas"
+                  label="Visível para outros contratantes"
                   value={project.visibleToCompanies ?? true}
                 />
                 <VisibilityRow
@@ -303,7 +304,7 @@ export function OpportunityDetailContent({
                   value={project.salaryVisibleToProfessionals ?? false}
                 />
                 <VisibilityRow
-                  label="Salário/orçamento visível para empresas"
+                  label="Salário/orçamento visível para contratantes"
                   value={project.salaryVisibleToCompanies ?? false}
                 />
               </CardContent>
@@ -315,7 +316,8 @@ export function OpportunityDetailContent({
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-sm">
                   <Building2 className="text-primary size-4" />
-                  Empresa
+                  Contratante
+                  <CompanyTypeBadge type={project.company.type} />
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">

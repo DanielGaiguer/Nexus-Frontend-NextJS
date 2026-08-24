@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils";
 
 const legendItems = [
   { color: "bg-primary", label: "Profissional" },
-  { color: "bg-warning", label: "Empresa" },
+  { color: "bg-warning", label: "Contratante" },
   { color: "bg-info", label: "Projeto" },
   { color: "bg-success", label: "Vaga de emprego" },
   { color: "bg-destructive", label: "Você" },
@@ -57,7 +57,12 @@ const typeOptions: {
     icon: Users,
     dot: "bg-primary",
   },
-  { value: "companies", label: "Empresas", icon: Building2, dot: "bg-warning" },
+  {
+    value: "companies",
+    label: "Contratantes",
+    icon: Building2,
+    dot: "bg-warning",
+  },
   {
     value: "opportunities",
     label: "Oportunidades",
@@ -151,7 +156,7 @@ export default function ProMapPage() {
         <div>
           <h1 className="text-lg font-bold tracking-tight">Mapa de Talentos</h1>
           <p className="text-muted-foreground text-xs">
-            Explore profissionais, empresas e oportunidades
+            Explore profissionais, contratantes e oportunidades
           </p>
         </div>
 

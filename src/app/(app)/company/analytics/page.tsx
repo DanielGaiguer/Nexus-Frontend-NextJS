@@ -13,7 +13,7 @@ export default function CompanyAnalyticsPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Analytics</h1>
         <p className="text-muted-foreground text-sm">
-          Visão analítica do desempenho da sua empresa na plataforma
+          Visão analítica do seu desempenho na plataforma
         </p>
       </div>
 

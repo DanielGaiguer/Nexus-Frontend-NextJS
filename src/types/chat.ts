@@ -1,3 +1,5 @@
+import type { CompanyType } from "./company";
+
 /**
  * Espelha com.main.nexus.dto.ChatSummaryDTO — um item da lista de conversas
  * (matches confirmados, ver GET /api/chat/matches).
@@ -7,6 +9,8 @@ export interface ChatSummaryDTO {
   otherPartyName: string;
   otherPartyPhotoUrl: string | null;
   otherPartyType: "PROFESSIONAL" | "COMPANY";
+  /** Subtipo do contratante quando otherPartyType === "COMPANY"; null caso contrário. */
+  otherPartyCompanyType: CompanyType | null;
   projectTitle: string;
   lastMessage: string | null;
   lastMessageAt: string | null;

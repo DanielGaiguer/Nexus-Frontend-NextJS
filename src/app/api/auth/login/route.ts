@@ -38,7 +38,7 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof ApiError) {
       return NextResponse.json(
-        { message: error.message },
+        { message: error.message, reason: error.reason },
         { status: error.status }
       );
     }

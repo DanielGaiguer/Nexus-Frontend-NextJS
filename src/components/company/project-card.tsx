@@ -118,10 +118,10 @@ export function ProjectCard({ project }: { project: ProjectResponseDTO }) {
                 <Badge
                   variant="outline"
                   className="text-muted-foreground"
-                  title="Não aparece para outras empresas no mapa nem na aba Oportunidades"
+                  title="Não aparece para outros contratantes no mapa nem na aba Oportunidades"
                 >
                   <EyeOff className="size-3" />
-                  Oculto p/ empresas
+                  Oculto p/ contratantes
                 </Badge>
               )}
             </div>

@@ -14,7 +14,7 @@ import { ReputationRadarChart } from "./reputation-radar-chart";
  * só o sujeito (empresa vs. você) entre company-analytics.html e pro-analytics.html. */
 const EMPTY_DESCRIPTION = {
   company:
-    "Assim que sua empresa receber avaliações, os indicadores de reputação aparecerão aqui.",
+    "Assim que você receber avaliações, os indicadores de reputação aparecerão aqui.",
   professional:
     "Assim que você receber avaliações, seus indicadores de reputação aparecerão aqui.",
 } as const;

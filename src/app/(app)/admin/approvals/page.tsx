@@ -9,15 +9,23 @@ import { toast } from "sonner";
 import { DataTable } from "@/components/admin/data-table";
 import { RejectCompanyDialog } from "@/components/admin/reject-company-dialog";
 import { adminTableFeatures } from "@/components/admin/table-features";
+import { CompanyTypeBadge } from "@/components/shared/company-type-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useApproveCompany } from "@/hooks/mutations/useAdminCompanyActions";
 import { useAdminAllCompanies } from "@/hooks/queries/useAdminCompanies";
 import { ApiError } from "@/lib/api-client";
-import type { CompanyProfileDTO } from "@/types/company";
+import type { CompanyProfileDTO, CompanyType } from "@/types/company";
 
 const statusLabels: Record<
   string,
@@ -38,6 +46,7 @@ export default function AdminApprovalsPage() {
   const [tab, setTab] = useState<"all" | "PENDING" | "APPROVED" | "REJECTED">(
     "all"
   );
+  const [typeFilter, setTypeFilter] = useState<CompanyType | "ALL">("ALL");
   const approveCompany = useApproveCompany();
 
   const counts = useMemo(() => {
@@ -52,15 +61,15 @@ export default function AdminApprovalsPage() {
 
   const filtered = useMemo(() => {
     if (!companies) return [];
-    return tab === "all"
-      ? companies
-      : companies.filter((c) => c.status === tab);
-  }, [companies, tab]);
+    return companies
+      .filter((c) => tab === "all" || c.status === tab)
+      .filter((c) => typeFilter === "ALL" || c.type === typeFilter);
+  }, [companies, tab, typeFilter]);
 
   const columns = useMemo(
     () => [
       helper.accessor("companyName", {
-        header: "Empresa",
+        header: "Contratante",
         cell: (info) => {
           const company = info.row.original;
           return (
@@ -78,7 +87,10 @@ export default function AdminApprovalsPage() {
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0">
-                <div className="font-medium">{company.companyName}</div>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-medium">{company.companyName}</span>
+                  <CompanyTypeBadge type={company.type} />
+                </div>
                 {company.description && (
                   <div className="text-muted-foreground max-w-xs truncate text-xs">
                     {company.description}
@@ -90,7 +102,7 @@ export default function AdminApprovalsPage() {
         },
       }),
       helper.accessor("taxId", {
-        header: "CNPJ",
+        header: "Documento",
         cell: (info) => (
           <span className="text-muted-foreground tabular-nums">
             {info.getValue() ?? "—"}
@@ -138,7 +150,7 @@ export default function AdminApprovalsPage() {
                   e.stopPropagation();
                   approveCompany.mutate(company.id, {
                     onSuccess: () =>
-                      toast.success("Empresa aprovada com sucesso!"),
+                      toast.success("Contratante aprovado com sucesso!"),
                     onError: (error) =>
                       toast.error(
                         error instanceof ApiError
@@ -149,7 +161,7 @@ export default function AdminApprovalsPage() {
                 }}
               >
                 <Check className="size-4" />
-                Aprovar empresa
+                Aprovar contratante
               </Button>
             </div>
           );
@@ -163,31 +175,47 @@ export default function AdminApprovalsPage() {
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
-          Aprovação de Empresas
+          Aprovação de Contratantes
         </h1>
         <p className="text-muted-foreground text-sm">
-          Verifique e aprove ou rejeite novos cadastros de empresas
+          Verifique e aprove ou rejeite novos cadastros de contratantes
         </p>
       </div>
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
-        <div className="overflow-x-auto">
-          <TabsList>
-            <TabsTrigger value="all">
-              Todas <Badge variant="secondary">{counts.all}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="PENDING">
-              Pendentes <Badge variant="secondary">{counts.PENDING}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="APPROVED">
-              Aprovadas <Badge variant="secondary">{counts.APPROVED}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="REJECTED">
-              Rejeitadas <Badge variant="secondary">{counts.REJECTED}</Badge>
-            </TabsTrigger>
-          </TabsList>
-        </div>
-      </Tabs>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
+          <div className="overflow-x-auto">
+            <TabsList>
+              <TabsTrigger value="all">
+                Todas <Badge variant="secondary">{counts.all}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="PENDING">
+                Pendentes <Badge variant="secondary">{counts.PENDING}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="APPROVED">
+                Aprovadas <Badge variant="secondary">{counts.APPROVED}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="REJECTED">
+                Rejeitadas <Badge variant="secondary">{counts.REJECTED}</Badge>
+              </TabsTrigger>
+            </TabsList>
+          </div>
+        </Tabs>
+
+        <Select
+          value={typeFilter}
+          onValueChange={(v) => setTypeFilter(v as CompanyType | "ALL")}
+        >
+          <SelectTrigger className="w-44">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">Todos os tipos</SelectItem>
+            <SelectItem value="INDIVIDUAL">Pessoa Física</SelectItem>
+            <SelectItem value="LEGAL_ENTITY">Empresa</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {isLoading ? (
         <Skeleton className="h-64" />
@@ -195,8 +223,8 @@ export default function AdminApprovalsPage() {
         <DataTable
           columns={columns}
           data={filtered}
-          searchPlaceholder="Buscar empresa..."
-          emptyMessage="Nenhuma empresa encontrada."
+          searchPlaceholder="Buscar contratante..."
+          emptyMessage="Nenhum contratante encontrado."
         />
       )}
     </div>

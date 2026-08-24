@@ -67,8 +67,8 @@ export default function CompanyOpportunitiesPage() {
           Oportunidades da plataforma
         </h1>
         <p className="text-muted-foreground text-sm">
-          {opportunities?.length ?? 0} oportunidades publicadas por outras
-          empresas
+          {opportunities?.length ?? 0} oportunidades publicadas por outros
+          contratantes
         </p>
       </div>
 
@@ -81,7 +81,7 @@ export default function CompanyOpportunitiesPage() {
             <div className="relative">
               <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
               <Input
-                placeholder="Título ou empresa..."
+                placeholder="Título ou contratante..."
                 className="pl-9"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -335,7 +335,7 @@ export default function CompanyOpportunitiesPage() {
         <EmptyState
           icon={FolderX}
           title="Nenhuma oportunidade na plataforma"
-          description="As oportunidades publicadas pelas empresas aparecerão aqui."
+          description="As oportunidades publicadas pelos contratantes aparecerão aqui."
         />
       )}
 

@@ -156,7 +156,7 @@ export default function AdminProjectsPage() {
         },
       }),
       helper.accessor("companyName", {
-        header: "Empresa",
+        header: "Contratante",
         cell: (info) => (
           <Link
             href={`/admin/company/${info.row.original.companyId}`}
@@ -237,7 +237,7 @@ export default function AdminProjectsPage() {
             <div className="relative">
               <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
               <Input
-                placeholder="Título ou empresa..."
+                placeholder="Título ou contratante..."
                 className="pl-9"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}

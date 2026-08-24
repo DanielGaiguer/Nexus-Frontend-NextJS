@@ -1,3 +1,8 @@
+import type { OpportunityType } from "./auth";
+
+/** Espelha com.main.nexus.model.enums.CompanyType. */
+export type CompanyType = "LEGAL_ENTITY" | "INDIVIDUAL";
+
 /** Espelha com.main.nexus.dto.CompanyProfileDTO. */
 export interface CompanyProfileDTO {
   id: number;
@@ -16,6 +21,7 @@ export interface CompanyProfileDTO {
   status: string;
   profilePhotoUrl: string | null;
   linkedinUrl: string | null;
+  type: CompanyType;
 }
 
 /** Espelha com.main.nexus.dto.CompanyDashboardDTO. */
@@ -42,7 +48,9 @@ export interface ReputationExplanationDTO {
 /** Espelha com.main.nexus.dto.CompanyPreviousProjectDTO. */
 export interface CompanyPreviousProjectDTO {
   id: number;
+  projectId: number;
   projectTitle: string;
+  opportunityType: OpportunityType;
   completedAt: string;
 }
 
@@ -64,6 +72,7 @@ export interface PublicCompanyDTO {
   status: string;
   previousProjects: CompanyPreviousProjectDTO[];
   contactEmail: string | null;
+  type: CompanyType;
 }
 
 /** Espelha com.main.nexus.dto.CompanyDirectoryItemDTO. */
@@ -75,6 +84,7 @@ export interface CompanyDirectoryItemDTO {
   reputation: number | null;
   profilePhotoUrl: string | null;
   description: string | null;
+  type: CompanyType;
 }
 
 /** Espelha com.main.nexus.dto.CompanyDirectoryPageDTO. */

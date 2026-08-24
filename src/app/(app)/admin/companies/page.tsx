@@ -4,40 +4,71 @@ import { Building2, Search, Star } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
+import { CompanyTypeBadge } from "@/components/shared/company-type-badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCompanyDirectory } from "@/hooks/queries/useCompanyDirectory";
+import type { CompanyType } from "@/types/company";
 
 export default function AdminCompaniesPage() {
   const [search, setSearch] = useState("");
-  const directory = useCompanyDirectory(search);
+  const [type, setType] = useState<CompanyType | "ALL">("ALL");
+  const directory = useCompanyDirectory(
+    search,
+    type === "ALL" ? undefined : type
+  );
 
   const companies = directory.data?.pages.flatMap((page) => page.content) ?? [];
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Empresas</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Contratantes</h1>
         <p className="text-muted-foreground text-sm">
-          Diretório completo de empresas cadastradas na plataforma
+          Diretório completo de contratantes cadastrados na plataforma
         </p>
       </div>
 
-      <div className="max-w-sm space-y-1">
-        <Label className="text-xs">Buscar</Label>
-        <div className="relative">
-          <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-          <Input
-            placeholder="Buscar por nome..."
-            className="pl-9"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="max-w-sm flex-1 space-y-1">
+          <Label className="text-xs">Buscar</Label>
+          <div className="relative">
+            <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+            <Input
+              placeholder="Buscar por nome..."
+              className="pl-9"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Tipo</Label>
+          <Select
+            value={type}
+            onValueChange={(v) => setType(v as CompanyType | "ALL")}
+          >
+            <SelectTrigger className="w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Todos</SelectItem>
+              <SelectItem value="INDIVIDUAL">Pessoa Física</SelectItem>
+              <SelectItem value="LEGAL_ENTITY">Empresa</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -50,7 +81,7 @@ export default function AdminCompaniesPage() {
       )}
 
       {!directory.isLoading && companies.length === 0 && (
-        <EmptyState icon={Building2} title="Nenhuma empresa encontrada" />
+        <EmptyState icon={Building2} title="Nenhum contratante encontrado" />
       )}
 
       <div className="grid min-w-0 gap-3 sm:grid-cols-2">
@@ -72,8 +103,11 @@ export default function AdminCompaniesPage() {
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate font-semibold">
-                    {company.companyName}
+                  <div className="flex items-center gap-1.5">
+                    <div className="truncate font-semibold">
+                      {company.companyName}
+                    </div>
+                    <CompanyTypeBadge type={company.type} />
                   </div>
                   {company.city && (
                     <div className="text-muted-foreground text-xs">

@@ -43,14 +43,14 @@ export function RejectCompanyDialog({
       { companyId, reason: reason.trim() },
       {
         onSuccess: () => {
-          toast.success("Empresa rejeitada.");
+          toast.success("Contratante rejeitado.");
           setOpen(false);
         },
         onError: (error) =>
           toast.error(
             error instanceof ApiError
               ? error.message
-              : "Não foi possível rejeitar a empresa."
+              : "Não foi possível rejeitar o contratante."
           ),
       }
     );
@@ -71,10 +71,10 @@ export function RejectCompanyDialog({
       </AlertDialogTrigger>
       <AlertDialogContent onClick={(e) => e.stopPropagation()}>
         <AlertDialogHeader>
-          <AlertDialogTitle>Rejeitar empresa</AlertDialogTitle>
+          <AlertDialogTitle>Rejeitar contratante</AlertDialogTitle>
           <AlertDialogDescription>
-            Deseja rejeitar o cadastro de <strong>{companyName}</strong>? A
-            empresa não poderá acessar a plataforma. Esta ação não pode ser
+            Deseja rejeitar o cadastro de <strong>{companyName}</strong>? O
+            contratante não poderá acessar a plataforma. Esta ação não pode ser
             desfeita.
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -86,7 +86,7 @@ export function RejectCompanyDialog({
             id="rejectCompanyReason"
             rows={3}
             required
-            placeholder="Explique por que o cadastro está sendo rejeitado — esse texto será enviado por e-mail para a empresa."
+            placeholder="Explique por que o cadastro está sendo rejeitado — esse texto será enviado por e-mail para o contratante."
             value={reason}
             onChange={(e) => setReason(e.target.value)}
           />

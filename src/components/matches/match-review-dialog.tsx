@@ -18,6 +18,10 @@ import {
 } from "@/components/ui/dialog";
 import type { AuthorType } from "@/types/review";
 
+// Texto cru que o backend manda (ReviewService, em inglês) — ReviewForm
+// repassa isso via onBlockedError (error.reason), não a mensagem já
+// traduzida (error.message), justamente pra essa comparação continuar
+// funcionando independente da tradução.
 const NEEDS_STATUS_CHECK_MSG =
   "Please answer the match status check before reviewing.";
 const NO_CONTACT_MSG = "Reviews are not available when there was no contact.";
@@ -92,12 +96,12 @@ export function MatchReviewDialog({
             cancelLabel="Cancelar"
             onCancel={() => setOpen(false)}
             onSubmitted={() => setOpen(false)}
-            onBlockedError={(message) => {
-              if (message === NEEDS_STATUS_CHECK_MSG) {
+            onBlockedError={(reason) => {
+              if (reason === NEEDS_STATUS_CHECK_MSG) {
                 setBlockedReason("status-check");
                 return true;
               }
-              if (message === NO_CONTACT_MSG) {
+              if (reason === NO_CONTACT_MSG) {
                 setBlockedReason("no-contact");
                 return true;
               }

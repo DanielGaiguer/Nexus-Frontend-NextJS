@@ -209,7 +209,7 @@ export default function OpportunitiesPage() {
     showInterest.mutate(projectId, {
       onSuccess: () => {
         setSentIds((ids) => [...ids, projectId]);
-        toast.success("Interesse enviado à empresa!");
+        toast.success("Interesse enviado ao contratante!");
       },
       onError: (error) => {
         toast.error(
@@ -262,7 +262,7 @@ export default function OpportunitiesPage() {
             <div className="relative">
               <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
               <Input
-                placeholder="Título ou empresa..."
+                placeholder="Título ou contratante..."
                 className="pl-9"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -502,7 +502,7 @@ export default function OpportunitiesPage() {
                   {match.project.companyId != null && (
                     <Button variant="ghost" size="sm" asChild>
                       <Link href={`/pro/companies/${match.project.companyId}`}>
-                        Ver empresa
+                        Ver contratante
                       </Link>
                     </Button>
                   )}

@@ -67,7 +67,7 @@ const contractTypeLabels: Record<string, string> = {
 
 const matchStatusLabels: Record<string, string> = {
   WAITING: "Aguardando",
-  COMPANY_INTERESTED: "Empresa interessada",
+  COMPANY_INTERESTED: "Contratante interessado",
   PROFESSIONAL_INTERESTED: "Profissional interessado",
   MATCHED: "Match confirmado",
   REJECTED: "Recusado",
@@ -221,7 +221,7 @@ export function MatchCompareDialog({
     } else {
       professionalShowInterest.mutate(match.project.id, {
         onSuccess: () => {
-          toast.success("Interesse enviado à empresa!");
+          toast.success("Interesse enviado ao contratante!");
           setOpen(false);
         },
         onError,

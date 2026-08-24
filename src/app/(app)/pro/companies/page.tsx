@@ -4,6 +4,7 @@ import { Building2, Search, Star } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
+import { CompanyTypeBadge } from "@/components/shared/company-type-badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -22,9 +23,9 @@ export default function CompaniesDirectoryPage() {
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Empresas</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Contratantes</h1>
         <p className="text-muted-foreground text-sm">
-          Explore as empresas cadastradas na plataforma
+          Explore os contratantes cadastrados na plataforma
         </p>
       </div>
 
@@ -50,7 +51,7 @@ export default function CompaniesDirectoryPage() {
       )}
 
       {!directory.isLoading && companies.length === 0 && (
-        <EmptyState icon={Building2} title="Nenhuma empresa encontrada" />
+        <EmptyState icon={Building2} title="Nenhum contratante encontrado" />
       )}
 
       <div className="grid min-w-0 gap-3 sm:grid-cols-2">
@@ -72,8 +73,11 @@ export default function CompaniesDirectoryPage() {
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate font-semibold">
-                    {company.companyName}
+                  <div className="flex items-center gap-1.5">
+                    <div className="truncate font-semibold">
+                      {company.companyName}
+                    </div>
+                    <CompanyTypeBadge type={company.type} />
                   </div>
                   {company.city && (
                     <div className="text-muted-foreground text-xs">

@@ -101,7 +101,7 @@ export default function CompanyDashboardPage() {
           )}
         </h1>
         <p className="text-muted-foreground text-sm">
-          Visão geral da sua empresa no Nexus
+          Visão geral do seu perfil no Nexus
         </p>
       </div>
 

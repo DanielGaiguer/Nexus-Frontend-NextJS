@@ -17,6 +17,7 @@ import { z } from "zod";
 const PHONE_REGEX = /^\(?\d{2}\)?[\s-]?\d{4,5}-?\d{4}$/;
 const CEP_REGEX = /^\d{5}-?\d{3}$/;
 const CNPJ_REGEX = /^\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}$/;
+const CPF_REGEX = /^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$/;
 
 export const phoneField = z
   .string()
@@ -32,12 +33,20 @@ export const cepField = z
     message: "CEP inválido. Use o formato 00000-000.",
   });
 
+// Permissivo (aceita CPF OU CNPJ) — a checagem estrita pelo tipo escolhido
+// (Pessoa Física/Empresa) roda via .superRefine() nos schemas de cadastro.
+// No dialog de edição de perfil o campo não é editável, então só precisa
+// não bloquear o submit independente do subtipo do contratante.
 const taxIdField = z
   .string()
   .trim()
-  .refine((value) => value === "" || CNPJ_REGEX.test(value), {
-    message: "CNPJ inválido. Use o formato 00.000.000/0001-00.",
-  });
+  .refine(
+    (value) => value === "" || CPF_REGEX.test(value) || CNPJ_REGEX.test(value),
+    {
+      message:
+        "Documento inválido. Use o formato de CPF (000.000.000-00) ou CNPJ (00.000.000/0001-00).",
+    }
+  );
 
 export const moneyField = z
   .string()
@@ -111,30 +120,56 @@ export type RegisterProfessionalFormValues = z.infer<
   typeof registerProfessionalSchema
 >;
 
-export const registerCompanySchema = z.object({
-  companyName: z.string().trim().min(1, "Informe o nome da empresa."),
-  taxId: taxIdField,
-  email: z
-    .string()
-    .trim()
-    .min(1, "Informe o e-mail.")
-    .email("E-mail inválido."),
-  password: z.string().min(6, "Mínimo de 6 caracteres."),
-  phone: phoneField,
-  cep: cepField,
-  description: z.string(),
-  allowCepUsage: allowCepUsageField,
-});
+// Checa se o documento informado bate com o formato esperado pro tipo de
+// contratante escolhido (Pessoa Física → CPF, Empresa → CNPJ). Compartilhado
+// pelos dois schemas de cadastro (tradicional e via LinkedIn).
+function refineTaxIdByType<
+  T extends { type: "LEGAL_ENTITY" | "INDIVIDUAL"; taxId: string },
+>(values: T, ctx: z.RefinementCtx) {
+  if (values.taxId === "") return;
+  const isIndividual = values.type === "INDIVIDUAL";
+  const regex = isIndividual ? CPF_REGEX : CNPJ_REGEX;
+  if (!regex.test(values.taxId)) {
+    ctx.addIssue({
+      code: "custom",
+      message: isIndividual
+        ? "CPF inválido. Use o formato 000.000.000-00."
+        : "CNPJ inválido. Use o formato 00.000.000/0001-00.",
+      path: ["taxId"],
+    });
+  }
+}
+
+export const registerCompanySchema = z
+  .object({
+    type: z.enum(["LEGAL_ENTITY", "INDIVIDUAL"]),
+    companyName: z.string().trim().min(1, "Informe o nome."),
+    taxId: taxIdField,
+    email: z
+      .string()
+      .trim()
+      .min(1, "Informe o e-mail.")
+      .email("E-mail inválido."),
+    password: z.string().min(6, "Mínimo de 6 caracteres."),
+    phone: phoneField,
+    cep: cepField,
+    description: z.string(),
+    allowCepUsage: allowCepUsageField,
+  })
+  .superRefine(refineTaxIdByType);
 
 export type RegisterCompanyFormValues = z.infer<typeof registerCompanySchema>;
 
-export const registerCompanyLinkedInSchema = z.object({
-  companyName: z.string().trim().min(1, "Informe o nome da empresa."),
-  taxId: taxIdField,
-  phone: phoneField,
-  cep: cepField,
-  description: z.string(),
-});
+export const registerCompanyLinkedInSchema = z
+  .object({
+    type: z.enum(["LEGAL_ENTITY", "INDIVIDUAL"]),
+    companyName: z.string().trim().min(1, "Informe o nome."),
+    taxId: taxIdField,
+    phone: phoneField,
+    cep: cepField,
+    description: z.string(),
+  })
+  .superRefine(refineTaxIdByType);
 
 export type RegisterCompanyLinkedInFormValues = z.infer<
   typeof registerCompanyLinkedInSchema
@@ -210,7 +245,7 @@ export type CredentialFormValues = z.infer<typeof credentialSchema>;
 // ── company-profile.html :: #editModal ──────────────────────────────────
 
 export const companyProfileEditSchema = z.object({
-  companyName: z.string().trim().min(2, "Informe o nome da empresa."),
+  companyName: z.string().trim().min(2, "Informe o nome."),
   taxId: taxIdField,
   phone: phoneField,
   cep: cepField,

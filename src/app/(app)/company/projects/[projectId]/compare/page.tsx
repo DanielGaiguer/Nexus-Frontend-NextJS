@@ -61,7 +61,7 @@ const workModeLabels: Record<string, string> = {
 
 const matchStatusLabels: Record<string, string> = {
   WAITING: "Aguardando",
-  COMPANY_INTERESTED: "Empresa interessada",
+  COMPANY_INTERESTED: "Contratante interessado",
   PROFESSIONAL_INTERESTED: "Profissional interessado",
   MATCHED: "Match confirmado",
   REJECTED: "Recusado",

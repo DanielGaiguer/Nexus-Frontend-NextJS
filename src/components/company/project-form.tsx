@@ -378,7 +378,8 @@ export function ProjectForm({ editing }: { editing?: ProjectResponseDTO }) {
                           />
                         </FormControl>
                         <p className="text-muted-foreground text-xs">
-                          Deixe em branco para usar o CEP cadastrado da empresa.
+                          Deixe em branco para usar o CEP cadastrado do
+                          contratante.
                         </p>
                         <FormMessage />
                       </FormItem>
@@ -596,7 +597,7 @@ export function ProjectForm({ editing }: { editing?: ProjectResponseDTO }) {
                     name="visibleToCompanies"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Visível para outras empresas?</FormLabel>
+                        <FormLabel>Visível para outros contratantes?</FormLabel>
                         <Select
                           value={field.value ? "true" : "false"}
                           onValueChange={(v) => field.onChange(v === "true")}
@@ -613,7 +614,7 @@ export function ProjectForm({ editing }: { editing?: ProjectResponseDTO }) {
                         </Select>
                         <p className="text-muted-foreground text-xs">
                           Se &quot;Não&quot;, esta oportunidade não aparece pra
-                          outras empresas no mapa nem nas Oportunidades.
+                          outros contratantes no mapa nem nas Oportunidades.
                           Profissionais continuam vendo normalmente.
                         </p>
                       </FormItem>
@@ -654,12 +655,12 @@ export function ProjectForm({ editing }: { editing?: ProjectResponseDTO }) {
                                 onCheckedChange={field.onChange}
                               />
                             </FormControl>
-                            O {visibilityWord} deve ser visível para outras
-                            empresas?
+                            O {visibilityWord} deve ser visível para outros
+                            contratantes?
                           </label>
                           <p className="text-muted-foreground text-xs">
                             Se desmarcado, aparece como &quot;A combinar&quot;
-                            para outras empresas.
+                            para outros contratantes.
                           </p>
                         </FormItem>
                       )}

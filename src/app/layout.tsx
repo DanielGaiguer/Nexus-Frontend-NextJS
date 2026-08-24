@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Nexus",
-  description: "Nexus — conectando profissionais e empresas.",
+  description: "Nexus — conectando profissionais e contratantes.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -53,8 +53,11 @@ export function ReviewForm({
    * que ainda não respondeu o status check, ou match marcado como "sem
    * contato" — quem chama pode querer trocar o form inteiro por um banner
    * nesses casos (ver /matches/[matchId]/review) em vez do toast genérico.
+   * Recebe o motivo cru que o backend mandou (`error.reason`, em inglês,
+   * não `error.message` — que já vem traduzido) porque é contra esse texto
+   * exato que quem chama compara.
    */
-  onBlockedError?: (message: string) => boolean;
+  onBlockedError?: (reason: string) => boolean;
 }) {
   const role = authorType === "PROFESSIONAL" ? "professional" : "company";
   const submitReview = useSubmitReview(role);
@@ -85,12 +88,12 @@ export function ReviewForm({
           onSubmitted();
         },
         onError: (error) => {
-          const message =
-            error instanceof ApiError
-              ? error.message
-              : "Não foi possível enviar a avaliação.";
-          if (onBlockedError?.(message)) return;
-          toast.error(message);
+          if (error instanceof ApiError) {
+            if (onBlockedError?.(error.reason)) return;
+            toast.error(error.message);
+            return;
+          }
+          toast.error("Não foi possível enviar a avaliação.");
         },
       }
     );

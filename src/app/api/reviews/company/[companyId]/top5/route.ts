@@ -3,10 +3,10 @@ import type { ReviewDisplayDTO } from "@/types/review";
 
 export async function GET(
   _request: Request,
-  ctx: RouteContext<"/api/reviews/professional/[professionalId]/top3">
+  ctx: RouteContext<"/api/reviews/company/[companyId]/top5">
 ) {
-  const { professionalId } = await ctx.params;
+  const { companyId } = await ctx.params;
   return proxyToBackend<ReviewDisplayDTO[]>(
-    `/api/reviews/professional/${professionalId}/top3`
+    `/api/reviews/company/${companyId}/top3?size=5`
   );
 }

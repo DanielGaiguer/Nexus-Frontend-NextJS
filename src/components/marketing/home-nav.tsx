@@ -31,7 +31,7 @@ const roleHome: Record<SessionClaims["role"], string> = {
 // antes de rolar até a seção, não só um "#" que faria nada fora de "/".
 const links = [
   { href: "/#como-funciona", label: "Como funciona" },
-  { href: "/#para-empresas", label: "Para empresas" },
+  { href: "/#para-empresas", label: "Para contratantes" },
   { href: "/#para-profissionais", label: "Para profissionais" },
 ];
 

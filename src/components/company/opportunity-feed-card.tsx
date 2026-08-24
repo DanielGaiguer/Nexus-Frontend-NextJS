@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { CompanyTypeBadge } from "@/components/shared/company-type-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -118,6 +119,7 @@ export function OpportunityFeedCard({
               </div>
               <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-1 text-sm">
                 {project.companyName}
+                <CompanyTypeBadge type={project.company?.type} />
                 <span className="text-muted-foreground/50">·</span>
                 <span className="text-xs">
                   Criado em {formatDate(project.createdAt)}
@@ -214,7 +216,7 @@ export function OpportunityFeedCard({
         <Button variant="ghost" size="sm" asChild>
           <Link href={`/public/company/${project.companyId}`}>
             <Building2 className="size-4" />
-            Ver empresa
+            Ver contratante
           </Link>
         </Button>
       </div>

@@ -175,7 +175,7 @@ export function NexusMap({
                   href={companyHref(c.id)}
                   className="text-primary text-xs font-medium"
                 >
-                  Ver empresa →
+                  Ver contratante →
                 </Link>
               </div>
             </Popup>

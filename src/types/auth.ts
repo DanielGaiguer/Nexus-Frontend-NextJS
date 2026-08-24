@@ -4,6 +4,8 @@
  * sem checar o DTO Java correspondente.
  */
 
+import type { CompanyType } from "./company";
+
 export type UserRole = "PROFESSIONAL" | "COMPANY" | "ADMIN";
 
 /** Espelha com.main.nexus.model.enums.OpportunityType. */
@@ -71,6 +73,7 @@ export interface RegisterCompanyRequestDTO {
   phone: string | null;
   cep: string | null;
   description: string | null;
+  type: CompanyType;
 }
 
 /** Espelha com.main.nexus.dto.RegisterCompanyLinkedInRequestDTO. */
@@ -81,4 +84,5 @@ export interface RegisterCompanyLinkedInRequestDTO {
   phone: string | null;
   cep: string | null;
   description: string | null;
+  type: CompanyType;
 }

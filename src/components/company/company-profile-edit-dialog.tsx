@@ -41,6 +41,7 @@ export function CompanyProfileEditDialog({
 }) {
   const [open, setOpen] = useState(false);
   const updateProfile = useUpdateCompanyProfile();
+  const isIndividual = profile.type === "INDIVIDUAL";
 
   const form = useForm<CompanyProfileEditFormValues>({
     resolver: zodResolver(companyProfileEditSchema),
@@ -93,7 +94,7 @@ export function CompanyProfileEditDialog({
       </DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Editar Perfil da Empresa</DialogTitle>
+          <DialogTitle>Editar Perfil do Contratante</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -102,7 +103,9 @@ export function CompanyProfileEditDialog({
               name="companyName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome da empresa</FormLabel>
+                  <FormLabel>
+                    {isIndividual ? "Nome completo" : "Razão Social"}
+                  </FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -112,7 +115,7 @@ export function CompanyProfileEditDialog({
             />
             <div className="space-y-2">
               <FormLabel className="text-muted-foreground">
-                CNPJ (não editável)
+                {isIndividual ? "CPF" : "CNPJ"} (não editável)
               </FormLabel>
               <Input value={profile.taxId ?? ""} disabled />
             </div>
@@ -168,7 +171,11 @@ export function CompanyProfileEditDialog({
                   <FormLabel>LinkedIn</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="https://www.linkedin.com/company/sua-empresa"
+                      placeholder={
+                        isIndividual
+                          ? "https://www.linkedin.com/in/seu-perfil"
+                          : "https://www.linkedin.com/company/sua-empresa"
+                      }
                       {...field}
                     />
                   </FormControl>

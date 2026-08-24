@@ -12,6 +12,6 @@ export function useDisplayName(role: UserRole): string {
   const company = useCompanyProfile(role === "COMPANY");
 
   if (role === "PROFESSIONAL") return professional.data?.name ?? "Profissional";
-  if (role === "COMPANY") return company.data?.companyName ?? "Empresa";
+  if (role === "COMPANY") return company.data?.companyName ?? "Contratante";
   return "Administrador";
 }

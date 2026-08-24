@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Building2, Info } from "lucide-react";
+import { Building2, Info, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -20,6 +20,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useRegisterCompany } from "@/hooks/mutations/useRegisterCompany";
 import { ApiError } from "@/lib/api-client";
@@ -36,6 +37,7 @@ export function RegisterCompanyForm() {
   const form = useForm<RegisterCompanyFormValues>({
     resolver: zodResolver(registerCompanySchema),
     defaultValues: {
+      type: "LEGAL_ENTITY",
       companyName: "",
       taxId: "",
       email: "",
@@ -47,9 +49,13 @@ export function RegisterCompanyForm() {
     },
   });
 
+  const type = form.watch("type");
+  const isIndividual = type === "INDIVIDUAL";
+
   function onSubmit(values: RegisterCompanyFormValues) {
     registerCompany.mutate(
       {
+        type: values.type,
         companyName: values.companyName,
         email: values.email,
         password: values.password,
@@ -75,10 +81,10 @@ export function RegisterCompanyForm() {
 
   return (
     <AuthCard
-      icon={Building2}
-      eyebrow="Sou Empresa"
+      icon={isIndividual ? User : Building2}
+      eyebrow="Sou Contratante"
       eyebrowClassName="bg-nexus-accent/10 text-nexus-accent border-nexus-accent/20"
-      title="Cadastre sua empresa"
+      title="Cadastre-se como contratante"
       description="Encontre os melhores profissionais para seus projetos de TI."
       footer={
         <>
@@ -102,6 +108,24 @@ export function RegisterCompanyForm() {
         </div>
       </div>
 
+      <Tabs
+        value={type}
+        onValueChange={(v) =>
+          form.setValue("type", v as RegisterCompanyFormValues["type"])
+        }
+      >
+        <TabsList className="w-full">
+          <TabsTrigger value="INDIVIDUAL">
+            <User className="size-4" />
+            Pessoa Física
+          </TabsTrigger>
+          <TabsTrigger value="LEGAL_ENTITY">
+            <Building2 className="size-4" />
+            Empresa
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
@@ -110,9 +134,16 @@ export function RegisterCompanyForm() {
               name="companyName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome da empresa</FormLabel>
+                  <FormLabel>
+                    {isIndividual ? "Nome completo" : "Razão Social"}
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder="Minha Empresa Ltda" {...field} />
+                    <Input
+                      placeholder={
+                        isIndividual ? "Maria da Silva" : "Minha Empresa Ltda"
+                      }
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -123,9 +154,14 @@ export function RegisterCompanyForm() {
               name="taxId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>CNPJ</FormLabel>
+                  <FormLabel>{isIndividual ? "CPF" : "CNPJ"}</FormLabel>
                   <FormControl>
-                    <Input placeholder="00.000.000/0001-00" {...field} />
+                    <Input
+                      placeholder={
+                        isIndividual ? "000.000.000-00" : "00.000.000/0001-00"
+                      }
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -140,7 +176,9 @@ export function RegisterCompanyForm() {
                   <FormControl>
                     <Input
                       type="email"
-                      placeholder="contato@empresa.com"
+                      placeholder={
+                        isIndividual ? "voce@email.com" : "contato@empresa.com"
+                      }
                       autoComplete="email"
                       {...field}
                     />
@@ -198,11 +236,11 @@ export function RegisterCompanyForm() {
               name="description"
               render={({ field }) => (
                 <FormItem className="sm:col-span-2">
-                  <FormLabel>Descrição da empresa</FormLabel>
+                  <FormLabel>Descrição do contratante</FormLabel>
                   <FormControl>
                     <Textarea
                       rows={3}
-                      placeholder="Fale sobre sua empresa e os projetos que costuma contratar..."
+                      placeholder="Fale sobre você e os projetos que costuma contratar..."
                       {...field}
                       value={field.value ?? ""}
                     />
@@ -241,7 +279,11 @@ export function RegisterCompanyForm() {
             className="w-full"
             disabled={registerCompany.isPending}
           >
-            <Building2 className="size-4" />
+            {isIndividual ? (
+              <User className="size-4" />
+            ) : (
+              <Building2 className="size-4" />
+            )}
             {registerCompany.isPending ? "Enviando…" : "Solicitar cadastro"}
           </Button>
         </form>

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ConversionRateGauge } from "@/components/admin/conversion-rate-gauge";
 import { MonthlyMatchesBarChart } from "@/components/admin/monthly-matches-bar-chart";
 import { UserCompositionChart } from "@/components/admin/user-composition-chart";
+import { CompanyTypeBadge } from "@/components/shared/company-type-badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -82,7 +83,7 @@ export default function AdminDashboardPage() {
               <span className="text-nexus-accent font-medium">
                 {d.totalCompanies}
               </span>
-              <span className="text-muted-foreground"> empresas</span>
+              <span className="text-muted-foreground"> contratantes</span>
             </div>
           </CardContent>
         </Card>
@@ -124,8 +125,8 @@ export default function AdminDashboardPage() {
             </div>
             <div className="text-warning mt-1.5 text-xs">
               {d.pendingCompanies > 0
-                ? "empresas pendentes"
-                : "nenhuma pendente"}
+                ? "contratantes pendentes"
+                : "nenhum pendente"}
             </div>
           </CardContent>
         </Card>
@@ -226,7 +227,7 @@ export default function AdminDashboardPage() {
             <div>
               <CardTitle className="text-sm">Aguardando aprovação</CardTitle>
               <p className="text-muted-foreground text-xs">
-                {d.pendingCompanies} empresa(s)
+                {d.pendingCompanies} contratante(s)
               </p>
             </div>
             <Link
@@ -240,7 +241,7 @@ export default function AdminDashboardPage() {
             {!pending.data || pending.data.length === 0 ? (
               <EmptyState
                 icon={CircleCheck}
-                title="Nenhuma empresa pendente"
+                title="Nenhum contratante pendente"
                 className="py-6"
               />
             ) : (
@@ -260,8 +261,11 @@ export default function AdminDashboardPage() {
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-medium">
-                        {company.companyName}
+                      <div className="flex items-center gap-1.5">
+                        <div className="truncate text-sm font-medium">
+                          {company.companyName}
+                        </div>
+                        <CompanyTypeBadge type={company.type} />
                       </div>
                       <div className="text-muted-foreground truncate text-xs">
                         {[company.city, company.uf].filter(Boolean).join(", ")}
@@ -282,7 +286,7 @@ export default function AdminDashboardPage() {
       <Card>
         <CardHeader className="flex-row items-center justify-between">
           <CardTitle className="text-sm">
-            Últimas empresas cadastradas
+            Últimos contratantes cadastrados
           </CardTitle>
           <Link
             href="/admin/approvals"
@@ -295,8 +299,8 @@ export default function AdminDashboardPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Empresa</TableHead>
-                <TableHead>CNPJ</TableHead>
+                <TableHead>Contratante</TableHead>
+                <TableHead>Documento</TableHead>
                 <TableHead>Cidade</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
@@ -308,7 +312,7 @@ export default function AdminDashboardPage() {
                     colSpan={4}
                     className="text-muted-foreground h-24 text-center"
                   >
-                    Nenhuma empresa cadastrada ainda
+                    Nenhum contratante cadastrado ainda
                   </TableCell>
                 </TableRow>
               ) : (
@@ -333,6 +337,7 @@ export default function AdminDashboardPage() {
                           <span className="font-medium">
                             {company.companyName}
                           </span>
+                          <CompanyTypeBadge type={company.type} />
                         </div>
                       </TableCell>
                       <TableCell className="text-muted-foreground tabular-nums">

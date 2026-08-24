@@ -10,6 +10,7 @@ import {
 import type { ReactNode } from "react";
 
 import { ScoreRing } from "@/components/professional/score-ring";
+import { CompanyTypeBadge } from "@/components/shared/company-type-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -107,6 +108,7 @@ export function MatchCard({
               </Badge>
               <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-1 text-sm">
                 {project.companyName}
+                <CompanyTypeBadge type={project.company?.type} />
                 {project.createdAt && (
                   <>
                     <span className="text-muted-foreground/50">·</span>
