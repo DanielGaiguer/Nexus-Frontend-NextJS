@@ -16,9 +16,11 @@ import {
   Star,
   X,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { ScreeningInvitationBadges } from "@/components/matches/screening-invitation-badges";
 import { ScoreRing } from "@/components/professional/score-ring";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -176,6 +178,7 @@ export function MatchCompareDialog({
   match: MatchResponseDTO;
   viewer?: "company" | "professional";
 }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const companyComparison = useCandidateComparison(
     open && viewer === "company"
@@ -220,7 +223,12 @@ export function MatchCompareDialog({
       });
     } else {
       professionalShowInterest.mutate(match.project.id, {
-        onSuccess: () => {
+        onSuccess: (result) => {
+          if (result.screeningRequired) {
+            setOpen(false);
+            router.push(`/pro/screening-invitations/${result.screeningInvitationId}/take`);
+            return;
+          }
           toast.success("Interesse enviado ao contratante!");
           setOpen(false);
         },
@@ -416,6 +424,18 @@ export function MatchCompareDialog({
                 </div>
               </div>
             </div>
+
+            {candidate.screeningInvitations.length > 0 && (
+              <div className="border-t pt-3">
+                <SectionLabel>Questionário de triagem</SectionLabel>
+                <div className="mt-2">
+                  <ScreeningInvitationBadges
+                    screeningInvitations={candidate.screeningInvitations}
+                    viewer={viewer}
+                  />
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-3 border-t pt-3">
               <InfoRow

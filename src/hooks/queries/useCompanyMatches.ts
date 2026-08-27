@@ -14,6 +14,8 @@ export const rejectedCompanyMatchesKey = () =>
   ["company", "matches", "rejected"] as const;
 export const previousCompanyMatchesKey = () =>
   ["company", "matches", "previous"] as const;
+export const inScreeningCompanyMatchesKey = () =>
+  ["company", "matches", "in-screening"] as const;
 
 export function useReceivedInterests() {
   return useQuery({
@@ -50,5 +52,13 @@ export function usePreviousCompanyMatches() {
   return useQuery({
     queryKey: previousCompanyMatchesKey(),
     queryFn: () => apiFetch<MatchResponseDTO[]>("/api/projects/previous"),
+  });
+}
+
+export function useInScreeningCompanyMatches() {
+  return useQuery({
+    queryKey: inScreeningCompanyMatchesKey(),
+    queryFn: () =>
+      apiFetch<MatchResponseDTO[]>("/api/projects/matches/in-screening"),
   });
 }

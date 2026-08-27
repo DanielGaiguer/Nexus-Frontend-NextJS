@@ -47,6 +47,7 @@ export function RegisterCompanyLinkedinForm() {
       cep: "",
       description: "",
     },
+    mode: "onChange",
   });
 
   const type = form.watch("type");
@@ -224,7 +225,9 @@ export function RegisterCompanyLinkedinForm() {
           <Button
             type="submit"
             className="w-full"
-            disabled={registerCompanyLinkedin.isPending}
+            disabled={
+              registerCompanyLinkedin.isPending || !form.formState.isValid
+            }
           >
             <Link2 className="size-4" />
             {registerCompanyLinkedin.isPending

@@ -113,58 +113,64 @@ export default function ProjectsPage() {
     const minSal = parseFloat(minSalary) || 0;
     const maxSal = parseFloat(maxSalary) || Infinity;
 
-    return projects.filter((project) => {
-      const statusMatch = status === "ALL" || project.status === status;
-      const modalityMatch = !modality || project.workMode === modality;
-      const typeMatch =
-        !opportunityType || project.opportunityType === opportunityType;
-      const searchMatch = !term || project.title.toLowerCase().includes(term);
-      const contractMatch =
-        !contractType || project.contractType === contractType;
-      const expMatch =
-        expLevels.length === 0 ||
-        (project.experienceLevel != null &&
-          expLevels.includes(project.experienceLevel));
-      const postedMatch =
-        !postedDate || project.createdAt.slice(0, 10) === postedDate;
-      const workTypeMatch = !workType || project.type === workType;
-      const skillsMatch = skillNames.every((name) =>
-        project.requiredSkills.some(
-          (skill) => skill.name.toLowerCase() === name.toLowerCase()
-        )
+    return projects
+      .filter((project) => {
+        const statusMatch = status === "ALL" || project.status === status;
+        const modalityMatch = !modality || project.workMode === modality;
+        const typeMatch =
+          !opportunityType || project.opportunityType === opportunityType;
+        const searchMatch =
+          !term || project.title.toLowerCase().includes(term);
+        const contractMatch =
+          !contractType || project.contractType === contractType;
+        const expMatch =
+          expLevels.length === 0 ||
+          (project.experienceLevel != null &&
+            expLevels.includes(project.experienceLevel));
+        const postedMatch =
+          !postedDate || project.createdAt.slice(0, 10) === postedDate;
+        const workTypeMatch = !workType || project.type === workType;
+        const skillsMatch = skillNames.every((name) =>
+          project.requiredSkills.some(
+            (skill) => skill.name.toLowerCase() === name.toLowerCase()
+          )
+        );
+
+        let budgetMatch = true;
+        if (opportunityType === "PROJECT") {
+          budgetMatch =
+            (project.maximumBudget ?? Infinity) >= min &&
+            (project.minimumBudget ?? 0) <= max;
+        }
+
+        let salaryMatch = true;
+        if (
+          opportunityType === "JOB" &&
+          (contractType === "CLT" || contractType === "PJ")
+        ) {
+          salaryMatch =
+            (project.monthlySalaryMax ?? Infinity) >= minSal &&
+            (project.monthlySalaryMin ?? 0) <= maxSal;
+        }
+
+        return (
+          statusMatch &&
+          modalityMatch &&
+          typeMatch &&
+          searchMatch &&
+          contractMatch &&
+          expMatch &&
+          postedMatch &&
+          workTypeMatch &&
+          skillsMatch &&
+          budgetMatch &&
+          salaryMatch
+        );
+      })
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
-
-      let budgetMatch = true;
-      if (opportunityType === "PROJECT") {
-        budgetMatch =
-          (project.maximumBudget ?? Infinity) >= min &&
-          (project.minimumBudget ?? 0) <= max;
-      }
-
-      let salaryMatch = true;
-      if (
-        opportunityType === "JOB" &&
-        (contractType === "CLT" || contractType === "PJ")
-      ) {
-        salaryMatch =
-          (project.monthlySalaryMax ?? Infinity) >= minSal &&
-          (project.monthlySalaryMin ?? 0) <= maxSal;
-      }
-
-      return (
-        statusMatch &&
-        modalityMatch &&
-        typeMatch &&
-        searchMatch &&
-        contractMatch &&
-        expMatch &&
-        postedMatch &&
-        workTypeMatch &&
-        skillsMatch &&
-        budgetMatch &&
-        salaryMatch
-      );
-    });
   }, [
     projects,
     status,

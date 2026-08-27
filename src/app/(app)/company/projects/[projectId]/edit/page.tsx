@@ -6,11 +6,14 @@ import { useParams, useRouter } from "next/navigation";
 import { ProjectForm } from "@/components/company/project-form";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProject } from "@/hooks/queries/useMyProjects";
+import { useProjectScreeningQuestionnaire } from "@/hooks/queries/useScreeningQuestionnaires";
 
 export default function EditProjectPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const router = useRouter();
   const { data: project, isLoading } = useProject(Number(projectId));
+  const { data: screening, isLoading: isScreeningLoading } =
+    useProjectScreeningQuestionnaire(Number(projectId));
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4">
@@ -34,10 +37,10 @@ export default function EditProjectPage() {
         Ao salvar, os scores dos matches em aberto serão recalculados
         automaticamente.
       </div>
-      {isLoading || !project ? (
+      {isLoading || isScreeningLoading || !project ? (
         <Skeleton className="h-96" />
       ) : (
-        <ProjectForm editing={project} />
+        <ProjectForm editing={project} existingScreening={screening} />
       )}
     </div>
   );

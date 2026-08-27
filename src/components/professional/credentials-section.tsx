@@ -234,6 +234,7 @@ function CredentialFormDialog({
   const form = useForm<CredentialFormValues>({
     resolver: zodResolver(credentialSchema),
     values: { name: editing?.name ?? "", color: editing?.color ?? "NEXUS" },
+    mode: "onChange",
   });
 
   function onSubmit(values: CredentialFormValues) {
@@ -327,7 +328,10 @@ function CredentialFormDialog({
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isPending}>
+              <Button
+                type="submit"
+                disabled={isPending || !form.formState.isValid}
+              >
                 {isPending
                   ? "Salvando…"
                   : editing

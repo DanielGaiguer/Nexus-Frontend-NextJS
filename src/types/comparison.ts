@@ -1,6 +1,7 @@
 import type { StatusMatch } from "./match";
 import type { ScoreBreakdownDTO } from "./match";
 import type { ExperienceLevel } from "./professional";
+import type { ScreeningInvitationSummaryDTO } from "./screening";
 
 /** Espelha com.main.nexus.dto.CandidateComparisonRequestDTO. */
 export interface CandidateComparisonRequestDTO {
@@ -29,6 +30,7 @@ export interface CandidateComparisonItemDTO {
   available: boolean | null;
   matchStatus: StatusMatch;
   scoreBreakdown: ScoreBreakdownDTO | null;
+  screeningInvitations: ScreeningInvitationSummaryDTO[];
 }
 
 /** Espelha com.main.nexus.dto.CandidateComparisonResponseDTO. */

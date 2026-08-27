@@ -45,6 +45,7 @@ export function CompanyProfileEditDialog({
 
   const form = useForm<CompanyProfileEditFormValues>({
     resolver: zodResolver(companyProfileEditSchema),
+    mode: "onChange",
     values: {
       companyName: profile.companyName,
       taxId: profile.taxId ?? "",
@@ -191,7 +192,10 @@ export function CompanyProfileEditDialog({
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={updateProfile.isPending}>
+              <Button
+                type="submit"
+                disabled={!form.formState.isValid || updateProfile.isPending}
+              >
                 {updateProfile.isPending ? "Salvando…" : "Salvar perfil"}
               </Button>
             </DialogFooter>

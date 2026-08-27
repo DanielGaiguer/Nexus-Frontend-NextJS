@@ -28,13 +28,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  useCompanyDashboardSummary,
-  useCompanySuccessRate,
-} from "@/hooks/queries/useCompanyDashboardSummary";
-import { useCompanyProfile } from "@/hooks/queries/useCompanyProfile";
-import { useMyProjects } from "@/hooks/queries/useMyProjects";
-import { usePendingStatusCheck } from "@/hooks/queries/useReviews";
+import { useCompanyDashboardBundle } from "@/hooks/queries/useCompanyDashboardBundle";
+import { computeSuccessRate } from "@/hooks/queries/useCompanyDashboardSummary";
 import type { Modality, ProjectResponseDTO } from "@/types/project";
 
 const modalityLabels: Record<Modality, string> = {
@@ -66,20 +61,28 @@ function formatCreatedAt(iso: string) {
 }
 
 export default function CompanyDashboardPage() {
-  const profile = useCompanyProfile();
-  const summary = useCompanyDashboardSummary();
-  const projects = useMyProjects();
-  // Só uma janela por vez — status check tem prioridade por ser mais urgente
-  // (match ainda ativo), igual ao app antigo.
-  const pendingStatusCheck = usePendingStatusCheck(true);
+  // Uma única request pra tudo que a tela precisa — o Route Handler
+  // /api/company/dashboard/bundle faz o fan-out server-side em paralelo, e
+  // o hook semeia o cache de cada query individual (perfil, projetos,
+  // matches confirmados/anteriores, pendências) pra header, sidebar e os
+  // diálogos abaixo reaproveitarem sem refetch.
+  const bundle = useCompanyDashboardBundle();
+  const data = bundle.data;
 
-  const allProjects = projects.data ?? [];
+  const profile = data?.profile;
+  const summary = data?.summary;
+
+  const allProjects = data?.projects ?? [];
   const openProjects = allProjects.filter((p) => p.status === "OPEN");
-  const totalProjects = summary.data?.totalProjects ?? allProjects.length;
+  const totalProjects = summary?.totalProjects ?? allProjects.length;
   // Mesma "Taxa de sucesso" de company/profile (useCompanySuccessRate) --
   // antes cada tela calculava esse número do seu próprio jeito e podiam
   // divergir pra mesma empresa.
-  const successRate = useCompanySuccessRate().value;
+  const successRate = computeSuccessRate(
+    summary?.totalProjects,
+    data?.confirmedMatches,
+    data?.previousMatches
+  );
 
   const recentProjects = allProjects
     .filter((p) => p.opportunityType !== "JOB")
@@ -91,14 +94,10 @@ export default function CompanyDashboardPage() {
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
       <PendingStatusCheckDialog />
-      <PendingReviewDialog role="company" active={!pendingStatusCheck.data} />
+      <PendingReviewDialog role="company" active={!data?.pendingStatusCheck} />
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
-          {profile.data ? (
-            profile.data.companyName
-          ) : (
-            <Skeleton className="h-8 w-56" />
-          )}
+          {profile ? profile.companyName : <Skeleton className="h-8 w-56" />}
         </h1>
         <p className="text-muted-foreground text-sm">
           Visão geral do seu perfil no Nexus
@@ -120,7 +119,7 @@ export default function CompanyDashboardPage() {
         <StatCard
           icon={Handshake}
           label="Matches Confirmados"
-          value={String(summary.data?.totalMatches ?? 0)}
+          value={String(summary?.totalMatches ?? 0)}
           accent="success"
         />
         <StatCard
@@ -136,7 +135,7 @@ export default function CompanyDashboardPage() {
         subtitle="Seus últimos projetos publicados"
         icon={Briefcase}
         iconClassName="text-primary"
-        isLoading={projects.isLoading}
+        isLoading={bundle.isLoading}
         items={recentProjects}
         emptyTitle="Nenhum projeto publicado ainda"
         createLabel="Criar projeto"
@@ -158,7 +157,7 @@ export default function CompanyDashboardPage() {
         subtitle="Suas últimas vagas publicadas"
         icon={Building2}
         iconClassName="text-success"
-        isLoading={projects.isLoading}
+        isLoading={bundle.isLoading}
         items={recentJobs}
         emptyTitle="Nenhuma vaga publicada ainda"
         createLabel="Criar vaga"

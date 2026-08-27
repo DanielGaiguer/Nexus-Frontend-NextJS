@@ -6,6 +6,7 @@ import {
   usePreviousCompanyMatches,
 } from "@/hooks/queries/useCompanyMatches";
 import type { CompanyDashboardDTO } from "@/types/company";
+import type { MatchResponseDTO } from "@/types/match";
 
 export const companyDashboardSummaryKey = () =>
   ["company", "dashboard", "summary"] as const;
@@ -28,25 +29,38 @@ export function useCompanyDashboardSummary() {
  * diferente de matches÷projetos (um projeto pode ter vários matches
  * confirmados, uma posição por match).
  */
+/**
+ * Cálculo puro da taxa de sucesso — extraído pra `company/dashboard` poder
+ * derivá-la do payload agregado (`useCompanyDashboardBundle`) usando
+ * exatamente a mesma fórmula que `useCompanySuccessRate` usa em
+ * `company/profile`, sem os dois divergirem.
+ */
+export function computeSuccessRate(
+  totalProjects: number | undefined,
+  confirmedMatches: MatchResponseDTO[] | undefined,
+  previousMatches: MatchResponseDTO[] | undefined
+): string {
+  if (totalProjects === undefined || totalProjects <= 0) return "—";
+
+  const projectsWithMatch = new Set([
+    ...(confirmedMatches ?? []).map((m) => m.project.id),
+    ...(previousMatches ?? []).map((m) => m.project.id),
+  ]);
+
+  return `${Math.round((projectsWithMatch.size / totalProjects) * 100)}%`;
+}
+
 export function useCompanySuccessRate() {
   const dashboard = useCompanyDashboardSummary();
   const confirmedMatches = useConfirmedCompanyMatches();
   const previousMatches = usePreviousCompanyMatches();
 
-  const projectsWithMatch = new Set([
-    ...(confirmedMatches.data ?? []).map((m) => m.project.id),
-    ...(previousMatches.data ?? []).map((m) => m.project.id),
-  ]);
-
-  const value =
-    dashboard.data && dashboard.data.totalProjects > 0
-      ? `${Math.round(
-          (projectsWithMatch.size / dashboard.data.totalProjects) * 100
-        )}%`
-      : "—";
-
   return {
-    value,
+    value: computeSuccessRate(
+      dashboard.data?.totalProjects,
+      confirmedMatches.data,
+      previousMatches.data
+    ),
     isLoading:
       dashboard.isLoading ||
       confirmedMatches.isLoading ||

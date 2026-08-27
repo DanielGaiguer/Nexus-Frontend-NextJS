@@ -18,10 +18,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useProjectSkillCatalog } from "@/hooks/queries/useProjectSkillCatalog";
+import { useSkillCatalog } from "@/hooks/queries/useSkillCatalog";
 import { cn } from "@/lib/utils";
 
-/** Combobox multi-seleção de skills exigidas — mesma técnica de SkillsEditorDialog. */
+/**
+ * Combobox multi-seleção de skills exigidas — mesma técnica de SkillsEditorDialog.
+ * Usa `useSkillCatalog` (GET /api/skills, permitAll) em vez de `useProjectSkillCatalog`
+ * (GET /api/projects/skills, só COMPANY) porque este componente também é usado em
+ * ProposalForm, do lado do profissional — lá, o endpoint só-COMPANY devolvia 403 e o
+ * catálogo ficava sempre vazio.
+ */
 export function ProjectSkillPicker({
   value,
   onChange,
@@ -32,7 +38,7 @@ export function ProjectSkillPicker({
   max?: number;
 }) {
   const [open, setOpen] = useState(false);
-  const { data: catalog } = useProjectSkillCatalog();
+  const { data: catalog } = useSkillCatalog();
   const selected = (catalog ?? []).filter((skill) => value.includes(skill.id));
 
   return (

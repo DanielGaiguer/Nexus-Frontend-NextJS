@@ -1,9 +1,15 @@
+import type { ScoreBreakdownDTO } from "./match";
 import type { ExperienceLevel } from "./professional";
+import type { ScreeningInvitationSummaryDTO } from "./screening";
 import type { SkillResponseDTO } from "./skill";
 
 /** Espelha com.main.nexus.model.enums.ProposalStatus. */
 export type ProposalStatus =
-  "PENDING" | "ACCEPTED" | "REJECTED" | "WITHDRAWN" | "EXPIRED";
+  | "PENDING"
+  | "ACCEPTED"
+  | "REJECTED"
+  | "WITHDRAWN"
+  | "EXPIRED";
 
 /** Espelha com.main.nexus.dto.ProposalAttachmentDTO. */
 export interface ProposalAttachmentDTO {
@@ -57,6 +63,14 @@ export interface ProposalResponseDTO {
   previousProjectsCount: number;
   matchingSkills: string[];
   missingSkills: string[];
+
+  /** Tentativa(s) do profissional no questionário de triagem da vaga. Lista vazia em toda vaga
+   * sem questionário vinculado. */
+  screeningInvitations: ScreeningInvitationSummaryDTO[];
+
+  /** Breakdown "vivo" (mesmo formato do card de match) -- mostra os mesmos índices de
+   * compatibilidade (skills/orçamento/histórico/reputação) no card de proposta. */
+  scoreBreakdown: ScoreBreakdownDTO;
 }
 
 /** Espelha com.main.nexus.dto.ProposalRequestDTO. */

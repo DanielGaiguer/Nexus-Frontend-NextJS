@@ -81,6 +81,7 @@ export function ProposalForm({
   const form = useForm<ProposalFormValues>({
     resolver: zodResolver(proposalFormSchema),
     defaultValues: toFormDefaults(project, editing),
+    mode: "onChange",
   });
 
   const steps = useFieldArray({
@@ -134,20 +135,18 @@ export function ProposalForm({
       questionsForCompany: toNullable(values.questionsForCompany),
     };
 
-    function afterSave(proposalId: number) {
+    function afterSave(proposalId: number, destination: string, successMessage: string) {
       if (pendingFiles.length === 0) {
-        toast.success(editing ? "Proposta atualizada!" : "Proposta enviada!");
-        router.push("/pro/opportunities");
+        toast.success(successMessage);
+        router.push(destination);
         return;
       }
       uploadAttachments.mutate(
         { proposalId, files: pendingFiles },
         {
           onSuccess: () => {
-            toast.success(
-              editing ? "Proposta atualizada!" : "Proposta enviada!"
-            );
-            router.push("/pro/opportunities");
+            toast.success(successMessage);
+            router.push(destination);
           },
           onError: (error) => {
             toast.error(
@@ -155,7 +154,7 @@ export function ProposalForm({
                 ? error.message
                 : "Proposta salva, mas não foi possível enviar os anexos."
             );
-            router.push("/pro/opportunities");
+            router.push(destination);
           },
         }
       );
@@ -165,7 +164,8 @@ export function ProposalForm({
       updateProposal.mutate(
         { proposalId: editing.id, ...payload },
         {
-          onSuccess: (data) => afterSave(data.id),
+          onSuccess: (data) =>
+            afterSave(data.id, "/pro/opportunities", "Proposta atualizada!"),
           onError: (error) =>
             toast.error(
               error instanceof ApiError
@@ -176,7 +176,23 @@ export function ProposalForm({
       );
     } else {
       submitProposal.mutate(payload, {
-        onSuccess: (data) => afterSave(data.id),
+        onSuccess: (data) => {
+          // A proposta em si nunca fica escondida -- só um nudge pra responder a etapa 1 do
+          // processo seletivo da vaga, se ela tiver uma (decisão confirmada: aceite/recusa da
+          // proposta continua sendo uma ação independente da empresa, sem depender disso).
+          const pendingInvitation = data.screeningInvitations.find(
+            (s) => s.status === "SENT"
+          );
+          if (pendingInvitation) {
+            afterSave(
+              data.id,
+              `/pro/screening-invitations/${pendingInvitation.id}/take`,
+              "Proposta enviada! Responda a etapa do processo seletivo desta vaga."
+            );
+            return;
+          }
+          afterSave(data.id, "/pro/opportunities", "Proposta enviada!");
+        },
         onError: (error) =>
           toast.error(
             error instanceof ApiError
@@ -198,7 +214,7 @@ export function ProposalForm({
                 name="proposedValue"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Valor proposto (R$)</FormLabel>
+                    <FormLabel>Valor proposto (R$) *</FormLabel>
                     <FormControl>
                       <Input type="number" step="1" min="0" {...field} />
                     </FormControl>
@@ -211,7 +227,7 @@ export function ProposalForm({
                 name="estimatedDays"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Prazo estimado (dias)</FormLabel>
+                    <FormLabel>Prazo estimado (dias) *</FormLabel>
                     <FormControl>
                       <Input type="number" min="1" {...field} />
                     </FormControl>
@@ -224,7 +240,7 @@ export function ProposalForm({
                 name="validityDays"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Validade da proposta (dias)</FormLabel>
+                    <FormLabel>Validade da proposta (dias) *</FormLabel>
                     <FormControl>
                       <Input type="number" min="1" {...field} />
                     </FormControl>
@@ -268,7 +284,7 @@ export function ProposalForm({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Como pretende resolver</FormLabel>
+                  <FormLabel>Como pretende resolver *</FormLabel>
                   <FormControl>
                     <Textarea
                       rows={4}
@@ -500,7 +516,10 @@ export function ProposalForm({
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isPending}>
+              <Button
+                type="submit"
+                disabled={isPending || !form.formState.isValid}
+              >
                 <Save className="size-4" />
                 {isPending
                   ? "Salvando…"

@@ -1,5 +1,6 @@
 import type { ProjectResponseDTO } from "./project";
 import type { ProposalResponseDTO } from "./proposal";
+import type { ScreeningInvitationSummaryDTO } from "./screening";
 
 /** Espelha com.main.nexus.model.enums.InterestStatus. */
 export type InterestStatus = "PENDING" | "INTERESTED" | "REJECTED";
@@ -63,6 +64,22 @@ export interface MatchResponseDTO {
   rejectionDescription: string | null;
   /** Preenchido pra sempre quando este match foi confirmado via aceite de uma Proposal. */
   acceptedProposal: ProposalResponseDTO | null;
+  /** Tentativa(s) do profissional no questionário de triagem da vaga (0..N -- pode ter mais de
+   * uma ao longo do tempo se recusou/expirou e tentou de novo). Lista vazia em toda vaga sem
+   * questionário vinculado. */
+  screeningInvitations: ScreeningInvitationSummaryDTO[];
+}
+
+/**
+ * Espelha com.main.nexus.dto.MatchActionResponseDTO -- resposta de
+ * professional-accept/professional-interest. Quando screeningRequired=true, a ação ainda não foi
+ * aplicada: redirecione o profissional pra responder o questionário em screeningInvitationId. A
+ * ação se completa sozinha assim que ele submete.
+ */
+export interface MatchActionResponseDTO {
+  message: string;
+  screeningRequired: boolean;
+  screeningInvitationId: number | null;
 }
 
 /** Espelha com.main.nexus.model.enums.ProfessionalRejectionReason. */

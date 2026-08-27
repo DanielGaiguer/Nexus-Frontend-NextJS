@@ -7,6 +7,7 @@ import { ProposalCard } from "@/components/company/proposal-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProject } from "@/hooks/queries/useMyProjects";
+import { useProjectRanking } from "@/hooks/queries/useProjectRanking";
 import { useProjectProposals } from "@/hooks/queries/useProposals";
 
 export default function ProjectProposalsPage() {
@@ -16,6 +17,10 @@ export default function ProjectProposalsPage() {
 
   const { data: project } = useProject(id);
   const { data: proposals, isLoading } = useProjectProposals(id);
+  // Ranking já devolve todos os matches do projeto (qualquer status) --
+  // reaproveitado só pra achar o Match por trás de cada proposta (via
+  // proposal.matchId), pros botões de "Ver profissional" e "Comparar".
+  const { data: matches } = useProjectRanking(id);
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
@@ -57,7 +62,11 @@ export default function ProjectProposalsPage() {
 
       <div className="flex flex-col gap-3">
         {proposals?.map((proposal) => (
-          <ProposalCard key={proposal.id} proposal={proposal} />
+          <ProposalCard
+            key={proposal.id}
+            proposal={proposal}
+            match={matches?.find((m) => m.id === proposal.matchId)}
+          />
         ))}
       </div>
     </div>

@@ -8,6 +8,7 @@ import {
   Eye,
   HeartHandshake,
   History,
+  Hourglass,
   Mail,
   MessageCircle,
   Search,
@@ -16,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -46,6 +48,7 @@ import {
 } from "@/hooks/mutations/useMatchActions";
 import { useCompanyContact } from "@/hooks/queries/useCompanyContact";
 import {
+  useInScreeningMatches,
   useMatchInvites,
   useMatches,
   usePreviousMatches,
@@ -131,6 +134,7 @@ export default function MatchesPage() {
   const sent = useSentInterests();
   const allMatches = useMatches();
   const previous = usePreviousMatches();
+  const inScreening = useInScreeningMatches();
   const { data: reviewedMatchIds } = useReviewedMatchIds("professional");
   const [search, setSearch] = useState("");
   const [minScore, setMinScore] = useState(0);
@@ -150,6 +154,7 @@ export default function MatchesPage() {
   const filteredConfirmed = filterMatches(confirmed, search, minScore);
   const filteredPrevious = filterMatches(previous.data, search, minScore);
   const filteredRejected = filterMatches(rejected, search, minScore);
+  const filteredInScreening = filterMatches(inScreening.data, search, minScore);
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
@@ -216,10 +221,18 @@ export default function MatchesPage() {
             </TabsTrigger>
           </TabsList>
           <TabsList className="w-full">
+            <TabsTrigger value="inScreening">
+              Em processo{" "}
+              <Badge variant="secondary">
+                {filteredInScreening?.length ?? 0}
+              </Badge>
+            </TabsTrigger>
             <TabsTrigger value="previous">
               Anteriores{" "}
               <Badge variant="secondary">{filteredPrevious?.length ?? 0}</Badge>
             </TabsTrigger>
+          </TabsList>
+          <TabsList className="w-full">
             <TabsTrigger value="rejected">
               Recusados{" "}
               <Badge variant="secondary">{filteredRejected?.length ?? 0}</Badge>
@@ -228,7 +241,7 @@ export default function MatchesPage() {
         </div>
 
         {/* Desktop (>= md): uma linha só, Confirmados primeiro, depois
-            Pendentes, Enviados, Anteriores, Recusados. */}
+            Pendentes, Enviados, Em processo, Anteriores, Recusados. */}
         <TabsList className="mb-[3px] hidden md:inline-flex">
           <TabsTrigger value="confirmed">
             Confirmados{" "}
@@ -241,6 +254,12 @@ export default function MatchesPage() {
           <TabsTrigger value="sent">
             Enviados{" "}
             <Badge variant="secondary">{filteredSent?.length ?? 0}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="inScreening">
+            Em processo{" "}
+            <Badge variant="secondary">
+              {filteredInScreening?.length ?? 0}
+            </Badge>
           </TabsTrigger>
           <TabsTrigger value="previous">
             Anteriores{" "}
@@ -274,6 +293,14 @@ export default function MatchesPage() {
             isLoading={allMatches.isLoading}
             mySkills={profile?.skills}
             reviewedMatchIds={reviewedMatchIds}
+          />
+        </TabsContent>
+
+        <TabsContent value="inScreening" className="flex flex-col gap-3">
+          <InScreeningList
+            matches={filteredInScreening}
+            isLoading={inScreening.isLoading}
+            mySkills={profile?.skills}
           />
         </TabsContent>
 
@@ -337,6 +364,7 @@ function InvitesList({
   mySkills: string[] | undefined;
 }) {
   const acceptMatch = useAcceptMatch();
+  const router = useRouter();
 
   if (isLoading) return <Loading />;
   if (!matches || matches.length === 0) {
@@ -379,8 +407,15 @@ function InvitesList({
             disabled={acceptMatch.isPending}
             onClick={() =>
               acceptMatch.mutate(match.id, {
-                onSuccess: () =>
-                  toast.success("Match confirmado! Contato liberado."),
+                onSuccess: (result) => {
+                  if (result.screeningRequired) {
+                    router.push(
+                      `/pro/screening-invitations/${result.screeningInvitationId}/take`
+                    );
+                    return;
+                  }
+                  toast.success("Match confirmado! Contato liberado.");
+                },
                 onError: (error) =>
                   toast.error(
                     error instanceof ApiError
@@ -468,6 +503,66 @@ function SentList({
             <X className="size-4" />
             Cancelar interesse
           </Button>
+        </>
+      }
+    />
+  ));
+}
+
+/** Convites/interesses ainda sem decisão final, mas já com uma etapa de triagem em andamento por
+ * trás (ver MatchService.getInScreeningMatchesForProfessional) -- hoje ficariam invisíveis
+ * (interesse recém-demonstrado) ou misturados num convite que na prática já não dá mais pra
+ * aceitar/recusar direto, porque depende de terminar de responder a etapa primeiro. */
+function InScreeningList({
+  matches,
+  isLoading,
+  mySkills,
+}: {
+  matches: MatchResponseDTO[] | undefined;
+  isLoading: boolean;
+  mySkills: string[] | undefined;
+}) {
+  if (isLoading) return <Loading />;
+  if (!matches || matches.length === 0) {
+    return (
+      <EmptyState
+        icon={Hourglass}
+        title="Nenhuma candidatura em processo seletivo"
+        description="Oportunidades em que você está respondendo etapas de triagem, ou aguardando a decisão do contratante sobre uma etapa, aparecerão aqui."
+      />
+    );
+  }
+
+  return matches.map((match) => (
+    <MatchCard
+      key={match.id}
+      match={match}
+      mySkills={mySkills}
+      badge={
+        <Badge
+          variant="outline"
+          className="border-warning/30 text-warning w-fit"
+        >
+          <Hourglass className="size-3" />
+          Em processo seletivo
+        </Badge>
+      }
+      actions={
+        <>
+          <Button size="sm" variant="ghost" asChild>
+            <Link href={`/public/opportunity/${match.project.id}`}>
+              <Eye className="size-4" />
+              Ver oportunidade
+            </Link>
+          </Button>
+          {match.project.companyId != null && (
+            <Button size="sm" variant="ghost" asChild>
+              <Link href={`/pro/companies/${match.project.companyId}`}>
+                <Building2 className="size-4" />
+                Ver contratante
+              </Link>
+            </Button>
+          )}
         </>
       }
     />

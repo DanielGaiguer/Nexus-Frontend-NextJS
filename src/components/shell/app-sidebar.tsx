@@ -64,7 +64,7 @@ export function AppSidebar({ session }: { session: SessionClaims }) {
         {roleLabel[session.role]}
       </div>
 
-      <SidebarContent>
+      <SidebarContent className="thin-scrollbar">
         {sections.map((section, index) => (
           <SidebarGroup
             key={index}

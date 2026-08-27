@@ -47,6 +47,7 @@ export function RegisterCompanyForm() {
       description: "",
       allowCepUsage: false,
     },
+    mode: "onChange",
   });
 
   const type = form.watch("type");
@@ -277,7 +278,7 @@ export function RegisterCompanyForm() {
           <Button
             type="submit"
             className="w-full"
-            disabled={registerCompany.isPending}
+            disabled={registerCompany.isPending || !form.formState.isValid}
           >
             {isIndividual ? (
               <User className="size-4" />

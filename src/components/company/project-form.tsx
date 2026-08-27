@@ -8,6 +8,10 @@ import { toast } from "sonner";
 
 import { AiExtractPanel } from "@/components/company/ai-extract-panel";
 import { ProjectSkillPicker } from "@/components/company/project-skill-picker";
+import {
+  newScreeningStage,
+  ScreeningStagesField,
+} from "@/components/company/screening-stage-fields";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -32,6 +36,10 @@ import {
   useCreateProject,
   useUpdateProject,
 } from "@/hooks/mutations/useProjectMutations";
+import {
+  useCreateScreeningQuestionnaire,
+  useUpdateScreeningQuestionnaire,
+} from "@/hooks/mutations/useScreeningQuestionnaireMutations";
 import { ApiError } from "@/lib/api-client";
 import {
   type ProjectFormValues,
@@ -41,6 +49,10 @@ import {
 } from "@/lib/validation";
 import { cn } from "@/lib/utils";
 import type { ProjectResponseDTO } from "@/types/project";
+import type {
+  ScreeningQuestionnaireRequestDTO,
+  ScreeningQuestionnaireResponseDTO,
+} from "@/types/screening";
 
 const workModeOptions = [
   { value: "REMOTE", label: "Remoto" },
@@ -71,7 +83,10 @@ const contractTypeOptions = [
   { value: "FREELANCER", label: "Freelancer" },
 ];
 
-function toFormDefaults(project?: ProjectResponseDTO): ProjectFormValues {
+function toFormDefaults(
+  project?: ProjectResponseDTO,
+  existingScreening?: ScreeningQuestionnaireResponseDTO | null
+): ProjectFormValues {
   return {
     opportunityType: project?.opportunityType ?? "PROJECT",
     title: project?.title ?? "",
@@ -95,19 +110,52 @@ function toFormDefaults(project?: ProjectResponseDTO): ProjectFormValues {
     salaryVisibleToProfessionals: project?.salaryVisibleToProfessionals ?? true,
     salaryVisibleToCompanies: project?.salaryVisibleToCompanies ?? true,
     acceptsProposals: project?.acceptsProposals ?? false,
+
+    useScreening: !!existingScreening,
+    screeningTitle: existingScreening?.title ?? "",
+    screeningInstructions: existingScreening?.instructions ?? "",
+    screeningStages: (existingScreening?.stages ?? []).map((stage) => ({
+      id: stage.id,
+      title: stage.title,
+      instructions: stage.instructions ?? "",
+      responseDeadlineDays: stage.responseDeadlineDays.toString(),
+      questions: stage.questions.map((q) => ({
+        id: q.id,
+        type: q.type,
+        prompt: q.prompt,
+        options: q.options.map((value) => ({ value })),
+        correctOptionIndex:
+          q.correctOptionIndex != null ? q.correctOptionIndex.toString() : "",
+      })),
+    })),
   };
 }
 
-export function ProjectForm({ editing }: { editing?: ProjectResponseDTO }) {
+export function ProjectForm({
+  editing,
+  existingScreening,
+}: {
+  editing?: ProjectResponseDTO;
+  existingScreening?: ScreeningQuestionnaireResponseDTO | null;
+}) {
   const router = useRouter();
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
-  const isPending = createProject.isPending || updateProject.isPending;
+  const createScreening = useCreateScreeningQuestionnaire();
+  const updateScreening = useUpdateScreeningQuestionnaire();
+  const isPending =
+    createProject.isPending ||
+    updateProject.isPending ||
+    createScreening.isPending ||
+    updateScreening.isPending;
 
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectFormSchema),
-    defaultValues: toFormDefaults(editing),
+    mode: "onChange",
+    defaultValues: toFormDefaults(editing, existingScreening),
   });
+
+  const useScreening = useWatch({ control: form.control, name: "useScreening" });
 
   const opportunityType = useWatch({
     control: form.control,
@@ -157,26 +205,88 @@ export function ProjectForm({ editing }: { editing?: ProjectResponseDTO }) {
       acceptsProposals: isProject ? values.acceptsProposals : false,
     };
 
-    const onSettled = {
-      onSuccess: () => {
-        toast.success(
-          editing ? "Oportunidade atualizada!" : "Oportunidade publicada!"
-        );
-        router.push("/company/projects");
-      },
-      onError: (error: unknown) => {
+    // Etapas do processo seletivo são salvas depois da vaga em si (precisa do projectId) --
+    // só quando useScreening está marcado; desmarcar não apaga um processo já existente, só
+    // deixa de tocar nele (não há endpoint pra remover o questionário inteiro, só etapas
+    // individuais dentro dele).
+    function saveScreeningThenFinish(projectId: number) {
+      if (!values.useScreening) {
+        finish();
+        return;
+      }
+
+      const screeningPayload: ScreeningQuestionnaireRequestDTO = {
+        projectId,
+        title: values.screeningTitle,
+        instructions: toNullable(values.screeningInstructions),
+        stages: values.screeningStages.map((stage) => ({
+          id: stage.id,
+          title: stage.title,
+          instructions: toNullable(stage.instructions),
+          responseDeadlineDays: Number(stage.responseDeadlineDays),
+          questions: stage.questions.map((q) => ({
+            id: q.id,
+            type: q.type,
+            prompt: q.prompt,
+            options:
+              q.type === "MULTIPLE_CHOICE"
+                ? q.options.map((o) => o.value.trim()).filter((v) => v !== "")
+                : [],
+            correctOptionIndex:
+              q.type === "MULTIPLE_CHOICE" && q.correctOptionIndex !== ""
+                ? Number(q.correctOptionIndex)
+                : null,
+          })),
+        })),
+      };
+
+      const onScreeningError = (error: unknown) => {
         toast.error(
           error instanceof ApiError
             ? error.message
-            : "Não foi possível salvar a oportunidade."
+            : "Vaga salva, mas não foi possível salvar o processo seletivo."
         );
-      },
+        router.push("/company/projects");
+      };
+
+      if (existingScreening) {
+        updateScreening.mutate(
+          { id: existingScreening.id, ...screeningPayload },
+          { onSuccess: finish, onError: onScreeningError }
+        );
+      } else {
+        createScreening.mutate(screeningPayload, {
+          onSuccess: finish,
+          onError: onScreeningError,
+        });
+      }
+    }
+
+    function finish() {
+      toast.success(
+        editing ? "Oportunidade atualizada!" : "Oportunidade publicada!"
+      );
+      router.push("/company/projects");
+    }
+
+    const onError = (error: unknown) => {
+      toast.error(
+        error instanceof ApiError
+          ? error.message
+          : "Não foi possível salvar a oportunidade."
+      );
     };
 
     if (editing) {
-      updateProject.mutate({ id: editing.id, ...payload }, onSettled);
+      updateProject.mutate(
+        { id: editing.id, ...payload },
+        { onSuccess: () => saveScreeningThenFinish(editing.id), onError }
+      );
     } else {
-      createProject.mutate(payload, onSettled);
+      createProject.mutate(payload, {
+        onSuccess: (data) => saveScreeningThenFinish(data.id),
+        onError,
+      });
     }
   }
 
@@ -612,6 +722,91 @@ export function ProjectForm({ editing }: { editing?: ProjectResponseDTO }) {
               </div>
 
               <div className="space-y-4 border-t pt-4">
+                <FormField
+                  control={form.control}
+                  name="useScreening"
+                  render={({ field }) => (
+                    <FormItem>
+                      <label className="flex items-center gap-2 text-sm font-medium">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={(checked) => {
+                              field.onChange(checked);
+                              if (
+                                checked &&
+                                form.getValues("screeningStages").length === 0
+                              ) {
+                                form.setValue("screeningStages", [
+                                  newScreeningStage(),
+                                ]);
+                              } else if (!checked && !existingScreening) {
+                                // Sem processo já salvo no servidor pra preservar -- limpa
+                                // qualquer etapa nova/incompleta que tenha ficado pela metade,
+                                // pra não travar a validação do formulário escondida (a seção
+                                // some da tela, mas os dados ainda seriam validados).
+                                form.setValue("screeningStages", []);
+                              }
+                            }}
+                          />
+                        </FormControl>
+                        Dividir o processo seletivo em etapas, com triagem?
+                      </label>
+                      <p className="text-muted-foreground text-xs">
+                        Cada etapa tem suas próprias perguntas. Quem demonstrar
+                        interesse, aceitar um convite ou enviar proposta
+                        precisa responder a etapa atual antes de continuar —
+                        você aprova ou reprova o avanço etapa por etapa.
+                        {existingScreening && !field.value && (
+                          <>
+                            {" "}
+                            Desmarcar não apaga o processo já existente, só
+                            deixa de editá-lo agora.
+                          </>
+                        )}
+                      </p>
+                    </FormItem>
+                  )}
+                />
+                {useScreening && (
+                  <div className="space-y-4 rounded-md border p-4">
+                    <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
+                      <FormField
+                        control={form.control}
+                        name="screeningTitle"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Título do processo seletivo</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Ex: Processo seletivo — Dev Backend"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <FormField
+                      control={form.control}
+                      name="screeningInstructions"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Instruções gerais (opcional)</FormLabel>
+                          <FormControl>
+                            <Textarea rows={2} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <ScreeningStagesField control={form.control} />
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-4 border-t pt-4">
                 <h3 className="text-warning text-xs font-semibold tracking-wide uppercase">
                   Visibilidade
                 </h3>
@@ -701,7 +896,10 @@ export function ProjectForm({ editing }: { editing?: ProjectResponseDTO }) {
                 >
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={isPending}>
+                <Button
+                  type="submit"
+                  disabled={!form.formState.isValid || isPending}
+                >
                   <Save className="size-4" />
                   {isPending
                     ? "Salvando…"

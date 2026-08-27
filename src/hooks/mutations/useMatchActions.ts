@@ -8,7 +8,7 @@ import {
 } from "@/hooks/queries/useMatches";
 import { opportunitiesKey } from "@/hooks/queries/useOpportunities";
 import { apiFetch } from "@/lib/api-client";
-import type { ProfessionalRejectRequestDTO } from "@/types/match";
+import type { MatchActionResponseDTO, ProfessionalRejectRequestDTO } from "@/types/match";
 
 /**
  * As três ações que o profissional pode tomar sobre um match
@@ -27,17 +27,25 @@ function useInvalidateMatchLists() {
   };
 }
 
+/**
+ * Se a vaga tiver um questionário de triagem obrigatório ainda não respondido, o backend
+ * devolve screeningRequired=true em vez de confirmar o match -- quem chama deve redirecionar
+ * pra `/pro/screening-invitations/{screeningInvitationId}/take` nesse caso, sem invalidar nada
+ * ainda (o match só avança de verdade quando o questionário for enviado).
+ */
 export function useAcceptMatch() {
   const invalidate = useInvalidateMatchLists();
   return useMutation({
     mutationFn: (matchId: number) =>
-      apiFetch<{ message: string }>(
+      apiFetch<MatchActionResponseDTO>(
         `/api/matches/${matchId}/professional-accept`,
         {
           method: "POST",
         }
       ),
-    onSuccess: invalidate,
+    onSuccess: (data) => {
+      if (!data.screeningRequired) invalidate();
+    },
   });
 }
 

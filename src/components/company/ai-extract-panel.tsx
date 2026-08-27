@@ -34,13 +34,6 @@ export function AiExtractPanel({
     setUnmatchedSkills([]);
     setTypeAmbiguous(false);
 
-    if (rawText.trim().length < 20) {
-      setInputError(
-        "Cole um texto mais completo (pelo menos 20 caracteres) para a IA analisar."
-      );
-      return;
-    }
-
     aiExtract.mutate(rawText.trim(), {
       onSuccess: ({ suggestion: s }) => {
         if (s.opportunityType === "PROJECT" || s.opportunityType === "JOB") {
@@ -120,7 +113,7 @@ export function AiExtractPanel({
         <Button
           type="button"
           size="sm"
-          disabled={aiExtract.isPending}
+          disabled={aiExtract.isPending || rawText.trim().length < 20}
           onClick={handleExtract}
         >
           <Sparkles className="size-4" />

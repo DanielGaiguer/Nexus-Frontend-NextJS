@@ -4,8 +4,10 @@ import {
   Check,
   CircleCheck,
   Eye,
+  FileText,
   HeartHandshake,
   History,
+  Hourglass,
   Mail,
   MessageCircle,
   Search,
@@ -21,13 +23,20 @@ import { toast } from "sonner";
 
 import { CandidateCard } from "@/components/company/candidate-card";
 import { RejectInterestDialog } from "@/components/company/reject-interest-dialog";
-import { AcceptedProposalPanel } from "@/components/matches/accepted-proposal-panel";
 import { ContactDialog } from "@/components/matches/contact-dialog";
 import { MatchHistoryDialog } from "@/components/matches/match-history-dialog";
 import { MatchReviewDialog } from "@/components/matches/match-review-dialog";
+import { ProposalDetails } from "@/components/matches/proposal-details";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -45,6 +54,7 @@ import {
 } from "@/hooks/mutations/useCompanyMatchActions";
 import {
   useConfirmedCompanyMatches,
+  useInScreeningCompanyMatches,
   usePreviousCompanyMatches,
   useReceivedInterests,
   useRejectedCompanyMatches,
@@ -130,6 +140,7 @@ export default function CompanyMatchesPage() {
   const confirmed = useConfirmedCompanyMatches();
   const rejected = useRejectedCompanyMatches();
   const previous = usePreviousCompanyMatches();
+  const inScreening = useInScreeningCompanyMatches();
   const { data: reviewedMatchIds } = useReviewedMatchIds("company");
   const [search, setSearch] = useState("");
   const [minScore, setMinScore] = useState(0);
@@ -139,6 +150,7 @@ export default function CompanyMatchesPage() {
   const filteredConfirmed = filterMatches(confirmed.data, search, minScore);
   const filteredPrevious = filterMatches(previous.data, search, minScore);
   const filteredRejected = filterMatches(rejected.data, search, minScore);
+  const filteredInScreening = filterMatches(inScreening.data, search, minScore);
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
@@ -205,10 +217,18 @@ export default function CompanyMatchesPage() {
             </TabsTrigger>
           </TabsList>
           <TabsList className="w-full">
+            <TabsTrigger value="inScreening">
+              Em processo{" "}
+              <Badge variant="secondary">
+                {filteredInScreening?.length ?? 0}
+              </Badge>
+            </TabsTrigger>
             <TabsTrigger value="previous">
               Anteriores{" "}
               <Badge variant="secondary">{filteredPrevious?.length ?? 0}</Badge>
             </TabsTrigger>
+          </TabsList>
+          <TabsList className="w-full">
             <TabsTrigger value="rejected">
               Recusados{" "}
               <Badge variant="secondary">{filteredRejected?.length ?? 0}</Badge>
@@ -217,7 +237,7 @@ export default function CompanyMatchesPage() {
         </div>
 
         {/* Desktop (>= md): uma linha só, Confirmados primeiro, depois
-            Recebidos, Enviados, Anteriores, Recusados. */}
+            Recebidos, Enviados, Em processo, Anteriores, Recusados. */}
         <TabsList className="mb-[3px] hidden md:inline-flex">
           <TabsTrigger value="confirmed">
             Confirmados{" "}
@@ -230,6 +250,12 @@ export default function CompanyMatchesPage() {
           <TabsTrigger value="sent">
             Enviados{" "}
             <Badge variant="secondary">{filteredSent?.length ?? 0}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="inScreening">
+            Em processo{" "}
+            <Badge variant="secondary">
+              {filteredInScreening?.length ?? 0}
+            </Badge>
           </TabsTrigger>
           <TabsTrigger value="previous">
             Anteriores{" "}
@@ -255,6 +281,12 @@ export default function CompanyMatchesPage() {
             matches={filteredConfirmed}
             isLoading={confirmed.isLoading}
             reviewedMatchIds={reviewedMatchIds}
+          />
+        </TabsContent>
+        <TabsContent value="inScreening" className="flex flex-col gap-3">
+          <InScreeningList
+            matches={filteredInScreening}
+            isLoading={inScreening.isLoading}
           />
         </TabsContent>
         <TabsContent value="previous" className="flex flex-col gap-3">
@@ -442,6 +474,64 @@ function SentList({
   ));
 }
 
+/** Candidaturas ainda sem decisão final, mas já com uma etapa de triagem em andamento por trás
+ * (ver MatchService.getInScreeningMatchesForCompany) -- hoje ficariam invisíveis (interesse
+ * recém-demonstrado) ou misturadas num convite que na prática já não dá mais pra aceitar/recusar
+ * direto, porque depende do profissional terminar de responder primeiro. */
+function InScreeningList({
+  matches,
+  isLoading,
+}: {
+  matches: MatchResponseDTO[] | undefined;
+  isLoading: boolean;
+}) {
+  if (isLoading) return <Loading />;
+  if (!matches || matches.length === 0) {
+    return (
+      <EmptyState
+        icon={Hourglass}
+        title="Nenhuma candidatura em processo seletivo"
+        description="Candidatos respondendo etapas de triagem, ou aguardando sua decisão sobre uma etapa, aparecerão aqui."
+      />
+    );
+  }
+
+  return matches.map((match) => (
+    <CandidateCard
+      key={match.id}
+      match={match}
+      badge={
+        <Badge
+          variant="outline"
+          className="border-warning/30 text-warning w-fit"
+        >
+          <Hourglass className="size-3" />
+          Aguardando processo seletivo
+        </Badge>
+      }
+      actions={
+        <>
+          <Button size="sm" variant="ghost" asChild>
+            <Link
+              href={`/public/opportunity/${match.project.id}`}
+              target="_blank"
+            >
+              <Eye className="size-4" />
+              Ver oportunidade
+            </Link>
+          </Button>
+          <Button size="sm" variant="ghost" asChild>
+            <Link href={`/public/professional/${match.professional.id}`}>
+              <User className="size-4" />
+              Ver profissional
+            </Link>
+          </Button>
+        </>
+      }
+    />
+  ));
+}
+
 function ConfirmedList({
   matches,
   isLoading,
@@ -498,9 +588,15 @@ function ConfirmedCandidateCard({
         match={match}
         badge={
           <div className="flex flex-col gap-1">
-            <Badge className="bg-success/15 text-success w-fit">
-              Match Confirmado
-            </Badge>
+            {match.acceptedProposal ? (
+              <Badge className="bg-info/15 text-info w-fit">
+                Proposta aceita
+              </Badge>
+            ) : (
+              <Badge className="bg-success/15 text-success w-fit">
+                Match Confirmado
+              </Badge>
+            )}
             {isEnded ? (
               <Badge variant="outline" className="text-muted-foreground w-fit">
                 Este match foi encerrado
@@ -548,6 +644,24 @@ function ConfirmedCandidateCard({
               </Link>
             </Button>
             <MatchHistoryDialog matchId={match.id} />
+            {match.acceptedProposal && (
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button size="sm" variant="ghost">
+                    <FileText className="size-4" />
+                    Ver detalhes da proposta
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="thin-scrollbar max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>
+                      Proposta de {match.acceptedProposal.professionalName}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <ProposalDetails proposal={match.acceptedProposal} />
+                </DialogContent>
+              </Dialog>
+            )}
             <ChatAndReviewActions
               matchId={match.id}
               projectTitle={match.project.title}
@@ -578,9 +692,6 @@ function ConfirmedCandidateCard({
           </>
         }
       />
-      {match.acceptedProposal && (
-        <AcceptedProposalPanel proposal={match.acceptedProposal} />
-      )}
     </div>
   );
 }

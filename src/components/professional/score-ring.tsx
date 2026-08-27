@@ -11,7 +11,7 @@ export function ScoreRing({
   score: number;
   size?: number;
 }) {
-  const score = clampScore(rawScore);
+  const score = Math.round(clampScore(rawScore));
   const tier = score >= 85 ? "high" : score >= 70 ? "medium" : "low";
   const colorClass = {
     high: "text-success",

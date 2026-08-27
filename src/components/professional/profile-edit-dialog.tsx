@@ -100,6 +100,7 @@ export function ProfileEditDialog({
       linkedinUrl: profile.linkedinUrl ?? "",
       githubUrl: profile.githubUrl ?? "",
     },
+    mode: "onChange",
   });
 
   const watched = useWatch({ control: form.control });
@@ -401,7 +402,10 @@ export function ProfileEditDialog({
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={updateProfile.isPending}>
+              <Button
+                type="submit"
+                disabled={updateProfile.isPending || !form.formState.isValid}
+              >
                 {updateProfile.isPending ? "Salvando…" : "Salvar perfil"}
               </Button>
             </DialogFooter>

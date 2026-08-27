@@ -71,6 +71,7 @@ export function LoginForm() {
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
+    mode: "onChange",
   });
 
   useEffect(() => {
@@ -179,7 +180,11 @@ export function LoginForm() {
               </FormItem>
             )}
           />
-          <Button type="submit" className="w-full" disabled={login.isPending}>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={login.isPending || !form.formState.isValid}
+          >
             <LogIn className="size-4" />
             {login.isPending ? "Entrando…" : "Entrar"}
           </Button>

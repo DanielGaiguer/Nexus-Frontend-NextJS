@@ -17,6 +17,8 @@ export const sentInterestsKey = () =>
   ["professional", "matches", "sent"] as const;
 export const previousMatchesKey = () =>
   ["professional", "matches", "previous"] as const;
+export const inScreeningMatchesKey = () =>
+  ["professional", "matches", "in-screening"] as const;
 
 export function useMatches() {
   return useQuery({
@@ -46,5 +48,13 @@ export function usePreviousMatches() {
     queryKey: previousMatchesKey(),
     queryFn: () =>
       apiFetch<MatchResponseDTO[]>("/api/professional/matches/previous"),
+  });
+}
+
+export function useInScreeningMatches() {
+  return useQuery({
+    queryKey: inScreeningMatchesKey(),
+    queryFn: () =>
+      apiFetch<MatchResponseDTO[]>("/api/professional/matches/in-screening"),
   });
 }

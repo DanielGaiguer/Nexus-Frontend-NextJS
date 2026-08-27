@@ -1,4 +1,7 @@
 import type { OpportunityType } from "./auth";
+import type { MatchResponseDTO } from "./match";
+import type { ProjectResponseDTO } from "./project";
+import type { PendingReviewDTO, PendingStatusCheckDTO } from "./review";
 
 /** Espelha com.main.nexus.model.enums.CompanyType. */
 export type CompanyType = "LEGAL_ENTITY" | "INDIVIDUAL";
@@ -29,6 +32,27 @@ export interface CompanyDashboardDTO {
   company: CompanyProfileDTO;
   totalProjects: number;
   totalMatches: number;
+}
+
+/**
+ * Payload agregado de `GET /api/company/dashboard/bundle` — junta numa
+ * única ida ao servidor tudo que a tela `/company/dashboard` precisa, que
+ * antes eram ~7 requests separados do browser (cada um recompilado à parte
+ * no `next dev` e cada um um duplo hop browser -> Route Handler -> Spring,
+ * incluindo os dois endpoints lentos `matches/confirmed` e `previous`). O
+ * Route Handler faz o fan-out server-side em paralelo (`Promise.all`) e o
+ * hook `useCompanyDashboardBundle` semeia o cache de cada query individual
+ * pra o resto do app (header, sidebar, diálogos, outras telas) continuar
+ * reaproveitando sem refetch.
+ */
+export interface CompanyDashboardBundleDTO {
+  profile: CompanyProfileDTO;
+  summary: CompanyDashboardDTO;
+  projects: ProjectResponseDTO[];
+  confirmedMatches: MatchResponseDTO[];
+  previousMatches: MatchResponseDTO[];
+  pendingStatusCheck: PendingStatusCheckDTO | null;
+  pendingReview: PendingReviewDTO | null;
 }
 
 /** Espelha com.main.nexus.dto.ReputationExplanationDTO. */

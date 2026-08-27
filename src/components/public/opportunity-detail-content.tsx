@@ -11,6 +11,7 @@ import {
   Code2,
   DollarSign,
   Eye,
+  FileEdit,
   FileText,
   Gift,
   MapPin,
@@ -21,6 +22,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+import { ProposalDetails } from "@/components/matches/proposal-details";
 import { ScoreRing } from "@/components/professional/score-ring";
 import { CompanyTypeBadge } from "@/components/shared/company-type-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -30,10 +32,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useShowInterest } from "@/hooks/mutations/useShowInterest";
+import { useCompanyProfile } from "@/hooks/queries/useCompanyProfile";
 import { useOpportunities } from "@/hooks/queries/useOpportunities";
 import { usePublicOpportunity } from "@/hooks/queries/usePublicOpportunity";
+import { useMyProposals } from "@/hooks/queries/useProposals";
 import { ApiError } from "@/lib/api-client";
 import type { UserRole } from "@/types/auth";
+import { proposalStatusLabels } from "@/types/proposal";
 
 const modalityLabels: Record<string, string> = {
   REMOTE: "Remoto",
@@ -77,14 +82,31 @@ export function OpportunityDetailContent({
   const { data: project, isLoading } = usePublicOpportunity(opportunityId);
   const opportunities = useOpportunities();
   const showInterest = useShowInterest();
+  const { data: myProposals } = useMyProposals(viewerRole === "PROFESSIONAL");
+  const { data: myCompany } = useCompanyProfile(viewerRole === "COMPANY");
 
   const match =
     viewerRole === "PROFESSIONAL"
       ? opportunities.data?.find((m) => m.project.id === opportunityId)
       : undefined;
+
+  const myProposal =
+    viewerRole === "PROFESSIONAL"
+      ? myProposals
+          ?.filter((p) => p.projectId === opportunityId)
+          .sort(
+            (a, b) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          )[0]
+      : undefined;
   const score = match?.scoreBreakdown
     ? Math.round(match.scoreBreakdown.finalScore)
     : null;
+  // Enviar proposta é um sinal de interesse mais forte que o botão abaixo, mas
+  // não passa pelo MatchService (ver comentário em ProposalService) — sem
+  // isso, quem já mandou proposta ainda veria "Demonstrar interesse".
+  const hasShownInterest =
+    match?.status === "PROFESSIONAL_INTERESTED" || myProposal != null;
 
   // Espelha o `<a href="javascript:history.back()">Voltar</a>` do
   // opportunity-detail.html original — esta tela é alcançável de vários
@@ -165,13 +187,31 @@ export function OpportunityDetailContent({
           </div>
 
           <div className="flex flex-col items-end gap-3">
+            {viewerRole === "COMPANY" &&
+              project.acceptsProposals &&
+              myCompany?.id === project.companyId && (
+                <Button size="sm" variant="outline" asChild>
+                  <Link href={`/company/projects/${project.id}/proposals`}>
+                    <FileEdit className="size-4" />
+                    Ver propostas
+                  </Link>
+                </Button>
+              )}
             {viewerRole === "PROFESSIONAL" &&
-              (!match || match.status !== "PROFESSIONAL_INTERESTED" ? (
+              (!hasShownInterest ? (
                 <Button
                   disabled={showInterest.isPending}
                   onClick={() =>
                     showInterest.mutate(project.id, {
-                      onSuccess: () => toast.success("Interesse enviado!"),
+                      onSuccess: (result) => {
+                        if (result.screeningRequired) {
+                          router.push(
+                            `/pro/screening-invitations/${result.screeningInvitationId}/take`
+                          );
+                          return;
+                        }
+                        toast.success("Interesse enviado!");
+                      },
                       onError: (error) =>
                         toast.error(
                           error instanceof ApiError
@@ -391,6 +431,68 @@ export function OpportunityDetailContent({
               )}
             </CardContent>
           </Card>
+
+          {viewerRole === "PROFESSIONAL" &&
+            project.opportunityType === "PROJECT" &&
+            project.acceptsProposals && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <FileText className="size-4" />
+                    Minha proposta
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-3">
+                  {myProposal ? (
+                    <>
+                      <Badge
+                        variant={
+                          myProposal.status === "REJECTED"
+                            ? "destructive"
+                            : "outline"
+                        }
+                        className="w-fit"
+                      >
+                        {myProposal.autoRejectedPositionFilled
+                          ? "Vaga preenchida"
+                          : proposalStatusLabels[myProposal.status]}
+                      </Badge>
+                      <ProposalDetails proposal={myProposal} />
+                      <div className="flex justify-end">
+                        <Button size="sm" asChild>
+                          <Link
+                            href={`/pro/opportunities/${opportunityId}/proposal`}
+                          >
+                            Ver mais
+                          </Link>
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-muted-foreground text-sm">
+                        Você ainda não tem nenhuma proposta enviada.
+                      </p>
+                      <p className="text-muted-foreground text-sm">
+                        Envie uma proposta detalhando valor, prazo e como você
+                        executaria este projeto para se destacar entre os demais
+                        candidatos.
+                      </p>
+                      <div className="flex justify-end">
+                        <Button size="sm" asChild>
+                          <Link
+                            href={`/pro/opportunities/${opportunityId}/proposal`}
+                          >
+                            <Send className="size-4" />
+                            Enviar proposta
+                          </Link>
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
           {project.benefits && (
             <Card>

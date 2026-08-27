@@ -257,6 +257,71 @@ export type CompanyProfileEditFormValues = z.infer<
   typeof companyProfileEditSchema
 >;
 
+// ── cadastro/edição da vaga — ScreeningQuestionnaire em etapas ──────────
+// Embutido dentro de projectFormSchema (ver abaixo) -- a empresa configura o processo seletivo
+// em etapas junto com o cadastro/edição da própria vaga, não numa tela separada.
+
+// id nulo = questão/etapa nova; preenchido = edita a existente no lugar (ver
+// ScreeningQuestionnaireService.mergeStages/mergeQuestions -- edição sempre livre, sem trava).
+// correctOptionIndex viaja como string (valor de RadioGroup) e só é
+// obrigatório quando type === MULTIPLE_CHOICE -- checado via superRefine,
+// não dá pra expressar isso só com o shape do objeto.
+export const screeningQuestionSchema = z
+  .object({
+    id: z.number().nullable(),
+    type: z.enum(["MULTIPLE_CHOICE", "ESSAY"]),
+    prompt: z.string().trim().min(1, "Enunciado obrigatório."),
+    // useFieldArray exige array de objetos -- mesmo padrão de executionSteps
+    // em proposalFormSchema. Sem min(1) aqui de propósito -- ESSAY nunca usa
+    // este campo (a UI nem exibe o editor de alternativas), mas o valor
+    // default de uma questão nova sempre carrega 2 alternativas vazias (ver
+    // newScreeningQuestion); exigir texto nelas incondicionalmente travaria o
+    // formulário pra sempre numa questão ESSAY, sem nenhum campo visível pro
+    // usuário corrigir. A checagem de conteúdo só vale pra MULTIPLE_CHOICE,
+    // feita abaixo no superRefine.
+    options: z.array(z.object({ value: z.string() })),
+    correctOptionIndex: z.string(),
+  })
+  .superRefine((question, ctx) => {
+    if (question.type !== "MULTIPLE_CHOICE") return;
+    if (question.options.length < 2) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Adicione ao menos 2 alternativas.",
+        path: ["options"],
+      });
+    }
+    question.options.forEach((option, index) => {
+      if (!option.value.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Alternativa não pode ficar vazia.",
+          path: ["options", index, "value"],
+        });
+      }
+    });
+    if (question.correctOptionIndex === "") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Selecione a alternativa correta.",
+        path: ["correctOptionIndex"],
+      });
+    }
+  });
+
+export const screeningStageSchema = z.object({
+  id: z.number().nullable(),
+  title: z.string().trim().min(1, "Título da etapa obrigatório."),
+  instructions: z.string(),
+  responseDeadlineDays: z
+    .string()
+    .trim()
+    .refine((v) => Number(v) >= 1, { message: "Informe ao menos 1 dia." }),
+  questions: z
+    .array(screeningQuestionSchema)
+    .min(1, "Adicione ao menos uma questão nesta etapa."),
+});
+
 // ── company-project-form.html — validação condicional PROJECT vs JOB,
 // espelhando 1:1 ProjectService#validateByType do backend. Além de checar
 // aqui (feedback antes mesmo de submeter), o Route Handler ainda repassa o
@@ -315,8 +380,33 @@ export const projectFormSchema = z
     salaryVisibleToCompanies: z.boolean(),
 
     acceptsProposals: z.boolean(),
+
+    // Processo seletivo em etapas (Questionário de Triagem) -- cadastrado junto com a vaga.
+    // screeningStages fica de fora da validação de shape aqui de propósito (schema completo é
+    // screeningStageSchema, já validado item a item pelo z.array) -- a exigência de "pelo menos
+    // uma etapa" só se aplica condicionalmente, ver superRefine abaixo.
+    useScreening: z.boolean(),
+    screeningTitle: z.string(),
+    screeningInstructions: z.string(),
+    screeningStages: z.array(screeningStageSchema),
   })
   .superRefine((values, ctx) => {
+    if (values.useScreening) {
+      if (!values.screeningTitle.trim()) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Título do processo seletivo obrigatório.",
+          path: ["screeningTitle"],
+        });
+      }
+      if (values.screeningStages.length === 0) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Adicione ao menos uma etapa.",
+          path: ["screeningStages"],
+        });
+      }
+    }
     if (values.workMode === "") {
       ctx.addIssue({
         code: "custom",
@@ -438,3 +528,6 @@ export const reviewFormSchema = z.object({
 });
 
 export type ReviewFormValues = z.infer<typeof reviewFormSchema>;
+
+export type ScreeningStageFormValues = z.infer<typeof screeningStageSchema>;
+export type ScreeningQuestionFormValues = z.infer<typeof screeningQuestionSchema>;

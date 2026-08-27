@@ -4,26 +4,23 @@ import {
   Building2,
   Calendar,
   DollarSign,
+  FileQuestion,
   FileText,
   MapPin,
 } from "lucide-react";
+import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { ScoreBreakdownGrid } from "@/components/matches/score-breakdown-grid";
+import { ScreeningInvitationBadges } from "@/components/matches/screening-invitation-badges";
 import { ScoreRing } from "@/components/professional/score-ring";
 import { CompanyTypeBadge } from "@/components/shared/company-type-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { rejectionReasonLabels } from "@/types/match";
 import type { MatchResponseDTO } from "@/types/match";
-
-const breakdownLabels = {
-  skills: "Skills",
-  budget: "Orçamento",
-  history: "Histórico",
-  reputation: "Reputação",
-} as const;
 
 const modalityLabels: Record<string, string> = {
   REMOTE: "Remoto",
@@ -81,6 +78,14 @@ export function MatchCard({
     ? Math.round(match.scoreBreakdown.finalScore)
     : null;
 
+  const latestScreening = match.screeningInvitations[0];
+  const screeningHref = latestScreening
+    ? latestScreening.status === "SENT" ||
+      latestScreening.status === "IN_PROGRESS"
+      ? `/pro/screening-invitations/${latestScreening.id}/take`
+      : `/pro/screening-invitations/${latestScreening.id}`
+    : null;
+
   return (
     <Card>
       <CardContent className="flex flex-col gap-4">
@@ -121,6 +126,11 @@ export function MatchCard({
             </div>
 
             {badge}
+
+            <ScreeningInvitationBadges
+              screeningInvitations={match.screeningInvitations}
+              viewer="professional"
+            />
 
             {project.description && (
               <p className="text-muted-foreground line-clamp-2 text-sm">
@@ -232,30 +242,19 @@ export function MatchCard({
         </div>
 
         {match.scoreBreakdown && (
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2 border-t pt-3 sm:grid-cols-4">
-            {(
-              Object.keys(breakdownLabels) as (keyof typeof breakdownLabels)[]
-            ).map((key) => (
-              <div key={key} className="space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">
-                    {breakdownLabels[key]}
-                  </span>
-                  <span className="text-primary tabular-nums">
-                    {Math.round(match.scoreBreakdown?.[key] ?? 0)}
-                  </span>
-                </div>
-                <Progress
-                  value={match.scoreBreakdown?.[key] ?? 0}
-                  className="h-1.5"
-                />
-              </div>
-            ))}
-          </div>
+          <ScoreBreakdownGrid breakdown={match.scoreBreakdown} />
         )}
       </CardContent>
-      {actions && (
+      {(actions || screeningHref) && (
         <div className="flex flex-wrap justify-end gap-2 border-t px-6 py-3">
+          {screeningHref && (
+            <Button size="sm" variant="outline" asChild>
+              <Link href={screeningHref}>
+                <FileQuestion className="size-4" />
+                Ver processo
+              </Link>
+            </Button>
+          )}
           {actions}
         </div>
       )}

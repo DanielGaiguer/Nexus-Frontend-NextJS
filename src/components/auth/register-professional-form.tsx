@@ -48,6 +48,7 @@ export function RegisterProfessionalForm() {
       freelanceMaxExpectation: "",
       allowCepUsage: false,
     },
+    mode: "onChange",
   });
 
   function onSubmit(values: RegisterProfessionalFormValues) {
@@ -301,7 +302,9 @@ export function RegisterProfessionalForm() {
           <Button
             type="submit"
             className="w-full"
-            disabled={registerProfessional.isPending}
+            disabled={
+              registerProfessional.isPending || !form.formState.isValid
+            }
           >
             <UserPlus className="size-4" />
             {registerProfessional.isPending ? "Criando conta…" : "Criar conta"}

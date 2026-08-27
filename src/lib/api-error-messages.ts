@@ -350,6 +350,83 @@ const MESSAGE_RULES: MessageRule[] = [
     includes: "No reputation data yet.",
     pt: "Ainda não há dados de reputação.",
   },
+
+  // ── Propostas (ProposalService/ProposalController) ─────────────────
+  {
+    includes:
+      "This match was rejected and cannot be reactivated by accepting a proposal.",
+    pt: "Este match foi recusado anteriormente e não pode ser reativado através do aceite de uma proposta.",
+  },
+  {
+    includes: "This opportunity does not accept proposals.",
+    pt: "Esta oportunidade não aceita propostas no momento.",
+  },
+  {
+    includes: "You already have a pending proposal for this project.",
+    pt: "Você já tem uma proposta pendente para este projeto.",
+  },
+  {
+    includes: "'validityDays' must be a positive number.",
+    pt: "A validade da proposta precisa ser maior que zero.",
+  },
+  {
+    includes: "Only a pending proposal can be edited.",
+    pt: "Só é possível editar uma proposta enquanto ela estiver pendente.",
+  },
+  {
+    includes: "Only a pending proposal can be withdrawn.",
+    pt: "Só é possível retirar uma proposta enquanto ela estiver pendente.",
+  },
+  {
+    includes: "Only a pending proposal can be changed.",
+    pt: "Só é possível alterar os anexos de uma proposta enquanto ela estiver pendente.",
+  },
+  {
+    includes: "Only a pending proposal can be accepted.",
+    pt: "Esta proposta não está mais pendente e não pode ser aceita.",
+  },
+  {
+    includes: "Only a pending proposal can be rejected.",
+    pt: "Esta proposta não está mais pendente e não pode ser recusada.",
+  },
+  {
+    includes: "This proposal does not belong to your company.",
+    pt: "Esta proposta não pertence à sua empresa.",
+  },
+  {
+    includes: "This proposal does not belong to you.",
+    pt: "Esta proposta não pertence a você.",
+  },
+  {
+    includes: "You are not authorized to view this proposal.",
+    pt: "Você não tem autorização para ver esta proposta.",
+  },
+  { includes: "Proposal not found", pt: "Proposta não encontrada." },
+  {
+    includes: "A proposal can have at most",
+    pt: "Uma proposta pode ter no máximo 5 anexos.",
+  },
+  {
+    includes: "At least one file is required.",
+    pt: "Selecione ao menos um arquivo.",
+  },
+  {
+    includes: "Attachment file is required.",
+    pt: "Selecione um arquivo para anexar.",
+  },
+  {
+    includes: "Only PDF, PNG, JPEG, WebP and ZIP files are accepted.",
+    pt: "Só são aceitos arquivos PDF, PNG, JPEG, WebP ou ZIP.",
+  },
+  {
+    includes: "Attachment size must not exceed 15MB.",
+    pt: "O anexo não pode passar de 15MB.",
+  },
+  { includes: "Attachment not found.", pt: "Anexo não encontrado." },
+  {
+    includes: "Failed to upload file to storage. Please try again.",
+    pt: "Não foi possível enviar o arquivo para o armazenamento. Tente novamente.",
+  },
 ].sort((a, b) => b.includes.length - a.includes.length);
 
 function genericMessageForStatus(status: number): string {

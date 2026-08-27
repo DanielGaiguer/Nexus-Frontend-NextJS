@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -93,6 +94,7 @@ function missingScoreRelevantFields(
 }
 
 export default function OpportunitiesPage() {
+  const router = useRouter();
   const { data: opportunities, isLoading } = useOpportunities();
   const { data: profile } = useProfessionalProfile();
   const { data: skillCatalog } = useSkillCatalog();
@@ -211,7 +213,11 @@ export default function OpportunitiesPage() {
 
   function handleInterest(projectId: number) {
     showInterest.mutate(projectId, {
-      onSuccess: () => {
+      onSuccess: (result) => {
+        if (result.screeningRequired) {
+          router.push(`/pro/screening-invitations/${result.screeningInvitationId}/take`);
+          return;
+        }
         setSentIds((ids) => [...ids, projectId]);
         toast.success("Interesse enviado ao contratante!");
       },
@@ -494,7 +500,11 @@ export default function OpportunitiesPage() {
         {filtered.map((match) => {
           const alreadySent =
             sentIds.includes(match.project.id) ||
-            match.professionalStatus === "INTERESTED";
+            match.professionalStatus === "INTERESTED" ||
+            // Enviar proposta não passa pelo MatchService (ver comentário em
+            // ProposalService), então sem isso quem já propôs ainda veria
+            // "Demonstrar interesse" aqui.
+            myProposals?.some((p) => p.projectId === match.project.id);
           const acceptsProposals =
             match.project.opportunityType === "PROJECT" &&
             match.project.acceptsProposals === true;

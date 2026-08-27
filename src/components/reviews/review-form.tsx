@@ -64,6 +64,7 @@ export function ReviewForm({
 
   const form = useForm<ReviewFormValues>({
     resolver: zodResolver(reviewFormSchema),
+    mode: "onChange",
     defaultValues: {
       rating: 0,
       comment: "",
@@ -191,7 +192,10 @@ export function ReviewForm({
                   </Button>
                 )
               )}
-              <Button type="submit" disabled={submitReview.isPending}>
+              <Button
+                type="submit"
+                disabled={!form.formState.isValid || submitReview.isPending}
+              >
                 <Star className="size-4" />
                 Enviar avaliação
               </Button>

@@ -55,6 +55,7 @@ export function PreviousProjectFormDialog({
       technologies: editing?.technologies.join(", ") ?? "",
       yearOfCompletion: editing?.yearOfCompletion?.toString() ?? "",
     },
+    mode: "onChange",
   });
 
   function onSubmit(values: PreviousProjectFormValues) {
@@ -184,7 +185,10 @@ export function PreviousProjectFormDialog({
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isPending}>
+              <Button
+                type="submit"
+                disabled={isPending || !form.formState.isValid}
+              >
                 {isPending
                   ? "Salvando…"
                   : editing

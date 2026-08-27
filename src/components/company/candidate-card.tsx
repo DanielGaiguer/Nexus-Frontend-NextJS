@@ -1,21 +1,17 @@
-import { Briefcase, Building2, Star } from "lucide-react";
+import { Briefcase, Building2, FileQuestion, Star } from "lucide-react";
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { MatchCompareDialog } from "@/components/company/match-compare-dialog";
+import { ScoreBreakdownGrid } from "@/components/matches/score-breakdown-grid";
+import { ScreeningInvitationBadges } from "@/components/matches/screening-invitation-badges";
 import { ScoreRing } from "@/components/professional/score-ring";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { rejectionReasonLabels } from "@/types/match";
 import type { MatchResponseDTO } from "@/types/match";
-
-const breakdownLabels = {
-  skills: "Skills",
-  budget: "Orçamento",
-  history: "Histórico",
-  reputation: "Reputação",
-} as const;
 
 /** Espelha MatchCard (professional), só que do ponto de vista da empresa — foco no candidato, não na vaga. */
 export function CandidateCard({
@@ -89,6 +85,11 @@ export function CandidateCard({
 
             {badge}
 
+            <ScreeningInvitationBadges
+              screeningInvitations={match.screeningInvitations}
+              viewer="company"
+            />
+
             {match.rejectionReasons && match.rejectionReasons.length > 0 && (
               <div>
                 <div className="text-muted-foreground mb-1 text-[11px] tracking-wide uppercase">
@@ -118,30 +119,21 @@ export function CandidateCard({
         </div>
 
         {match.scoreBreakdown && (
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2 border-t pt-3 sm:grid-cols-4">
-            {(
-              Object.keys(breakdownLabels) as (keyof typeof breakdownLabels)[]
-            ).map((key) => (
-              <div key={key} className="space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">
-                    {breakdownLabels[key]}
-                  </span>
-                  <span className="text-primary tabular-nums">
-                    {Math.round(match.scoreBreakdown?.[key] ?? 0)}
-                  </span>
-                </div>
-                <Progress
-                  value={match.scoreBreakdown?.[key] ?? 0}
-                  className="h-1.5"
-                />
-              </div>
-            ))}
-          </div>
+          <ScoreBreakdownGrid breakdown={match.scoreBreakdown} />
         )}
       </CardContent>
       <div className="flex flex-wrap justify-end gap-2 border-t px-6 py-3">
         <MatchCompareDialog match={match} />
+        {match.screeningInvitations.length > 0 && (
+          <Button size="sm" variant="outline" asChild>
+            <Link
+              href={`/company/screening-invitations/${match.screeningInvitations[0].id}`}
+            >
+              <FileQuestion className="size-4" />
+              Ver processo
+            </Link>
+          </Button>
+        )}
         {actions}
       </div>
     </Card>
