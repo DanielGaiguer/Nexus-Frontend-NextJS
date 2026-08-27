@@ -12,6 +12,7 @@ import {
   MessageCircle,
   Sparkles,
   Star,
+  Store,
   Tag,
   User,
   Users,
@@ -100,6 +101,11 @@ export const navByRole: Record<UserRole, NavSection[]> = {
       items: [
         { title: "Analytics", href: "/company/analytics", icon: BarChart3 },
         { title: "Avaliações", href: "/company/reviews", icon: Star },
+        {
+          title: "Plataforma personalizada",
+          href: "/company/custom-portal",
+          icon: Store,
+        },
         { title: "Perfil", href: "/company/profile", icon: Building2 },
       ],
     },
@@ -109,6 +115,11 @@ export const navByRole: Record<UserRole, NavSection[]> = {
       items: [
         { title: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
         { title: "Pendentes", href: "/admin/approvals", icon: ListChecks },
+        {
+          title: "Plataformas personalizadas",
+          href: "/admin/custom-portals",
+          icon: Store,
+        },
         { title: "Skills", href: "/admin/skills", icon: Tag },
         { title: "Oportunidades", href: "/admin/projects", icon: FolderOpen },
         { title: "Usuários", href: "/admin/users", icon: Users },

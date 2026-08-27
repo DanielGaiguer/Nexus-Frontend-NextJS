@@ -427,6 +427,116 @@ const MESSAGE_RULES: MessageRule[] = [
     includes: "Failed to upload file to storage. Please try again.",
     pt: "Não foi possível enviar o arquivo para o armazenamento. Tente novamente.",
   },
+
+  // ── Plataforma personalizada (CustomPortalService) ─────────────────
+  {
+    includes: "This company already has a custom portal.",
+    pt: "Este contratante já possui uma plataforma personalizada.",
+  },
+  {
+    includes:
+      "There is already a pending custom portal request for this company.",
+    pt: "Já existe uma solicitação de plataforma personalizada pendente para este contratante.",
+  },
+  {
+    includes: "This request is not pending a decision.",
+    pt: "Esta solicitação não está mais pendente de decisão.",
+  },
+  {
+    includes: "A rejection reason must be provided.",
+    pt: "É necessário informar o motivo da recusa.",
+  },
+  {
+    includes:
+      "The company must be approved before a custom portal can be created.",
+    pt: "O contratante precisa estar aprovado antes de ter uma plataforma personalizada.",
+  },
+  {
+    includes: "This subdomain is already in use.",
+    pt: "Este subdomínio já está em uso. Escolha outro.",
+  },
+  {
+    includes: "This subdomain is reserved.",
+    pt: "Este subdomínio é reservado. Escolha outro.",
+  },
+  {
+    includes:
+      "Invalid subdomain. Use 3 to 63 lowercase letters, digits or hyphens",
+    pt: "Subdomínio inválido. Use de 3 a 63 caracteres — letras minúsculas, números ou hífen — sem começar ou terminar com hífen.",
+  },
+  {
+    includes: "A subdomain is required.",
+    pt: "Informe um subdomínio.",
+  },
+  {
+    includes: "A plan name is required.",
+    pt: "Informe o nome do plano.",
+  },
+  {
+    includes: "A plan price of zero or more is required.",
+    pt: "Informe um valor de plano igual ou maior que zero.",
+  },
+  {
+    includes: "Subscription start date and next due date are required.",
+    pt: "Informe a data de início e o próximo vencimento da assinatura.",
+  },
+  {
+    includes: "A next due date is required.",
+    pt: "Informe o próximo vencimento da assinatura.",
+  },
+  {
+    includes: "The next due date cannot be before the subscription start date.",
+    pt: "O próximo vencimento não pode ser anterior ao início da assinatura.",
+  },
+  {
+    includes: "Only an active custom portal can be suspended.",
+    pt: "Só é possível suspender uma plataforma personalizada que esteja ativa.",
+  },
+  {
+    includes: "Only a suspended custom portal can be reactivated.",
+    pt: "Só é possível reativar uma plataforma personalizada que esteja suspensa.",
+  },
+  {
+    includes: "This custom portal is already canceled.",
+    pt: "Esta plataforma personalizada já está cancelada.",
+  },
+  {
+    includes: "Cannot change the subscription of a canceled custom portal.",
+    pt: "Não é possível alterar a assinatura de uma plataforma personalizada cancelada.",
+  },
+  {
+    includes: "Custom portal request not found",
+    pt: "Solicitação não encontrada.",
+  },
+  {
+    includes: "Custom portal not found for this company.",
+    pt: "Este contratante ainda não tem uma plataforma personalizada.",
+  },
+  {
+    includes: "Custom portal not found",
+    pt: "Plataforma personalizada não encontrada.",
+  },
+  { includes: "companyId is required.", pt: "Selecione um contratante." },
+  {
+    includes: "Invalid color. Use a hex value like",
+    pt: "Cor inválida. Use um valor hexadecimal como #4F46E5.",
+  },
+  {
+    includes: "A section title is required.",
+    pt: "Toda seção com texto precisa de um título.",
+  },
+  {
+    includes: "A section title must be at most",
+    pt: "O título da seção é longo demais (máx. 150 caracteres).",
+  },
+  {
+    includes: "You can add at most",
+    pt: "Você pode adicionar no máximo 10 seções.",
+  },
+  {
+    includes: "must be at most 120 characters.",
+    pt: "O nome de exibição é longo demais (máx. 120 caracteres).",
+  },
 ].sort((a, b) => b.includes.length - a.includes.length);
 
 function genericMessageForStatus(status: number): string {
