@@ -120,6 +120,8 @@ export interface ScreeningAttemptQuestionDTO {
 export interface ScreeningAttemptDTO {
   invitationId: number;
   screeningQuestionnaireTitle: string;
+  /** Instruções GERAIS do processo -- diferente de `instructions` abaixo, que é só desta etapa. */
+  questionnaireInstructions: string | null;
   stageTitle: string;
   stageOrderIndex: number;
   totalStages: number;
@@ -179,6 +181,8 @@ export interface ScreeningInvitationDetailDTO {
   id: number;
   screeningQuestionnaireId: number;
   screeningQuestionnaireTitle: string;
+  /** Instruções GERAIS do processo -- diferente de `instructions` abaixo, que é só desta etapa. */
+  questionnaireInstructions: string | null;
   screeningStageId: number;
   stageTitle: string;
   stageOrderIndex: number;

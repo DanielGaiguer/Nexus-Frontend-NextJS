@@ -29,6 +29,21 @@ const statusVariant: Record<string, "default" | "secondary" | "destructive"> = {
   CANCELLED: "secondary",
 };
 
+function formatSeconds(totalSeconds: number) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}m${seconds.toString().padStart(2, "0")}s`;
+}
+
+function formatDateTime(iso: string) {
+  return new Date(iso).toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 /** Uma etapa já alcançada -- mostra as respostas e, se reprovada, o comentário da empresa. */
 function ReachedStageCard({
   invitation,
@@ -37,6 +52,13 @@ function ReachedStageCard({
   invitation: ScreeningInvitationDetailDTO;
   index: number;
 }) {
+  const timestamps: { label: string; value: string | null }[] = [
+    { label: "Enviado", value: invitation.sentAt },
+    { label: "Iniciado", value: invitation.startedAt },
+    { label: "Respondido", value: invitation.submittedAt },
+    { label: "Decidido", value: invitation.decidedAt },
+  ].filter((t) => t.value != null);
+
   return (
     <Card>
       <CardContent className="space-y-3">
@@ -48,6 +70,12 @@ function ReachedStageCard({
             {screeningInvitationStatusLabels[invitation.status]}
           </Badge>
         </div>
+
+        {invitation.instructions && (
+          <p className="text-muted-foreground text-sm whitespace-pre-wrap">
+            {invitation.instructions}
+          </p>
+        )}
 
         {(invitation.status === "SENT" ||
           invitation.status === "IN_PROGRESS") && (
@@ -63,6 +91,24 @@ function ReachedStageCard({
           </p>
         )}
 
+        {(invitation.autoScorePercent != null ||
+          invitation.totalTimeSpentSeconds != null) && (
+          <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-xs">
+            {invitation.autoScorePercent != null && (
+              <span>
+                {Math.round(invitation.autoScorePercent)}% de aproveitamento
+                (referência)
+              </span>
+            )}
+            {invitation.totalTimeSpentSeconds != null && (
+              <span className="flex items-center gap-1">
+                <Clock className="size-3" />
+                {formatSeconds(invitation.totalTimeSpentSeconds)} no total
+              </span>
+            )}
+          </div>
+        )}
+
         {invitation.answers.length > 0 && (
           <div className="flex flex-col gap-2 border-t pt-3">
             {invitation.answers.map((answer, answerIndex) => (
@@ -71,13 +117,20 @@ function ReachedStageCard({
                   <p className="text-sm font-medium">
                     {answerIndex + 1}. {answer.prompt}
                   </p>
-                  {answer.type === "MULTIPLE_CHOICE" &&
-                    answer.correct != null &&
-                    (answer.correct ? (
-                      <CheckCircle2 className="text-success size-4 shrink-0" />
-                    ) : (
-                      <XCircle className="text-destructive size-4 shrink-0" />
-                    ))}
+                  <div className="flex shrink-0 items-center gap-2">
+                    {answer.timeSpentSeconds != null && (
+                      <span className="text-muted-foreground text-xs">
+                        {formatSeconds(answer.timeSpentSeconds)}
+                      </span>
+                    )}
+                    {answer.type === "MULTIPLE_CHOICE" &&
+                      answer.correct != null &&
+                      (answer.correct ? (
+                        <CheckCircle2 className="text-success size-4 shrink-0" />
+                      ) : (
+                        <XCircle className="text-destructive size-4 shrink-0" />
+                      ))}
+                  </div>
                 </div>
                 {answer.type === "MULTIPLE_CHOICE" ? (
                   <ul className="space-y-1 text-sm">
@@ -124,6 +177,16 @@ function ReachedStageCard({
             Você não respondeu a tempo. Diferente de recusar, esse prazo é
             definitivo — não é possível tentar novamente para esta vaga.
           </p>
+        )}
+
+        {timestamps.length > 0 && (
+          <div className="text-muted-foreground flex flex-wrap gap-x-3 gap-y-1 border-t pt-2 text-[11px]">
+            {timestamps.map((t) => (
+              <span key={t.label}>
+                {t.label} em {formatDateTime(t.value as string)}
+              </span>
+            ))}
+          </div>
         )}
       </CardContent>
     </Card>
@@ -201,6 +264,11 @@ export default function ScreeningInvitationResultPage() {
         <h1 className="text-2xl font-bold tracking-tight">
           {first.projectTitle}
         </h1>
+        {first.questionnaireInstructions && (
+          <p className="text-muted-foreground mt-1 text-sm whitespace-pre-wrap">
+            {first.questionnaireInstructions}
+          </p>
+        )}
       </div>
 
       <Card>

@@ -114,20 +114,26 @@ function toFormDefaults(
     useScreening: !!existingScreening,
     screeningTitle: existingScreening?.title ?? "",
     screeningInstructions: existingScreening?.instructions ?? "",
-    screeningStages: (existingScreening?.stages ?? []).map((stage) => ({
-      id: stage.id,
-      title: stage.title,
-      instructions: stage.instructions ?? "",
-      responseDeadlineDays: stage.responseDeadlineDays.toString(),
-      questions: stage.questions.map((q) => ({
-        id: q.id,
-        type: q.type,
-        prompt: q.prompt,
-        options: q.options.map((value) => ({ value })),
-        correctOptionIndex:
-          q.correctOptionIndex != null ? q.correctOptionIndex.toString() : "",
+    // Defesa extra além do filtro que o backend já aplica (ScreeningQuestionnaireService
+    // .toResponseDTO) -- uma etapa removida (active=false) nunca deveria reaparecer aqui, senão
+    // salvar o formulário de novo a reativaria (mergeStages marca active=true incondicional pra
+    // toda etapa presente no request).
+    screeningStages: (existingScreening?.stages ?? [])
+      .filter((stage) => stage.active)
+      .map((stage) => ({
+        id: stage.id,
+        title: stage.title,
+        instructions: stage.instructions ?? "",
+        responseDeadlineDays: stage.responseDeadlineDays.toString(),
+        questions: stage.questions.map((q) => ({
+          id: q.id,
+          type: q.type,
+          prompt: q.prompt,
+          options: q.options.map((value) => ({ value })),
+          correctOptionIndex:
+            q.correctOptionIndex != null ? q.correctOptionIndex.toString() : "",
+        })),
       })),
-    })),
   };
 }
 
@@ -155,7 +161,10 @@ export function ProjectForm({
     defaultValues: toFormDefaults(editing, existingScreening),
   });
 
-  const useScreening = useWatch({ control: form.control, name: "useScreening" });
+  const useScreening = useWatch({
+    control: form.control,
+    name: "useScreening",
+  });
 
   const opportunityType = useWatch({
     control: form.control,
@@ -754,9 +763,9 @@ export function ProjectForm({
                       </label>
                       <p className="text-muted-foreground text-xs">
                         Cada etapa tem suas próprias perguntas. Quem demonstrar
-                        interesse, aceitar um convite ou enviar proposta
-                        precisa responder a etapa atual antes de continuar —
-                        você aprova ou reprova o avanço etapa por etapa.
+                        interesse, aceitar um convite ou enviar proposta precisa
+                        responder a etapa atual antes de continuar — você aprova
+                        ou reprova o avanço etapa por etapa.
                         {existingScreening && !field.value && (
                           <>
                             {" "}

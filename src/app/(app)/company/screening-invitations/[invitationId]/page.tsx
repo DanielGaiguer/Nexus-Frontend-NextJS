@@ -48,6 +48,15 @@ function formatSeconds(totalSeconds: number) {
   return `${minutes}m${seconds.toString().padStart(2, "0")}s`;
 }
 
+function formatDateTime(iso: string) {
+  return new Date(iso).toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 /** Painel separado, sempre visível, com a proposta associada -- aceite/recusa dela é uma decisão
  * independente da empresa, nunca automatizada pelo resultado da etapa (decisão confirmada com o
  * usuário: "deixe isso bem separado"). */
@@ -109,6 +118,12 @@ function CompanyStageSection({
   const needsDecision = invitation.status === "SUBMITTED";
   const isPending = approve.isPending || reprove.isPending;
   const isLastStage = invitation.stageOrderIndex === invitation.totalStages;
+  const timestamps: { label: string; value: string | null }[] = [
+    { label: "Enviado", value: invitation.sentAt },
+    { label: "Iniciado", value: invitation.startedAt },
+    { label: "Respondido", value: invitation.submittedAt },
+    { label: "Decidido", value: invitation.decidedAt },
+  ].filter((t) => t.value != null);
 
   function handleApprove() {
     approve.mutate(
@@ -188,6 +203,12 @@ function CompanyStageSection({
           </div>
         </div>
 
+        {invitation.instructions && (
+          <p className="text-muted-foreground text-sm whitespace-pre-wrap">
+            {invitation.instructions}
+          </p>
+        )}
+
         {(invitation.status === "SENT" ||
           invitation.status === "IN_PROGRESS") && (
           <p className="text-muted-foreground text-sm">
@@ -203,13 +224,20 @@ function CompanyStageSection({
                   <p className="text-sm font-medium">
                     {answerIndex + 1}. {answer.prompt}
                   </p>
-                  {answer.type === "MULTIPLE_CHOICE" &&
-                    answer.correct != null &&
-                    (answer.correct ? (
-                      <CheckCircle2 className="text-success size-4 shrink-0" />
-                    ) : (
-                      <XCircle className="text-destructive size-4 shrink-0" />
-                    ))}
+                  <div className="flex shrink-0 items-center gap-2">
+                    {answer.timeSpentSeconds != null && (
+                      <span className="text-muted-foreground text-xs">
+                        {formatSeconds(answer.timeSpentSeconds)}
+                      </span>
+                    )}
+                    {answer.type === "MULTIPLE_CHOICE" &&
+                      answer.correct != null &&
+                      (answer.correct ? (
+                        <CheckCircle2 className="text-success size-4 shrink-0" />
+                      ) : (
+                        <XCircle className="text-destructive size-4 shrink-0" />
+                      ))}
+                  </div>
                 </div>
                 {answer.type === "MULTIPLE_CHOICE" ? (
                   <ul className="space-y-1 text-sm">
@@ -280,6 +308,16 @@ function CompanyStageSection({
               </p>
             </div>
           )
+        )}
+
+        {timestamps.length > 0 && (
+          <div className="text-muted-foreground flex flex-wrap gap-x-3 gap-y-1 border-t pt-2 text-[11px]">
+            {timestamps.map((t) => (
+              <span key={t.label}>
+                {t.label} em {formatDateTime(t.value as string)}
+              </span>
+            ))}
+          </div>
         )}
       </CardContent>
     </Card>
@@ -360,6 +398,11 @@ export default function ScreeningInvitationDecisionPage() {
         <p className="text-muted-foreground mt-1 text-sm">
           {first.projectTitle}
         </p>
+        {first.questionnaireInstructions && (
+          <p className="text-muted-foreground mt-1 text-sm whitespace-pre-wrap">
+            {first.questionnaireInstructions}
+          </p>
+        )}
       </div>
 
       <Card>

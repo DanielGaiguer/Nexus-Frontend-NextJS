@@ -239,6 +239,11 @@ export default function TakeScreeningInvitationPage() {
         <p className="text-muted-foreground mt-1 text-sm">
           {attempt.projectTitle} — {attempt.companyName}
         </p>
+        {attempt.questionnaireInstructions && (
+          <p className="text-muted-foreground mt-2 text-sm whitespace-pre-wrap">
+            {attempt.questionnaireInstructions}
+          </p>
+        )}
         {attempt.instructions && (
           <p className="text-muted-foreground mt-2 text-sm">
             {attempt.instructions}
@@ -246,9 +251,9 @@ export default function TakeScreeningInvitationPage() {
         )}
         <p className="text-muted-foreground mt-2 flex items-center gap-1.5 text-xs">
           <AlertTriangle className="size-3.5" />
-          Responda até {new Date(attempt.deadlineAt).toLocaleString("pt-BR")}{" "}
-          — depois disso o prazo se esgota e não será possível tentar de novo
-          para esta vaga.
+          Responda até {new Date(attempt.deadlineAt).toLocaleString("pt-BR")} —
+          depois disso o prazo se esgota e não será possível tentar de novo para
+          esta vaga.
         </p>
       </div>
 
@@ -262,8 +267,7 @@ export default function TakeScreeningInvitationPage() {
               {question.type === "MULTIPLE_CHOICE" ? (
                 <RadioGroup
                   value={
-                    answers[question.id]?.selectedOptionIndex?.toString() ??
-                    ""
+                    answers[question.id]?.selectedOptionIndex?.toString() ?? ""
                   }
                   onValueChange={(value) =>
                     setSelectedOption(question.id, Number(value))
