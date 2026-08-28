@@ -92,6 +92,7 @@ export function PortalHome({
         aboutText: portal.aboutText,
         sections: portal.sections,
         companyName: portal.companyName,
+        socialLinks: portal.socialLinks,
       }}
     >
       <section id="vagas">

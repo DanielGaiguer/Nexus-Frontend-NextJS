@@ -121,6 +121,7 @@ export function PortalOpportunity({
         aboutText: null,
         sections: [],
         companyName: portal.companyName,
+        socialLinks: portal.socialLinks,
       }}
     >
       <Link

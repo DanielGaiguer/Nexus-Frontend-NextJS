@@ -15,12 +15,62 @@ import { ApiError } from "@/lib/api-client";
 import type {
   BrandingImageKind,
   CustomPortalDTO,
+  PortalSocialLinks,
   UpdateCustomPortalBrandingBody,
 } from "@/types/custom-portal";
 
 const DEFAULT_COLOR = "#5457e0";
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
+const URL_RE = /^https?:\/\/.+/;
 const MAX_SECTIONS = 10;
+
+/** Chaves de redes sociais na ordem em que aparecem no formulário e no rodapé. */
+const SOCIAL_FIELDS = [
+  { key: "website", label: "Site", placeholder: "https://suaempresa.com" },
+  {
+    key: "linkedin",
+    label: "LinkedIn",
+    placeholder: "https://linkedin.com/company/…",
+  },
+  {
+    key: "instagram",
+    label: "Instagram",
+    placeholder: "https://instagram.com/…",
+  },
+  { key: "facebook", label: "Facebook", placeholder: "https://facebook.com/…" },
+  { key: "youtube", label: "YouTube", placeholder: "https://youtube.com/@…" },
+  { key: "x", label: "X (Twitter)", placeholder: "https://x.com/…" },
+  { key: "github", label: "GitHub", placeholder: "https://github.com/…" },
+] as const;
+
+type SocialKey = (typeof SOCIAL_FIELDS)[number]["key"];
+type SocialForm = Record<SocialKey, string>;
+
+function initialSocial(portal: CustomPortalDTO): SocialForm {
+  const src = portal.socialLinks;
+  return {
+    website: src?.website ?? "",
+    linkedin: src?.linkedin ?? "",
+    instagram: src?.instagram ?? "",
+    facebook: src?.facebook ?? "",
+    youtube: src?.youtube ?? "",
+    x: src?.x ?? "",
+    github: src?.github ?? "",
+  };
+}
+
+/** SocialForm → PortalSocialLinks (trim, vazio vira null). */
+function socialToPayload(form: SocialForm): PortalSocialLinks {
+  return {
+    website: form.website.trim() || null,
+    linkedin: form.linkedin.trim() || null,
+    instagram: form.instagram.trim() || null,
+    facebook: form.facebook.trim() || null,
+    youtube: form.youtube.trim() || null,
+    x: form.x.trim() || null,
+    github: form.github.trim() || null,
+  };
+}
 
 interface SectionForm {
   title: string;
@@ -55,11 +105,16 @@ export function BrandingEditor({
   const [sections, setSections] = useState<SectionForm[]>(() =>
     initialSections(portal)
   );
+  const [social, setSocial] = useState<SocialForm>(() => initialSocial(portal));
 
   const colorValid = HEX_RE.test(primaryColor);
   const sectionMissingTitle = sections.some(
     (s) => !s.title.trim() && s.content.trim()
   );
+  const socialError = SOCIAL_FIELDS.some(({ key }) => {
+    const v = social[key].trim();
+    return v.length > 0 && !URL_RE.test(v);
+  });
 
   const dirty = useMemo(() => {
     const a = JSON.stringify({
@@ -70,6 +125,7 @@ export function BrandingEditor({
         title: s.title.trim(),
         content: s.content.trim(),
       })),
+      social: SOCIAL_FIELDS.map(({ key }) => social[key].trim()),
     });
     const b = JSON.stringify({
       displayName: portal.displayName?.trim() ?? "",
@@ -79,9 +135,20 @@ export function BrandingEditor({
         title: s.title?.trim() ?? "",
         content: s.content?.trim() ?? "",
       })),
+      social: SOCIAL_FIELDS.map(
+        ({ key }) => portal.socialLinks?.[key]?.trim() ?? ""
+      ),
     });
     return a !== b;
-  }, [displayName, primaryColor, colorValid, aboutText, sections, portal]);
+  }, [
+    displayName,
+    primaryColor,
+    colorValid,
+    aboutText,
+    sections,
+    social,
+    portal,
+  ]);
 
   function moveSection(index: number, dir: -1 | 1) {
     setSections((prev) => {
@@ -108,6 +175,12 @@ export function BrandingEditor({
       toast.error("Toda seção com texto precisa de um título.");
       return;
     }
+    if (socialError) {
+      toast.error(
+        "Links de redes sociais devem começar com http:// ou https://."
+      );
+      return;
+    }
     const body: UpdateCustomPortalBrandingBody = {
       displayName: displayName.trim() || null,
       primaryColor: colorValid ? primaryColor.toLowerCase() : null,
@@ -118,6 +191,7 @@ export function BrandingEditor({
           content: s.content.trim() || null,
         }))
         .filter((s) => s.title || s.content),
+      socialLinks: socialToPayload(social),
     };
     onSaveBranding(body)
       .then(() => toast.success("Aparência salva."))
@@ -149,7 +223,9 @@ export function BrandingEditor({
             </p>
             <Button
               onClick={handleSave}
-              disabled={!dirty || savingBranding || sectionMissingTitle}
+              disabled={
+                !dirty || savingBranding || sectionMissingTitle || socialError
+              }
             >
               <Save className="size-4" />
               {savingBranding ? "Salvando…" : "Salvar"}
@@ -344,6 +420,48 @@ export function BrandingEditor({
               ))}
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Redes sociais</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-muted-foreground text-sm">
+                Aparecem como ícones no rodapé da página pública. Deixe em
+                branco as que não usa.
+              </p>
+              {SOCIAL_FIELDS.map(({ key, label, placeholder }) => {
+                const value = social[key];
+                const invalid =
+                  value.trim().length > 0 && !URL_RE.test(value.trim());
+                return (
+                  <div key={key} className="space-y-1.5">
+                    <Label htmlFor={`cp-social-${key}`}>{label}</Label>
+                    <Input
+                      id={`cp-social-${key}`}
+                      type="url"
+                      inputMode="url"
+                      maxLength={300}
+                      placeholder={placeholder}
+                      value={value}
+                      onChange={(e) =>
+                        setSocial((prev) => ({
+                          ...prev,
+                          [key]: e.target.value,
+                        }))
+                      }
+                      aria-invalid={invalid}
+                    />
+                    {invalid && (
+                      <p className="text-destructive text-xs">
+                        Use uma URL completa (http:// ou https://).
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
         </div>
 
         <div className="lg:sticky lg:top-4 lg:self-start">
@@ -359,6 +477,7 @@ export function BrandingEditor({
               faviconUrl: portal.faviconUrl,
               aboutText,
               sections,
+              socialLinks: socialToPayload(social),
               companyName: portal.companyName,
               subdomain: portal.subdomain,
               status: portal.status,

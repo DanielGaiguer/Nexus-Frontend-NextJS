@@ -23,6 +23,17 @@ export interface CustomPortalSectionDTO {
   content: string | null;
 }
 
+/** Espelha com.main.nexus.dto.SocialLinksDTO — links de redes sociais do rodapé. */
+export interface PortalSocialLinks {
+  website: string | null;
+  linkedin: string | null;
+  instagram: string | null;
+  facebook: string | null;
+  youtube: string | null;
+  x: string | null;
+  github: string | null;
+}
+
 /** Espelha com.main.nexus.dto.CustomPortalRequestDTO. */
 export interface CustomPortalRequestDTO {
   id: number;
@@ -63,6 +74,7 @@ export interface CustomPortalDTO {
   faviconUrl: string | null;
   aboutText: string | null;
   sections: CustomPortalSectionDTO[];
+  socialLinks: PortalSocialLinks;
 }
 
 /** Espelha com.main.nexus.dto.CustomPortalStatusHistoryDTO. */
@@ -106,6 +118,7 @@ export interface PublicCustomPortalDTO {
   faviconUrl: string | null;
   aboutText: string | null;
   sections: CustomPortalSectionDTO[];
+  socialLinks: PortalSocialLinks;
 }
 
 // ── Corpos de request ────────────────────────────────────────────────
@@ -152,6 +165,7 @@ export interface UpdateCustomPortalBrandingBody {
   primaryColor: string | null;
   aboutText: string | null;
   sections: CustomPortalSectionDTO[];
+  socialLinks: PortalSocialLinks;
 }
 
 // ── Análises / tracking ──────────────────────────────────────────────

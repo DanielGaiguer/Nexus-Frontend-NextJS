@@ -39,6 +39,7 @@ export function PortalPreviewDialog({ portal }: { portal: CustomPortalDTO }) {
               title: s.title,
               content: s.content ?? "",
             })),
+            socialLinks: portal.socialLinks,
             companyName: portal.companyName,
             subdomain: portal.subdomain,
             status: portal.status,

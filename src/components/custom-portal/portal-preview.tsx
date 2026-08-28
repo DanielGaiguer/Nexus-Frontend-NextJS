@@ -6,7 +6,10 @@ import {
   PortalBrandingView,
   resolvePortalColor,
 } from "@/components/custom-portal/portal-branding-view";
-import type { CustomPortalStatus } from "@/types/custom-portal";
+import type {
+  CustomPortalStatus,
+  PortalSocialLinks,
+} from "@/types/custom-portal";
 
 export interface PortalPreviewData {
   displayName: string;
@@ -16,6 +19,7 @@ export interface PortalPreviewData {
   faviconUrl: string | null;
   aboutText: string;
   sections: { title: string; content: string }[];
+  socialLinks: PortalSocialLinks;
   companyName: string;
   subdomain: string;
   status: CustomPortalStatus;
@@ -131,6 +135,7 @@ export function PortalPreview({ data }: { data: PortalPreviewData }) {
           aboutText: data.aboutText,
           sections: data.sections,
           companyName: data.companyName,
+          socialLinks: data.socialLinks,
         }}
       >
         <section id="preview-vagas">

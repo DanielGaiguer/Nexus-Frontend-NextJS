@@ -2,6 +2,9 @@
 
 import type { ReactNode } from "react";
 
+import { PortalSocialLinksBar } from "@/components/custom-portal/portal-social-links";
+import type { PortalSocialLinks } from "@/types/custom-portal";
+
 export interface PortalBranding {
   displayName: string | null;
   primaryColor: string | null;
@@ -10,6 +13,7 @@ export interface PortalBranding {
   aboutText: string | null;
   sections: { title: string; content: string | null }[];
   companyName: string;
+  socialLinks?: PortalSocialLinks | null;
 }
 
 const DEFAULT_COLOR = "#5457e0";
@@ -171,12 +175,15 @@ export function PortalBrandingView({
 
         {children && <div className={dense ? "mt-6" : "mt-12"}>{children}</div>}
 
-        <div
-          className={`${dense ? "mt-6" : "mt-16"} border-t pt-4 text-center text-xs`}
-          style={{ borderColor: BORDER, color: MUTED }}
+        <footer
+          className={`${dense ? "mt-6" : "mt-16"} flex flex-col items-center gap-3 border-t pt-5`}
+          style={{ borderColor: BORDER }}
         >
-          Powered by Nexus
-        </div>
+          <PortalSocialLinksBar links={branding.socialLinks} color={color} />
+          <div className="text-center text-xs" style={{ color: MUTED }}>
+            Powered by Nexus
+          </div>
+        </footer>
       </div>
     </div>
   );
