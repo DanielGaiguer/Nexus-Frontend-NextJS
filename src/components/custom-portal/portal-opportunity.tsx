@@ -29,8 +29,10 @@ import { useOpportunities } from "@/hooks/queries/useOpportunities";
 import { usePublicOpportunity } from "@/hooks/queries/usePublicOpportunity";
 import { usePublicPortal } from "@/hooks/queries/usePublicPortal";
 import { useSession } from "@/hooks/queries/useSession";
+import { usePortalPageView } from "@/hooks/usePortalTracking";
 import { ApiError } from "@/lib/api-client";
 import { nexusUrlFrom } from "@/lib/portal-domain";
+import { trackApplyClick } from "@/lib/portal-analytics";
 import type { ProjectResponseDTO } from "@/types/project";
 
 const modalityLabels: Record<string, string> = {
@@ -75,6 +77,8 @@ export function PortalOpportunity({
   const jobQ = usePublicOpportunity(opportunityId);
   const portal = portalQ.data;
   const job = jobQ.data;
+
+  usePortalPageView(subdomain, `/vaga/${opportunityId}`, opportunityId);
 
   if (portalQ.isLoading || jobQ.isLoading) {
     return (
@@ -157,6 +161,7 @@ export function PortalOpportunity({
           job={job}
           primaryColor={portal.primaryColor}
           rootHost={rootHost}
+          subdomain={subdomain}
         />
       </div>
 
@@ -297,10 +302,12 @@ function ApplyBox({
   job,
   primaryColor,
   rootHost,
+  subdomain,
 }: {
   job: ProjectResponseDTO;
   primaryColor: string | null;
   rootHost: string;
+  subdomain: string;
 }) {
   const session = useSession();
   const role = session.data?.role ?? null;
@@ -370,7 +377,10 @@ function ApplyBox({
     return (
       <>
         <button
-          onClick={() => setLoginOpen(true)}
+          onClick={() => {
+            trackApplyClick(subdomain, `/vaga/${job.id}`, job.id);
+            setLoginOpen(true);
+          }}
           className="rounded-md px-4 py-2 text-sm font-semibold text-white"
           style={{ background: color }}
         >
@@ -422,7 +432,10 @@ function ApplyBox({
 
   return (
     <button
-      onClick={doInterest}
+      onClick={() => {
+        trackApplyClick(subdomain, `/vaga/${job.id}`, job.id);
+        doInterest();
+      }}
       disabled={showInterest.isPending}
       className="rounded-md px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
       style={{ background: color }}

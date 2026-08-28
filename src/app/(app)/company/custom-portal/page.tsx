@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { BrandingEditor } from "@/components/custom-portal/branding-editor";
+import { PortalAnalyticsView } from "@/components/custom-portal/portal-analytics-view";
 import { PortalPreviewDialog } from "@/components/custom-portal/portal-preview-dialog";
 import { PortalUrlBox } from "@/components/custom-portal/portal-url-box";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +31,10 @@ import {
 } from "@/hooks/mutations/useCustomPortalBranding";
 import { useRequestCustomPortal } from "@/hooks/mutations/useCustomPortalRequest";
 import { useMyCustomPortal } from "@/hooks/queries/useCustomPortal";
+import {
+  useCustomPortalAnalytics,
+  type AnalyticsRange,
+} from "@/hooks/queries/useCustomPortalAnalytics";
 import { ApiError } from "@/lib/api-client";
 import {
   customPortalPaymentStatusLabel,
@@ -51,7 +56,9 @@ function formatDateTime(iso: string) {
 
 export default function CompanyCustomPortalPage() {
   const { data, isLoading } = useMyCustomPortal();
-  const [tab, setTab] = useState<"overview" | "appearance">("overview");
+  const [tab, setTab] = useState<"overview" | "appearance" | "analytics">(
+    "overview"
+  );
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
@@ -67,6 +74,7 @@ export default function CompanyCustomPortalPage() {
         <TabsList>
           <TabsTrigger value="overview">Visão geral</TabsTrigger>
           <TabsTrigger value="appearance">Aparência</TabsTrigger>
+          <TabsTrigger value="analytics">Análises</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-4">
@@ -109,6 +117,21 @@ export default function CompanyCustomPortalPage() {
             </Card>
           )}
         </TabsContent>
+
+        <TabsContent value="analytics" className="mt-4">
+          {isLoading ? (
+            <Skeleton className="h-96" />
+          ) : data?.portal ? (
+            <CompanyAnalyticsTab />
+          ) : (
+            <Card>
+              <CardContent className="text-muted-foreground py-10 text-center text-sm">
+                As análises da sua plataforma aparecem aqui depois que ela for
+                aprovada e começar a receber acessos.
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
       </Tabs>
     </div>
   );
@@ -126,6 +149,20 @@ function CompanyBrandingTab({ portal }: { portal: CustomPortalDTO }) {
       onSaveBranding={(body) => save.mutateAsync(body)}
       onUploadImage={(kind, file) => upload.mutateAsync({ kind, file })}
       onDeleteImage={(kind) => remove.mutateAsync({ kind })}
+    />
+  );
+}
+
+function CompanyAnalyticsTab() {
+  const [days, setDays] = useState<AnalyticsRange>(30);
+  const analytics = useCustomPortalAnalytics(days);
+
+  return (
+    <PortalAnalyticsView
+      data={analytics.data}
+      days={days}
+      onDaysChange={setDays}
+      isLoading={analytics.isLoading}
     />
   );
 }

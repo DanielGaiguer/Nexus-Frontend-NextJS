@@ -11,6 +11,7 @@ import { PortalHeader } from "@/components/custom-portal/portal-header";
 import { PortalUnavailable } from "@/components/custom-portal/portal-unavailable";
 import { useCompanyOpenProjects } from "@/hooks/queries/usePublicCompany";
 import { usePublicPortal } from "@/hooks/queries/usePublicPortal";
+import { usePortalPageView } from "@/hooks/usePortalTracking";
 import type { ProjectResponseDTO } from "@/types/project";
 
 const modalityLabels: Record<string, string> = {
@@ -51,6 +52,7 @@ export function PortalHome({
   const portal = portalQ.data;
   const active = portal?.status === "ACTIVE";
 
+  usePortalPageView(subdomain, "/");
   const jobsQ = useCompanyOpenProjects(active ? portal.companyId : undefined);
 
   if (portalQ.isLoading) {

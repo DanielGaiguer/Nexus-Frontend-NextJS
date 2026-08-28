@@ -154,6 +154,36 @@ export interface UpdateCustomPortalBrandingBody {
   sections: CustomPortalSectionDTO[];
 }
 
+// ── Análises / tracking ──────────────────────────────────────────────
+
+/** Espelha com.main.nexus.model.enums.CustomPortalEventType. */
+export type CustomPortalEventType = "PAGE_VIEW" | "APPLY_CLICK" | "SESSION_END";
+
+/** Corpo do beacon POST /api/public/custom-portal/{sub}/events. */
+export interface TrackPortalEventBody {
+  visitorId: string;
+  type: CustomPortalEventType;
+  path?: string;
+  opportunityId?: number | null;
+  durationSeconds?: number | null;
+  referrerHost?: string | null;
+}
+
+/** Espelha com.main.nexus.dto.CustomPortalAnalyticsDTO. */
+export interface CustomPortalAnalyticsDTO {
+  rangeDays: number;
+  totalViews: number;
+  uniqueVisitors: number;
+  applyClicks: number;
+  /** % — applyClicks / totalViews. */
+  conversionRate: number;
+  /** segundos. */
+  avgSessionSeconds: number;
+  viewsPerDay: { date: string; views: number }[];
+  topOpportunities: { opportunityId: number; title: string; views: number }[];
+  referrers: { label: string; count: number }[];
+}
+
 // ── Rótulos para a UI ────────────────────────────────────────────────
 
 export const customPortalStatusLabel: Record<CustomPortalStatus, string> = {
