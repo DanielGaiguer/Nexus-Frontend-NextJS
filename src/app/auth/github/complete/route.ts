@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 import {
   SESSION_COOKIE_NAME,
-  SESSION_MAX_AGE_SECONDS,
+  sessionCookieOptions,
   verifySessionToken,
 } from "@/lib/session";
 import type { UserRole } from "@/types/auth";
@@ -30,12 +30,6 @@ export async function GET(request: NextRequest) {
   const target =
     redirect && redirect.startsWith("/") ? redirect : roleHome[claims.role];
   const response = NextResponse.redirect(new URL(target, request.url));
-  response.cookies.set(SESSION_COOKIE_NAME, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: SESSION_MAX_AGE_SECONDS,
-  });
+  response.cookies.set(SESSION_COOKIE_NAME, token, sessionCookieOptions());
   return response;
 }

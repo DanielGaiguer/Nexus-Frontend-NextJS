@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { SESSION_COOKIE_NAME } from "@/lib/session";
+import { SESSION_COOKIE_NAME, sessionCookieClearOptions } from "@/lib/session";
 
 /**
  * O backend não tem (nem precisa ter) um endpoint de logout — o JWT é
@@ -10,6 +10,8 @@ import { SESSION_COOKIE_NAME } from "@/lib/session";
  */
 export async function POST() {
   const response = NextResponse.json({ ok: true });
-  response.cookies.delete(SESSION_COOKIE_NAME);
+  // set com maxAge:0 (não .delete) pra bater com o mesmo domain/path do cookie
+  // de sessão — só assim ele some quando foi setado com Domain=.nexus.com.br.
+  response.cookies.set(SESSION_COOKIE_NAME, "", sessionCookieClearOptions());
   return response;
 }

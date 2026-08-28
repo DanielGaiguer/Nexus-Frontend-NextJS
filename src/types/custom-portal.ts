@@ -89,6 +89,25 @@ export interface CustomPortalOverviewDTO {
   canRequest: boolean;
 }
 
+/**
+ * Espelha com.main.nexus.dto.PublicCustomPortalDTO — recorte público servido em
+ * `empresa.nexus.com.br` (Prompt 3). Sem dados de assinatura. `status` vem junto
+ * pra a página decidir entre renderizar (ACTIVE) e "plataforma indisponível".
+ */
+export interface PublicCustomPortalDTO {
+  companyId: number;
+  companyName: string;
+  subdomain: string;
+  status: CustomPortalStatus;
+  displayName: string | null;
+  primaryColor: string | null;
+  logoUrl: string | null;
+  bannerUrl: string | null;
+  faviconUrl: string | null;
+  aboutText: string | null;
+  sections: CustomPortalSectionDTO[];
+}
+
 // ── Corpos de request ────────────────────────────────────────────────
 
 export interface CreateCustomPortalRequestBody {

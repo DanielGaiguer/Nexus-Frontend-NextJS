@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/session";
+import {
+  SESSION_COOKIE_NAME,
+  rootDomain,
+  verifySessionToken,
+} from "@/lib/session";
 import type { UserRole } from "@/types/auth";
 
 const roleHome: Record<UserRole, string> = {
@@ -63,8 +67,66 @@ function isPublicPath(pathname: string) {
   return PUBLIC_PATHS.some((path) => matchesPath(pathname, path));
 }
 
+// Prefixo interno pra onde as requests de subdomínio de plataforma
+// personalizada são reescritas. A URL no navegador continua
+// `empresa.nexus.com.br/...`; internamente serve `app/(portal)/s/empresa/...`.
+const PORTAL_PREFIX = "/s";
+
+/**
+ * `empresa.nexus.com.br` -> "empresa". Retorna null para o domínio principal
+ * (apex, `www`, `localhost`, previews `*.vercel.app`) e para hosts que não
+ * sejam um subdomínio de exatamente um nível do domínio raiz.
+ * Aceita também `*.localhost` pra facilitar teste local sem editar hosts.
+ */
+function resolveTenant(host: string): string | null {
+  if (!host) return null;
+  const hostNoPort = host.split(":")[0].toLowerCase();
+  const root = rootDomain(); // "localhost" ou "nexus.com.br"
+
+  if (
+    hostNoPort === root ||
+    hostNoPort === `www.${root}` ||
+    hostNoPort === "localhost" ||
+    hostNoPort === "127.0.0.1" ||
+    hostNoPort.endsWith(".vercel.app")
+  ) {
+    return null;
+  }
+
+  for (const base of new Set([root, "localhost"])) {
+    if (hostNoPort.endsWith(`.${base}`)) {
+      const sub = hostNoPort.slice(0, hostNoPort.length - base.length - 1);
+      return sub && !sub.includes(".") && /^[a-z0-9-]+$/.test(sub) ? sub : null;
+    }
+  }
+  return null;
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const host = request.headers.get("host") ?? "";
+  const tenant = resolveTenant(host);
+
+  // Subdomínio de tenant: reescreve pra página pública do portal e para por
+  // aqui — o portal é público, sem gate de sessão/papel.
+  if (tenant) {
+    if (
+      pathname === PORTAL_PREFIX ||
+      pathname.startsWith(`${PORTAL_PREFIX}/`)
+    ) {
+      // já é uma rota interna — não reescreve de novo
+      return NextResponse.next();
+    }
+    const url = request.nextUrl.clone();
+    url.pathname = `${PORTAL_PREFIX}/${tenant}${pathname === "/" ? "" : pathname}`;
+    return NextResponse.rewrite(url);
+  }
+
+  // No domínio principal, o prefixo interno `/s/...` não é endereçável.
+  if (pathname === PORTAL_PREFIX || pathname.startsWith(`${PORTAL_PREFIX}/`)) {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
   const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
   const session = await verifySessionToken(token);
 

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { ApiError, backendFetch } from "@/lib/api-client";
-import { SESSION_COOKIE_NAME, SESSION_MAX_AGE_SECONDS } from "@/lib/session";
+import { SESSION_COOKIE_NAME, sessionCookieOptions } from "@/lib/session";
 import type { LoginRequestDTO, LoginResponseDTO } from "@/types/auth";
 
 /**
@@ -26,13 +26,11 @@ export async function POST(request: Request) {
       role: session.role,
     });
 
-    response.cookies.set(SESSION_COOKIE_NAME, session.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: SESSION_MAX_AGE_SECONDS,
-    });
+    response.cookies.set(
+      SESSION_COOKIE_NAME,
+      session.token,
+      sessionCookieOptions()
+    );
 
     return response;
   } catch (error) {
