@@ -1,10 +1,12 @@
 "use client";
 
-import { CheckCircle2, Clock, Store, XCircle } from "lucide-react";
+import { CheckCircle2, Clock, Palette, Store, XCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { BrandingEditor } from "@/components/custom-portal/branding-editor";
+import { PortalPreviewDialog } from "@/components/custom-portal/portal-preview-dialog";
+import { PortalUrlBox } from "@/components/custom-portal/portal-url-box";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -54,12 +56,10 @@ export default function CompanyCustomPortalPage() {
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Plataforma personalizada
-        </h1>
+        <h1 className="text-2xl font-bold tracking-tight">Minha Plataforma</h1>
         <p className="text-muted-foreground text-sm">
-          Tenha uma vitrine de vagas com a identidade visual da sua empresa,
-          sobre os mesmos projetos e vagas que você já publica no Nexus.
+          Sua vitrine de vagas com a identidade visual da empresa, sobre os
+          mesmos projetos e vagas que você já publica no Nexus.
         </p>
       </div>
 
@@ -74,7 +74,10 @@ export default function CompanyCustomPortalPage() {
             {isLoading ? (
               <Skeleton className="h-56" />
             ) : data?.portal ? (
-              <PortalCard portal={data.portal} />
+              <PortalCard
+                portal={data.portal}
+                onEditAppearance={() => setTab("appearance")}
+              />
             ) : data?.latestRequest?.status === "PENDING" ? (
               <PendingCard
                 requestedAt={data.latestRequest.requestedAt}
@@ -314,20 +317,41 @@ function Row({
   );
 }
 
-function PortalCard({ portal }: { portal: CustomPortalDTO }) {
-  const statusStyle: Record<string, string> = {
-    ACTIVE: "bg-success/15 text-success",
-    SUSPENDED: "bg-warning/15 text-warning",
-    CANCELED: "bg-destructive/15 text-destructive",
-  };
-  const paymentStyle: Record<string, string> = {
-    UP_TO_DATE: "bg-success/15 text-success",
-    OVERDUE: "bg-warning/15 text-warning",
-    CANCELED: "bg-muted text-muted-foreground",
-  };
+const statusStyle: Record<string, string> = {
+  ACTIVE: "bg-success/15 text-success",
+  SUSPENDED: "bg-warning/15 text-warning",
+  CANCELED: "bg-destructive/15 text-destructive",
+};
+const paymentStyle: Record<string, string> = {
+  UP_TO_DATE: "bg-success/15 text-success",
+  OVERDUE: "bg-warning/15 text-warning",
+  CANCELED: "bg-muted text-muted-foreground",
+};
+
+function isBrandingEmpty(portal: CustomPortalDTO) {
+  return (
+    !portal.displayName &&
+    !portal.primaryColor &&
+    !portal.logoUrl &&
+    !portal.bannerUrl &&
+    !portal.faviconUrl &&
+    !portal.aboutText &&
+    portal.sections.length === 0
+  );
+}
+
+function PortalCard({
+  portal,
+  onEditAppearance,
+}: {
+  portal: CustomPortalDTO;
+  onEditAppearance: () => void;
+}) {
+  const active = portal.status === "ACTIVE";
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Status e endereço */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
@@ -341,10 +365,32 @@ function PortalCard({ portal }: { portal: CustomPortalDTO }) {
             {customPortalStatusLabel[portal.status]}
           </Badge>
         </CardHeader>
+        <CardContent className="space-y-4">
+          <PortalUrlBox subdomain={portal.subdomain} active={active} />
+
+          {isBrandingEmpty(portal) && (
+            <p className="bg-muted/50 rounded-md p-3 text-xs">
+              Sua página ainda não foi personalizada. Configure cor, logo,
+              banner e textos na aba <strong>Aparência</strong>.
+            </p>
+          )}
+
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" onClick={onEditAppearance}>
+              <Palette className="size-4" />
+              Editar aparência
+            </Button>
+            <PortalPreviewDialog portal={portal} />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Assinatura — somente leitura (quem edita é o Admin) */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Assinatura</CardTitle>
+        </CardHeader>
         <CardContent>
-          <Row label="Endereço">
-            <code>{portal.subdomain}.nexus.com.br</code>
-          </Row>
           <Row label="Plano">{portal.planName}</Row>
           <Row label="Valor mensal">
             R${" "}
@@ -365,18 +411,22 @@ function PortalCard({ portal }: { portal: CustomPortalDTO }) {
               {customPortalPaymentStatusLabel[portal.paymentStatus]}
             </span>
           </Row>
+          <p className="text-muted-foreground pt-3 text-xs">
+            A assinatura é gerida pela equipe Nexus. Para mudanças de plano,
+            valor ou pagamento, fale com o suporte.
+          </p>
         </CardContent>
       </Card>
 
-      {portal.status === "ACTIVE" ? (
+      {/* Banner contextual */}
+      {active ? (
         <Card className="border-primary/30">
           <CardContent className="flex items-start gap-3 py-4 text-sm">
             <CheckCircle2 className="text-success mt-0.5 size-5 shrink-0" />
             <p className="text-muted-foreground">
-              Assinatura ativa. A personalização visual (cor, logo, banner,
-              textos) e a publicação da página em{" "}
-              <code>{portal.subdomain}.nexus.com.br</code> serão liberadas nas
-              próximas etapas.
+              Sua página está no ar. Visitantes veem as vagas abertas da sua
+              empresa com a identidade visual que você configurar na aba
+              Aparência.
             </p>
           </CardContent>
         </Card>
@@ -386,9 +436,10 @@ function PortalCard({ portal }: { portal: CustomPortalDTO }) {
             <Clock className="text-warning mt-0.5 size-5 shrink-0" />
             <p className="text-muted-foreground">
               Sua plataforma personalizada está{" "}
-              {customPortalStatusLabel[portal.status].toLowerCase()}. Seu
-              cadastro normal no Nexus continua ativo e inalterado. Fale com o
-              suporte para regularizar.
+              {customPortalStatusLabel[portal.status].toLowerCase()} — a página
+              pública fica fora do ar até a reativação. Seu cadastro normal no
+              Nexus continua ativo e inalterado; fale com o suporte para
+              regularizar. Você pode continuar editando a aparência normalmente.
             </p>
           </CardContent>
         </Card>

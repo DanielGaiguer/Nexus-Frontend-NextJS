@@ -102,7 +102,7 @@ export const navByRole: Record<UserRole, NavSection[]> = {
         { title: "Analytics", href: "/company/analytics", icon: BarChart3 },
         { title: "Avaliações", href: "/company/reviews", icon: Star },
         {
-          title: "Plataforma personalizada",
+          title: "Minha Plataforma",
           href: "/company/custom-portal",
           icon: Store,
         },

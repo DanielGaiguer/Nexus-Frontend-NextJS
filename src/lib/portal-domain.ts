@@ -10,7 +10,8 @@ export function rootDomainClient(): string {
 }
 
 function protocolFor(host: string): string {
-  return host.startsWith("localhost") || host.startsWith("127.0.0.1")
+  // localhost, 127.0.0.1 e qualquer *.localhost (com ou sem porta) -> http.
+  return /(^|\.)localhost(:|$)/.test(host) || host.startsWith("127.0.0.1")
     ? "http"
     : "https";
 }
@@ -20,4 +21,15 @@ export function nexusUrl(path = "/"): string {
   const host = rootDomainClient();
   const suffix = path.startsWith("/") ? path : `/${path}`;
   return `${protocolFor(host)}://${host}${suffix}`;
+}
+
+/** Host publicado da plataforma personalizada. Ex.: "acme.nexus.com.br". */
+export function portalHost(subdomain: string): string {
+  return `${subdomain}.${rootDomainClient()}`;
+}
+
+/** URL absoluta da página pública da plataforma personalizada. */
+export function portalUrl(subdomain: string): string {
+  const host = portalHost(subdomain);
+  return `${protocolFor(host)}://${host}`;
 }
