@@ -1,6 +1,6 @@
 "use client";
 
-import { nexusUrl } from "@/lib/portal-domain";
+import { nexusUrl, nexusUrlFrom } from "@/lib/portal-domain";
 import type { CustomPortalStatus } from "@/types/custom-portal";
 
 /**
@@ -9,8 +9,11 @@ import type { CustomPortalStatus } from "@/types/custom-portal";
  */
 export function PortalUnavailable({
   status,
+  rootHost,
 }: {
   status?: CustomPortalStatus | null;
+  /** Domínio raiz do Nexus (do server). Ausente → deriva do host atual. */
+  rootHost?: string;
 }) {
   const suspended = status === "SUSPENDED";
   const heading = suspended
@@ -19,6 +22,8 @@ export function PortalUnavailable({
   const message = suspended
     ? "Esta plataforma de vagas está fora do ar no momento. Tente novamente mais tarde."
     : "Não encontramos uma plataforma de vagas neste endereço.";
+
+  const href = rootHost ? nexusUrlFrom(rootHost, "/") : nexusUrl("/");
 
   return (
     <div
@@ -33,7 +38,7 @@ export function PortalUnavailable({
         {message}
       </p>
       <a
-        href={nexusUrl("/")}
+        href={href}
         className="rounded-md px-4 py-2 text-sm font-semibold text-white"
         style={{ background: "#5457e0" }}
       >

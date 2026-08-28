@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useLogin } from "@/hooks/mutations/useLogin";
 import { ApiError } from "@/lib/api-client";
-import { nexusUrl } from "@/lib/portal-domain";
+import { nexusUrlFrom } from "@/lib/portal-domain";
 import { resolvePortalColor } from "@/components/custom-portal/portal-branding-view";
 
 /**
@@ -29,11 +29,14 @@ export function PortalLoginDialog({
   open,
   onOpenChange,
   primaryColor,
+  rootHost,
   onLoggedIn,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   primaryColor: string | null;
+  /** Domínio raiz do Nexus (sem o subdomínio) — pra montar o link de cadastro. */
+  rootHost: string;
   onLoggedIn: () => void;
 }) {
   const [email, setEmail] = useState("");
@@ -109,7 +112,7 @@ export function PortalLoginDialog({
               {login.isPending ? "Entrando…" : "Entrar"}
             </Button>
             <a
-              href={nexusUrl("/register/professional")}
+              href={nexusUrlFrom(rootHost, "/register/professional")}
               className="text-center text-xs underline"
               style={{ color: "#64748b" }}
             >

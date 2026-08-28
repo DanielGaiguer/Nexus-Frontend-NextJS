@@ -1,6 +1,6 @@
 "use client";
 
-import { Globe } from "lucide-react";
+import { Globe, Menu } from "lucide-react";
 
 import {
   PortalBrandingView,
@@ -32,6 +32,7 @@ const SURFACE = "#f1f5f9";
 export function PortalPreview({ data }: { data: PortalPreviewData }) {
   const color = resolvePortalColor(data.primaryColor);
   const inactive = data.status !== "ACTIVE";
+  const title = data.displayName.trim() || data.companyName;
 
   return (
     <div
@@ -86,6 +87,42 @@ export function PortalPreview({ data }: { data: PortalPreviewData }) {
       <PortalBrandingView
         dense
         jobsAnchor="preview-vagas"
+        header={
+          <div
+            className="flex items-center justify-between gap-3 border-b px-4 py-2.5"
+            style={{ background: "#ffffff", borderColor: "#e2e8f0" }}
+          >
+            <div className="flex min-w-0 items-center gap-2">
+              <span
+                className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md text-sm font-bold"
+                style={{ background: `${color}1f`, color }}
+              >
+                {data.logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- URL remota do Supabase
+                  <img
+                    src={data.logoUrl}
+                    alt=""
+                    className="size-full object-contain"
+                  />
+                ) : (
+                  title.charAt(0).toUpperCase()
+                )}
+              </span>
+              <span
+                className="truncate text-sm font-semibold"
+                style={{ color: "#0f172a" }}
+              >
+                {title}
+              </span>
+            </div>
+            <span
+              className="inline-flex size-9 items-center justify-center rounded-md border"
+              style={{ borderColor: "#e2e8f0", color: "#334155" }}
+            >
+              <Menu className="size-5" />
+            </span>
+          </div>
+        }
         branding={{
           displayName: data.displayName,
           primaryColor: data.primaryColor,

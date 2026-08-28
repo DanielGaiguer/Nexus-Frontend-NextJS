@@ -20,6 +20,7 @@ import {
   PortalBrandingView,
   resolvePortalColor,
 } from "@/components/custom-portal/portal-branding-view";
+import { PortalHeader } from "@/components/custom-portal/portal-header";
 import { PortalLoginDialog } from "@/components/custom-portal/portal-login-dialog";
 import { PortalUnavailable } from "@/components/custom-portal/portal-unavailable";
 import { useLogout } from "@/hooks/mutations/useLogout";
@@ -29,7 +30,7 @@ import { usePublicOpportunity } from "@/hooks/queries/usePublicOpportunity";
 import { usePublicPortal } from "@/hooks/queries/usePublicPortal";
 import { useSession } from "@/hooks/queries/useSession";
 import { ApiError } from "@/lib/api-client";
-import { nexusUrl } from "@/lib/portal-domain";
+import { nexusUrlFrom } from "@/lib/portal-domain";
 import type { ProjectResponseDTO } from "@/types/project";
 
 const modalityLabels: Record<string, string> = {
@@ -64,9 +65,11 @@ function money(value: number | null | undefined) {
 export function PortalOpportunity({
   subdomain,
   opportunityId,
+  rootHost,
 }: {
   subdomain: string;
   opportunityId: number;
+  rootHost: string;
 }) {
   const portalQ = usePublicPortal(subdomain);
   const jobQ = usePublicOpportunity(opportunityId);
@@ -83,19 +86,29 @@ export function PortalOpportunity({
   }
 
   if (portalQ.isError || !portal || portal.status !== "ACTIVE") {
-    return <PortalUnavailable status={portal?.status} />;
+    return <PortalUnavailable status={portal?.status} rootHost={rootHost} />;
   }
   // vaga inexistente / fechada, ou de outra empresa que não a dona do portal
   if (jobQ.isError || !job || job.companyId !== portal.companyId) {
-    return <PortalUnavailable status="ACTIVE" />;
+    return <PortalUnavailable status="ACTIVE" rootHost={rootHost} />;
   }
 
   const color = resolvePortalColor(portal.primaryColor);
   const isJob = job.opportunityType === "JOB";
+  const title = (portal.displayName ?? "").trim() || portal.companyName;
 
   return (
     <PortalBrandingView
       dense
+      header={
+        <PortalHeader
+          rootHost={rootHost}
+          title={title}
+          logoUrl={portal.logoUrl}
+          primaryColor={portal.primaryColor}
+          jobsHref="/"
+        />
+      }
       branding={{
         displayName: portal.displayName,
         primaryColor: portal.primaryColor,
@@ -140,7 +153,11 @@ export function PortalOpportunity({
       </div>
 
       <div className="mt-4">
-        <ApplyBox job={job} primaryColor={portal.primaryColor} />
+        <ApplyBox
+          job={job}
+          primaryColor={portal.primaryColor}
+          rootHost={rootHost}
+        />
       </div>
 
       <dl className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -279,9 +296,11 @@ function Info({
 function ApplyBox({
   job,
   primaryColor,
+  rootHost,
 }: {
   job: ProjectResponseDTO;
   primaryColor: string | null;
+  rootHost: string;
 }) {
   const session = useSession();
   const role = session.data?.role ?? null;
@@ -308,7 +327,8 @@ function ApplyBox({
           toast.message(
             "Esta vaga tem um processo seletivo — você continua no Nexus para respondê-lo."
           );
-          window.location.href = nexusUrl(
+          window.location.href = nexusUrlFrom(
+            rootHost,
             `/pro/screening-invitations/${result.screeningInvitationId}/take`
           );
           return;
@@ -361,6 +381,7 @@ function ApplyBox({
           open={loginOpen}
           onOpenChange={setLoginOpen}
           primaryColor={primaryColor}
+          rootHost={rootHost}
           onLoggedIn={() => {
             pendingApply.current = true;
             session.refetch();

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 
 import { PortalOpportunity } from "@/components/custom-portal/portal-opportunity";
 import {
@@ -6,6 +7,15 @@ import {
   fetchPublicPortal,
   portalTitle,
 } from "@/lib/portal-server";
+
+async function resolveRootHost(subdomain: string): Promise<string> {
+  const host = ((await headers()).get("host") ?? "").toLowerCase();
+  const prefix = `${subdomain.toLowerCase()}.`;
+  if (host.startsWith(prefix)) return host.slice(prefix.length);
+  return (
+    process.env.NEXT_PUBLIC_ROOT_DOMAIN?.trim() || host || "localhost:3000"
+  );
+}
 
 export async function generateMetadata({
   params,
@@ -35,6 +45,7 @@ export default async function PortalOpportunityPage({
     <PortalOpportunity
       subdomain={subdomain}
       opportunityId={Number(opportunityId)}
+      rootHost={await resolveRootHost(subdomain)}
     />
   );
 }

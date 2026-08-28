@@ -7,6 +7,7 @@ import {
   PortalBrandingView,
   resolvePortalColor,
 } from "@/components/custom-portal/portal-branding-view";
+import { PortalHeader } from "@/components/custom-portal/portal-header";
 import { PortalUnavailable } from "@/components/custom-portal/portal-unavailable";
 import { useCompanyOpenProjects } from "@/hooks/queries/usePublicCompany";
 import { usePublicPortal } from "@/hooks/queries/usePublicPortal";
@@ -39,7 +40,13 @@ function salaryLabel(job: ProjectResponseDTO): string | null {
   return min ? `${min}${max ? ` – ${max}` : ""}` : null;
 }
 
-export function PortalHome({ subdomain }: { subdomain: string }) {
+export function PortalHome({
+  subdomain,
+  rootHost,
+}: {
+  subdomain: string;
+  rootHost: string;
+}) {
   const portalQ = usePublicPortal(subdomain);
   const portal = portalQ.data;
   const active = portal?.status === "ACTIVE";
@@ -56,15 +63,25 @@ export function PortalHome({ subdomain }: { subdomain: string }) {
   }
 
   if (portalQ.isError || !portal || !active) {
-    return <PortalUnavailable status={portal?.status} />;
+    return <PortalUnavailable status={portal?.status} rootHost={rootHost} />;
   }
 
   const color = resolvePortalColor(portal.primaryColor);
   const jobs = jobsQ.data ?? [];
+  const title = (portal.displayName ?? "").trim() || portal.companyName;
 
   return (
     <PortalBrandingView
       jobsAnchor="vagas"
+      header={
+        <PortalHeader
+          rootHost={rootHost}
+          title={title}
+          logoUrl={portal.logoUrl}
+          primaryColor={portal.primaryColor}
+          jobsHref="#vagas"
+        />
+      }
       branding={{
         displayName: portal.displayName,
         primaryColor: portal.primaryColor,

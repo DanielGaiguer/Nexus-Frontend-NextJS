@@ -35,11 +35,14 @@ export function resolvePortalColor(color: string | null | undefined): string {
 export function PortalBrandingView({
   branding,
   children,
+  header,
   dense = false,
   jobsAnchor,
 }: {
   branding: PortalBranding;
   children?: ReactNode;
+  /** Barra fixa no topo (PortalHeader). */
+  header?: ReactNode;
   /** compacta paddings/altura — usado na prévia do editor */
   dense?: boolean;
   /** id de âncora pra um CTA "ver vagas" (só a home passa) */
@@ -54,6 +57,7 @@ export function PortalBrandingView({
 
   return (
     <div style={{ background: "#ffffff", color: INK }}>
+      {header}
       <div
         className={`w-full ${dense ? "h-28" : "h-40 sm:h-56"}`}
         style={{ background: SURFACE }}
@@ -111,7 +115,7 @@ export function PortalBrandingView({
         {jobsAnchor && (
           <a
             href={`#${jobsAnchor}`}
-            className="mt-4 inline-block rounded-md px-4 py-2 text-sm font-semibold"
+            className="mt-4 inline-block rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition-transform hover:-translate-y-0.5"
             style={{ background: color, color: "#ffffff" }}
           >
             Ver vagas abertas
@@ -119,12 +123,17 @@ export function PortalBrandingView({
         )}
 
         {about && (
-          <section className={dense ? "mt-5" : "mt-8"}>
-            <h2 className="text-sm font-bold" style={{ color }}>
+          <section className={dense ? "mt-5" : "mt-10"}>
+            <h2
+              className={`font-bold ${dense ? "text-sm" : "text-lg"}`}
+              style={{ color }}
+            >
               Sobre
             </h2>
             <p
-              className="mt-1 text-sm whitespace-pre-line"
+              className={`mt-1.5 whitespace-pre-line ${
+                dense ? "text-sm" : "text-[15px] leading-relaxed"
+              }`}
               style={{ color: BODY }}
             >
               {about}
@@ -132,30 +141,38 @@ export function PortalBrandingView({
           </section>
         )}
 
-        {sections.map((section, i) => (
-          <section
-            key={i}
-            className={`${dense ? "mt-4" : "mt-6"} pl-3`}
-            style={{ borderLeft: `3px solid ${color}` }}
-          >
-            <h3 className="text-sm font-semibold">
-              {section.title?.trim() || "Sem título"}
-            </h3>
-            {(section.content ?? "").trim() && (
-              <p
-                className="mt-0.5 text-sm whitespace-pre-line"
-                style={{ color: BODY }}
+        {sections.length > 0 && (
+          <div className={`${dense ? "mt-4 space-y-4" : "mt-8 space-y-6"}`}>
+            {sections.map((section, i) => (
+              <section
+                key={i}
+                className="pl-4"
+                style={{ borderLeft: `3px solid ${color}` }}
               >
-                {section.content}
-              </p>
-            )}
-          </section>
-        ))}
+                <h3
+                  className={`font-semibold ${dense ? "text-sm" : "text-base"}`}
+                >
+                  {section.title?.trim() || "Sem título"}
+                </h3>
+                {(section.content ?? "").trim() && (
+                  <p
+                    className={`mt-1 whitespace-pre-line ${
+                      dense ? "text-sm" : "text-[15px] leading-relaxed"
+                    }`}
+                    style={{ color: BODY }}
+                  >
+                    {section.content}
+                  </p>
+                )}
+              </section>
+            ))}
+          </div>
+        )}
 
-        {children && <div className={dense ? "mt-6" : "mt-10"}>{children}</div>}
+        {children && <div className={dense ? "mt-6" : "mt-12"}>{children}</div>}
 
         <div
-          className={`${dense ? "mt-6" : "mt-12"} border-t pt-3 text-center text-xs`}
+          className={`${dense ? "mt-6" : "mt-16"} border-t pt-4 text-center text-xs`}
           style={{ borderColor: BORDER, color: MUTED }}
         >
           Powered by Nexus
