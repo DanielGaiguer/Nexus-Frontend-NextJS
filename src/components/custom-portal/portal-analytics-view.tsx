@@ -56,11 +56,18 @@ export function PortalAnalyticsView({
   days,
   onDaysChange,
   isLoading,
+  intro,
+  emptyTitle = "Ainda não há visitas registradas",
+  emptyDescription = "Compartilhe o endereço da sua plataforma para começar a receber acessos — as métricas aparecem aqui automaticamente.",
 }: {
   data: CustomPortalAnalyticsDTO | undefined;
   days: AnalyticsRange;
   onDaysChange: (days: AnalyticsRange) => void;
   isLoading: boolean;
+  /** Texto no topo (esquerda do seletor de período). Default: cópia do contratante. */
+  intro?: string;
+  emptyTitle?: string;
+  emptyDescription?: string;
 }) {
   const rangeSelector = (
     <div className="flex gap-1">
@@ -119,7 +126,8 @@ export function PortalAnalyticsView({
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-muted-foreground text-sm">
-          Métricas da página pública nos últimos {data.rangeDays} dias.
+          {intro ??
+            `Métricas da página pública nos últimos ${data.rangeDays} dias.`}
         </p>
         {rangeSelector}
       </div>
@@ -127,8 +135,8 @@ export function PortalAnalyticsView({
       {noData ? (
         <EmptyState
           icon={BarChart3}
-          title="Ainda não há visitas registradas"
-          description="Compartilhe o endereço da sua plataforma para começar a receber acessos — as métricas aparecem aqui automaticamente."
+          title={emptyTitle}
+          description={emptyDescription}
           className="rounded-lg border"
         />
       ) : (

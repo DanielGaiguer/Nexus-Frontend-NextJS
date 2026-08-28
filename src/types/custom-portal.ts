@@ -198,6 +198,34 @@ export interface CustomPortalAnalyticsDTO {
   referrers: { label: string; count: number }[];
 }
 
+/** Espelha com.main.nexus.dto.AdminCustomPortalAnalyticsDTO — dashboard geral do módulo. */
+export interface AdminCustomPortalAnalyticsDTO {
+  rangeDays: number;
+  totalPortals: number;
+  activePortals: number;
+  suspendedPortals: number;
+  canceledPortals: number;
+  pendingRequests: number;
+  overduePayments: number;
+  dueSoon: number;
+  /** Soma do preço dos planos das plataformas ativas. */
+  monthlyRecurringRevenue: number;
+  /** Engajamento agregado de todas as plataformas — mesmo formato do dashboard do contratante. */
+  system: CustomPortalAnalyticsDTO;
+  portalsByStatus: { status: CustomPortalStatus; count: number }[];
+  portalsByPlan: { planName: string; count: number }[];
+  topPortals: {
+    portalId: number;
+    companyName: string;
+    subdomain: string;
+    status: CustomPortalStatus;
+    views: number;
+    applyClicks: number;
+    conversionRate: number;
+  }[];
+  portalsCreatedPerMonth: { label: string; count: number }[];
+}
+
 // ── Rótulos para a UI ────────────────────────────────────────────────
 
 export const customPortalStatusLabel: Record<CustomPortalStatus, string> = {

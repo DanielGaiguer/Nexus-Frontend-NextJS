@@ -1,14 +1,14 @@
 "use client";
 
-import { History, Palette, Search, Store } from "lucide-react";
+import { BarChart3, History, Palette, Search, Store } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
+import { AdminPortalAnalyticsView } from "@/components/admin/admin-portal-analytics-view";
 import { ApproveCustomPortalRequestDialog } from "@/components/admin/approve-custom-portal-request-dialog";
 import { CreateCustomPortalDialog } from "@/components/admin/create-custom-portal-dialog";
 import { CustomPortalStatusDialog } from "@/components/admin/custom-portal-status-dialog";
 import { CustomPortalSubscriptionDialog } from "@/components/admin/custom-portal-subscription-dialog";
-import { CustomPortalSummary } from "@/components/admin/custom-portal-summary";
 import { RejectCustomPortalRequestDialog } from "@/components/admin/reject-custom-portal-request-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +43,10 @@ import {
   useAdminCustomPortalRequests,
   useAdminCustomPortals,
 } from "@/hooks/queries/useAdminCustomPortals";
+import {
+  useAdminCustomPortalSystemAnalytics,
+  type AnalyticsRange,
+} from "@/hooks/queries/useCustomPortalAnalytics";
 import {
   customPortalPaymentStatusLabel,
   customPortalRequestStatusLabel,
@@ -80,7 +84,9 @@ const paymentBadgeClass: Record<string, string> = {
 };
 
 export default function AdminCustomPortalsPage() {
-  const [tab, setTab] = useState<"requests" | "portals">("requests");
+  const [tab, setTab] = useState<"requests" | "portals" | "analytics">(
+    "requests"
+  );
   const requests = useAdminCustomPortalRequests();
   const portals = useAdminCustomPortals();
 
@@ -96,16 +102,12 @@ export default function AdminCustomPortalsPage() {
             Plataformas personalizadas
           </h1>
           <p className="text-muted-foreground text-sm">
-            Solicitações dos contratantes e gestão das plataformas e
-            assinaturas.
+            Solicitações dos contratantes, gestão das plataformas e visão geral
+            do módulo.
           </p>
         </div>
         <CreateCustomPortalDialog />
       </div>
-
-      {!requests.isLoading && !portals.isLoading && (
-        <CustomPortalSummary portals={portalRows} requests={requestRows} />
-      )}
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
         <TabsList>
@@ -115,15 +117,32 @@ export default function AdminCustomPortalsPage() {
           <TabsTrigger value="portals">
             Plataformas <Badge variant="secondary">{portalRows.length}</Badge>
           </TabsTrigger>
+          <TabsTrigger value="analytics">Análises</TabsTrigger>
         </TabsList>
       </Tabs>
 
       {tab === "requests" ? (
         <RequestsTab isLoading={requests.isLoading} rows={requestRows} />
-      ) : (
+      ) : tab === "portals" ? (
         <PortalsTab isLoading={portals.isLoading} rows={portalRows} />
+      ) : (
+        <AnalyticsTab />
       )}
     </div>
+  );
+}
+
+function AnalyticsTab() {
+  const [days, setDays] = useState<AnalyticsRange>(30);
+  const analytics = useAdminCustomPortalSystemAnalytics(days);
+
+  return (
+    <AdminPortalAnalyticsView
+      data={analytics.data}
+      days={days}
+      onDaysChange={setDays}
+      isLoading={analytics.isLoading}
+    />
   );
 }
 
@@ -373,6 +392,12 @@ function PortalsTab({
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap justify-end gap-2">
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/admin/custom-portals/${p.id}/analytics`}>
+                          <BarChart3 className="size-4" />
+                          Analytics
+                        </Link>
+                      </Button>
                       <Button variant="ghost" size="sm" asChild>
                         <Link href={`/admin/custom-portals/${p.id}/appearance`}>
                           <Palette className="size-4" />
