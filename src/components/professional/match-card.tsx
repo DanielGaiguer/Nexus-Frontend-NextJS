@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { MatchConfirmationBadge } from "@/components/matches/match-confirmation-badge";
 import { ScoreBreakdownGrid } from "@/components/matches/score-breakdown-grid";
 import { ScreeningInvitationBadges } from "@/components/matches/screening-invitation-badges";
 import { ScoreRing } from "@/components/professional/score-ring";
@@ -126,6 +127,8 @@ export function MatchCard({
             </div>
 
             {badge}
+
+            <MatchConfirmationBadge confirmation={match.confirmation} />
 
             <ScreeningInvitationBadges
               screeningInvitations={match.screeningInvitations}

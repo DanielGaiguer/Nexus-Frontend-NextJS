@@ -17,6 +17,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useChatUnreadTotal } from "@/hooks/queries/useChat";
+import { useSupportUnreadTotal } from "@/hooks/queries/useSupport";
 import { useDisplayName } from "@/hooks/queries/useDisplayName";
 import { cn } from "@/lib/utils";
 import type { SessionClaims } from "@/types/auth";
@@ -36,6 +37,16 @@ export function AppSidebar({ session }: { session: SessionClaims }) {
   const sections = navByRole[session.role];
   const displayName = useDisplayName(session.role);
   const unreadChat = useChatUnreadTotal();
+  const supportSide = session.role === "ADMIN" ? "admin" : "user";
+  const unreadSupport = useSupportUnreadTotal(supportSide);
+
+  // Contador do badge por item de menu (0 = sem badge).
+  const badgeFor = (href: string) => {
+    if (href === "/chat") return unreadChat.data ?? 0;
+    if (href === "/support" || href === "/admin/support")
+      return unreadSupport.data ?? 0;
+    return 0;
+  };
 
   return (
     <Sidebar collapsible="icon">
@@ -90,32 +101,27 @@ export function AppSidebar({ session }: { session: SessionClaims }) {
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
-                    {item.href === "/chat" &&
-                      !!unreadChat.data &&
-                      unreadChat.data > 0 && (
-                        <SidebarMenuBadge
-                          className={cn(
-                            "bg-primary text-primary-foreground rounded-full",
-                            // SidebarMenuBadge base já vem com
-                            // peer-hover/menu-button:text-sidebar-accent-foreground
-                            // E peer-data-[active=true]/menu-button:text-sidebar-accent-foreground
-                            // — sem isso, passar o mouse OU o item "Conversas" estar
-                            // selecionado troca essa cor por cima do texto branco
-                            // (fica ilegível/preto sobre o fundo bg-primary),
-                            // independente do tema escolhido.
-                            "peer-hover/menu-button:text-primary-foreground peer-data-[active=true]/menu-button:text-primary-foreground",
-                            // O botão do menu usa h-10! (maior que o h-8 padrão do
-                            // size="default"), mas o offset vertical da badge
-                            // (top-1.5) é calibrado pro h-8 original -- centraliza
-                            // de verdade em vez de um top fixo desatualizado, pra
-                            // acompanhar a altura real do botão e alinhar com o
-                            // título do item.
-                            "peer-data-[size=default]/menu-button:top-1/2 peer-data-[size=default]/menu-button:-translate-y-1/2"
-                          )}
-                        >
-                          {unreadChat.data > 99 ? "99+" : unreadChat.data}
-                        </SidebarMenuBadge>
-                      )}
+                    {badgeFor(item.href) > 0 && (
+                      <SidebarMenuBadge
+                        className={cn(
+                          "bg-primary text-primary-foreground rounded-full",
+                          // SidebarMenuBadge base já vem com
+                          // peer-hover/menu-button:text-sidebar-accent-foreground
+                          // E peer-data-[active=true]/menu-button:text-sidebar-accent-foreground
+                          // — sem isso, passar o mouse OU o item estar selecionado
+                          // troca essa cor por cima do texto branco (fica ilegível
+                          // sobre bg-primary), independente do tema.
+                          "peer-hover/menu-button:text-primary-foreground peer-data-[active=true]/menu-button:text-primary-foreground",
+                          // O botão do menu usa h-10! (maior que o h-8 padrão do
+                          // size="default"), mas o offset vertical da badge
+                          // (top-1.5) é calibrado pro h-8 original -- centraliza
+                          // de verdade acompanhando a altura real do botão.
+                          "peer-data-[size=default]/menu-button:top-1/2 peer-data-[size=default]/menu-button:-translate-y-1/2"
+                        )}
+                      >
+                        {badgeFor(item.href) > 99 ? "99+" : badgeFor(item.href)}
+                      </SidebarMenuBadge>
+                    )}
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>

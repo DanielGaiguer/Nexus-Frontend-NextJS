@@ -21,6 +21,7 @@ import type { ReactNode } from "react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { BillingBlockBanner } from "@/components/billing/billing-block-banner";
 import { CandidateCard } from "@/components/company/candidate-card";
 import { RejectInterestDialog } from "@/components/company/reject-interest-dialog";
 import { ContactDialog } from "@/components/matches/contact-dialog";
@@ -154,6 +155,7 @@ export default function CompanyMatchesPage() {
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
+      <BillingBlockBanner />
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Matches</h1>
         <p className="text-muted-foreground text-sm">

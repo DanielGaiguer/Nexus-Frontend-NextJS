@@ -17,6 +17,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import { BillingBlockBanner } from "@/components/billing/billing-block-banner";
 import { ProposalCard } from "@/components/company/proposal-card";
 import { ContactDialog } from "@/components/matches/contact-dialog";
 import { MatchHistoryDialog } from "@/components/matches/match-history-dialog";
@@ -326,6 +327,7 @@ function CompanyProposalsPageContent() {
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
+      <BillingBlockBanner />
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Propostas</h1>
         <p className="text-muted-foreground text-sm">

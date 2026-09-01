@@ -2,7 +2,16 @@ import { Check, CheckCheck } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import type { MessageDTO } from "@/types/chat";
+
+/** Campos que a bolha precisa — serve tanto MessageDTO (chat de match) quanto
+ * SupportMessageDTO (chat de suporte). */
+interface BubbleMessage {
+  senderName: string;
+  senderPhotoUrl: string | null;
+  content: string;
+  sentAt: string;
+  read: boolean;
+}
 
 function formatTime(sentAt: string) {
   const date = new Date(sentAt);
@@ -27,7 +36,7 @@ export function MessageBubble({
   message,
   mine,
 }: {
-  message: MessageDTO;
+  message: BubbleMessage;
   mine: boolean;
 }) {
   return (

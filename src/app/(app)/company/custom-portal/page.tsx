@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { BrandingEditor } from "@/components/custom-portal/branding-editor";
 import { PortalAnalyticsView } from "@/components/custom-portal/portal-analytics-view";
+import { SubscriptionBillingCard } from "@/components/custom-portal/subscription-billing-card";
 import { PortalPreviewDialog } from "@/components/custom-portal/portal-preview-dialog";
 import { PortalUrlBox } from "@/components/custom-portal/portal-url-box";
 import { Badge } from "@/components/ui/badge";
@@ -82,10 +83,13 @@ export default function CompanyCustomPortalPage() {
             {isLoading ? (
               <Skeleton className="h-56" />
             ) : data?.portal ? (
-              <PortalCard
-                portal={data.portal}
-                onEditAppearance={() => setTab("appearance")}
-              />
+              <div className="flex flex-col gap-4">
+                <PortalCard
+                  portal={data.portal}
+                  onEditAppearance={() => setTab("appearance")}
+                />
+                <SubscriptionBillingCard />
+              </div>
             ) : data?.latestRequest?.status === "PENDING" ? (
               <PendingCard
                 requestedAt={data.latestRequest.requestedAt}

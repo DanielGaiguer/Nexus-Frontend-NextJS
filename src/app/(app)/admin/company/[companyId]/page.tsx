@@ -21,6 +21,7 @@ import {
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 
+import { CompanyConfirmationsCard } from "@/components/admin/company-confirmations-card";
 import { ReputationCard } from "@/components/professional/reputation-card";
 import { ReviewsPreviewCard } from "@/components/reviews/reviews-preview-card";
 import { CompanyTypeBadge } from "@/components/shared/company-type-badge";
@@ -557,6 +558,8 @@ export default function AdminCompanyViewPage() {
               )}
             </CardContent>
           </Card>
+
+          <CompanyConfirmationsCard companyId={id} />
 
           <ReviewsPreviewCard
             entityType="company"

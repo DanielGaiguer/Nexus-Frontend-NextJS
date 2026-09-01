@@ -13,6 +13,7 @@ import Link from "next/link";
 
 import { StatCard } from "@/components/dashboard/stat-card";
 import { PendingReviewDialog } from "@/components/matches/pending-review-dialog";
+import { PendingStatusCheckDialog } from "@/components/matches/pending-status-check-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +24,7 @@ import { useMatchInvites, useMatches } from "@/hooks/queries/useMatches";
 import { usePreviousProjects } from "@/hooks/queries/usePreviousProjects";
 import { useProfessionalProfile } from "@/hooks/queries/useProfessionalProfile";
 import { useProfessionalStats } from "@/hooks/queries/useProfessionalStats";
+import { usePendingStatusCheck } from "@/hooks/queries/useReviews";
 import { clampScore } from "@/lib/utils";
 
 export default function ProDashboardPage() {
@@ -31,6 +33,7 @@ export default function ProDashboardPage() {
   const allMatches = useMatches();
   const previousProjects = usePreviousProjects();
   const stats = useProfessionalStats();
+  const pendingConfirmation = usePendingStatusCheck(true);
 
   const confirmed = (allMatches.data ?? []).filter(
     (m) => m.status === "MATCHED"
@@ -38,7 +41,11 @@ export default function ProDashboardPage() {
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
-      <PendingReviewDialog role="professional" active />
+      <PendingStatusCheckDialog />
+      <PendingReviewDialog
+        role="professional"
+        active={!pendingConfirmation.data}
+      />
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
           {profile.data ? (

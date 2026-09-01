@@ -141,14 +141,25 @@ export const matchOutcomeOptions: {
   },
 ];
 
-/** Espelha com.main.nexus.dto.MatchStatusCheckRequestDTO. */
+/**
+ * Espelha com.main.nexus.dto.MatchStatusCheckRequestDTO. `finalAmount` é
+ * obrigatório quando o outcome indica que houve trabalho (WORKING_TOGETHER /
+ * PROJECT_COMPLETED); ignorado nos demais.
+ */
 export interface MatchStatusCheckRequestDTO {
   outcome: MatchOutcome;
+  finalAmount: number | null;
 }
 
-/** Espelha com.main.nexus.dto.PendingStatusCheckDTO — só empresa responde. */
+/**
+ * Espelha com.main.nexus.dto.PendingStatusCheckDTO — janela de confirmação
+ * pós-contratação mais antiga que o usuário logado (contratante OU profissional)
+ * ainda não respondeu.
+ */
 export interface PendingStatusCheckDTO {
   matchId: number;
-  professionalName: string;
+  otherPartyName: string;
   projectTitle: string;
+  opportunityType: "PROJECT" | "JOB" | null;
+  suggestedAmount: number | null;
 }

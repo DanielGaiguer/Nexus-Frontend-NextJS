@@ -21,6 +21,40 @@ export interface MatchHistoryDTO {
   changedAt: string;
 }
 
+/** Espelha com.main.nexus.model.enums.MatchConfirmationStatus. */
+export type MatchConfirmationStatus =
+  | "AWAITING_RESPONSES"
+  | "CONFIRMED"
+  | "PENDING_ADMIN_REVIEW"
+  | "CLOSED_NO_CHARGE"
+  | "CLOSED_UNRESOLVED";
+
+/** Espelha com.main.nexus.model.enums.MatchConfirmationPendingReason. */
+export type MatchConfirmationPendingReason =
+  "VALUE_DIVERGENCE" | "NO_RESPONSE" | "COMPLETION_DISAGREEMENT";
+
+/** Espelha com.main.nexus.model.enums.MatchConfirmationResolution. */
+export type MatchConfirmationResolution =
+  "PARTIES_AGREED" | "ADMIN_SET_VALUE" | "ADMIN_COULD_NOT_CONFIRM";
+
+/**
+ * Espelha com.main.nexus.dto.MatchConfirmationDTO — janela de confirmação
+ * pós-contratação (30 dias). `null` no MatchResponseDTO enquanto a janela não
+ * abriu. `viewerAnswered` é null quando quem vê é o Admin.
+ */
+export interface MatchConfirmationDTO {
+  status: MatchConfirmationStatus;
+  pendingReason: MatchConfirmationPendingReason | null;
+  openedAt: string;
+  deadline: string;
+  suggestedAmount: number | null;
+  confirmedAmount: number | null;
+  companyAnswered: boolean;
+  professionalAnswered: boolean;
+  viewerAnswered: boolean | null;
+  adminReviewed: boolean;
+}
+
 /** Espelha com.main.nexus.dto.ProfessionalSummaryDTO. */
 export interface ProfessionalSummaryDTO {
   id: number;
@@ -68,6 +102,8 @@ export interface MatchResponseDTO {
    * uma ao longo do tempo se recusou/expirou e tentou de novo). Lista vazia em toda vaga sem
    * questionário vinculado. */
   screeningInvitations: ScreeningInvitationSummaryDTO[];
+  /** Janela de confirmação pós-contratação (Prompt 2). null enquanto a janela não abriu. */
+  confirmation: MatchConfirmationDTO | null;
 }
 
 /**

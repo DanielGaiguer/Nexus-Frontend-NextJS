@@ -381,6 +381,15 @@ function PortalsTab({
                         {customPortalPaymentStatusLabel[p.paymentStatus]}
                       </span>
                     </div>
+                    {p.status !== "CANCELED" && (
+                      <div className="text-muted-foreground text-xs">
+                        {p.subscriptionCardOnFile
+                          ? "cartão cadastrado"
+                          : "aguardando cartão do contratante"}
+                        {p.paymentGraceUntil &&
+                          ` · carência até ${formatDateOnly(p.paymentGraceUntil)}`}
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Badge

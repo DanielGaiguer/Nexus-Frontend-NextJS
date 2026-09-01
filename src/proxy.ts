@@ -150,9 +150,10 @@ export async function proxy(request: NextRequest) {
       );
     }
 
-    // Status check só é respondido pela empresa — mesma regra especial do
-    // AuthInterceptor original (`uri.contains("/status-check")`).
-    if (pathname.includes("/status-check") && session.role !== "COMPANY") {
+    // Confirmação pós-contratação (/matches/{id}/status-check): agora respondida
+    // pelos dois lados (contratante e profissional). Só o Admin não tem o que
+    // fazer ali.
+    if (pathname.includes("/status-check") && session.role === "ADMIN") {
       return NextResponse.redirect(
         new URL(roleHome[session.role], request.url)
       );

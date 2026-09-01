@@ -12,6 +12,8 @@ import {
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { BillingBlockBanner } from "@/components/billing/billing-block-banner";
+import { CommissionStatusCard } from "@/components/company/commission-status-card";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { PendingReviewDialog } from "@/components/matches/pending-review-dialog";
 import { PendingStatusCheckDialog } from "@/components/matches/pending-status-check-dialog";
@@ -95,6 +97,7 @@ export default function CompanyDashboardPage() {
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
       <PendingStatusCheckDialog />
       <PendingReviewDialog role="company" active={!data?.pendingStatusCheck} />
+      <BillingBlockBanner />
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
           {profile ? profile.companyName : <Skeleton className="h-8 w-56" />}
@@ -129,6 +132,8 @@ export default function CompanyDashboardPage() {
           accent="warning"
         />
       </div>
+
+      <CommissionStatusCard />
 
       <RecentOpportunitiesCard
         title="Projetos Recentes"

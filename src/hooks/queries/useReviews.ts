@@ -43,7 +43,8 @@ export function usePendingReview(role: "professional" | "company") {
   });
 }
 
-/** Só empresa responde — match com 14+ dias ainda sem resposta do status check. */
+/** Janela de confirmação pós-contratação aberta que o usuário logado (contratante
+ * OU profissional) ainda não respondeu. */
 export function usePendingStatusCheck(enabled: boolean) {
   return useQuery({
     queryKey: pendingStatusCheckKey(),

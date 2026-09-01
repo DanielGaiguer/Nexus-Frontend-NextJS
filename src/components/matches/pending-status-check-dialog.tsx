@@ -13,10 +13,9 @@ import {
 import { usePendingStatusCheck } from "@/hooks/queries/useReviews";
 
 /**
- * Auto-abre no dashboard da empresa quando há um match com 14+ dias ainda
- * sem resposta do status check — espelha #statusCheckModal de
- * company-dashboard.html. Tem prioridade sobre PendingReviewDialog (match
- * ainda ativo, é mais urgente).
+ * Auto-abre no dashboard (contratante OU profissional) quando há uma janela de
+ * confirmação pós-contratação aberta que este lado ainda não respondeu. Tem
+ * prioridade sobre PendingReviewDialog.
  */
 export function PendingStatusCheckDialog() {
   const { data: pending } = usePendingStatusCheck(true);
@@ -28,18 +27,20 @@ export function PendingStatusCheckDialog() {
     <Dialog open={open} onOpenChange={(next) => !next && setDismissed(true)}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Como está indo o match?</DialogTitle>
+          <DialogTitle>Confirme sua contratação</DialogTitle>
           {pending && (
             <DialogDescription>
-              Seu match com {pending.professionalName} no projeto &quot;
-              {pending.projectTitle}
-              &quot; completa 30 dias em breve.
+              Sua contratação com {pending.otherPartyName} no projeto &quot;
+              {pending.projectTitle}&quot; completou 30 dias. Confirme se o
+              trabalho foi concluído e o valor final combinado.
             </DialogDescription>
           )}
         </DialogHeader>
         {pending && (
           <StatusCheckForm
             matchId={pending.matchId}
+            isJob={pending.opportunityType === "JOB"}
+            suggestedAmount={pending.suggestedAmount}
             onSubmitted={() => setDismissed(true)}
           />
         )}

@@ -62,6 +62,10 @@ export interface CustomPortalDTO {
   subscriptionStartDate: string;
   nextDueDate: string;
   paymentStatus: CustomPortalPaymentStatus;
+  /** true quando o contratante já cadastrou o cartão da assinatura recorrente. */
+  subscriptionCardOnFile: boolean;
+  /** Data-limite da carência após uma cobrança falhar; null = sem carência pendente. */
+  paymentGraceUntil: string | null;
   /** true quando o portal nasceu de uma solicitação; false quando o Admin criou direto. */
   createdFromRequest: boolean;
   createdAt: string;
@@ -250,4 +254,57 @@ export const customPortalPaymentStatusLabel: Record<
   UP_TO_DATE: "Em dia",
   OVERDUE: "Atrasado",
   CANCELED: "Cancelado",
+};
+
+// ── Assinatura & cobrança da mensalidade ─────────────────────────────
+
+/** Espelha com.main.nexus.model.enums.PortalSubscriptionChargeStatus. */
+export type PortalSubscriptionChargeStatus =
+  "PENDING" | "PROCESSING" | "PAID" | "FAILED" | "CANCELED";
+
+/** Espelha com.main.nexus.dto.PortalSubscriptionStatusDTO. */
+export interface PortalSubscriptionStatusDTO {
+  hasPortal: boolean;
+  billingEnabled: boolean;
+  simulated: boolean;
+  /** chave pública do Mercado Pago para o Card Brick (vazia fora do modo real). */
+  publicKey: string;
+  portalStatus: CustomPortalStatus | null;
+  paymentStatus: CustomPortalPaymentStatus | null;
+  planName: string | null;
+  planPrice: number | null;
+  nextDueDate: string | null;
+  paymentGraceUntil: string | null;
+  hasCard: boolean;
+  cardBrand: string | null;
+  cardLast4: string | null;
+}
+
+/** Espelha com.main.nexus.dto.PortalSubscriptionChargeDTO. */
+export interface PortalSubscriptionChargeDTO {
+  id: number;
+  portalId: number;
+  companyId: number;
+  companyName: string;
+  subdomain: string;
+  planName: string;
+  amount: number;
+  dueDate: string;
+  status: PortalSubscriptionChargeStatus;
+  mpPaymentId: string | null;
+  failureReason: string | null;
+  attempts: number;
+  createdAt: string;
+  paidAt: string | null;
+}
+
+export const portalSubscriptionChargeStatusLabel: Record<
+  PortalSubscriptionChargeStatus,
+  string
+> = {
+  PENDING: "Pendente",
+  PROCESSING: "Processando",
+  PAID: "Paga",
+  FAILED: "Recusada",
+  CANCELED: "Cancelada",
 };
