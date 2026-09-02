@@ -225,6 +225,80 @@ export default function AdminApprovalsPage() {
           data={filtered}
           searchPlaceholder="Buscar contratante..."
           emptyMessage="Nenhum contratante encontrado."
+          renderMobileCard={(company) => {
+            const status = statusLabels[company.status] ?? {
+              label: company.status,
+              variant: "outline" as const,
+            };
+            return (
+              <div className="bg-card flex flex-col gap-2 rounded-lg border p-3 text-sm">
+                <div className="flex items-start justify-between gap-2">
+                  <Link
+                    href={`/admin/company/${company.id}`}
+                    className="flex min-w-0 items-center gap-2 hover:underline"
+                  >
+                    <Avatar className="size-8 shrink-0">
+                      <AvatarImage
+                        src={company.profilePhotoUrl ?? undefined}
+                        alt=""
+                      />
+                      <AvatarFallback>
+                        {company.companyName.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="min-w-0 font-medium break-words">
+                      {company.companyName}
+                    </span>
+                  </Link>
+                  <Badge variant={status.variant} className="shrink-0">
+                    {status.label}
+                  </Badge>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                  <CompanyTypeBadge type={company.type} />
+                  <span className="text-muted-foreground tabular-nums">
+                    {company.taxId ?? "—"}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {[company.city, company.uf].filter(Boolean).join(", ") ||
+                      "—"}
+                  </span>
+                </div>
+                {company.description && (
+                  <p className="text-muted-foreground text-xs break-words">
+                    {company.description}
+                  </p>
+                )}
+                {company.status === "PENDING" && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <RejectCompanyDialog
+                      companyId={company.id}
+                      companyName={company.companyName}
+                    />
+                    <Button
+                      size="sm"
+                      disabled={approveCompany.isPending}
+                      onClick={() =>
+                        approveCompany.mutate(company.id, {
+                          onSuccess: () =>
+                            toast.success("Contratante aprovado com sucesso!"),
+                          onError: (error) =>
+                            toast.error(
+                              error instanceof ApiError
+                                ? error.message
+                                : "Não foi possível aprovar."
+                            ),
+                        })
+                      }
+                    >
+                      <Check className="size-4" />
+                      Aprovar contratante
+                    </Button>
+                  </div>
+                )}
+              </div>
+            );
+          }}
         />
       )}
     </div>

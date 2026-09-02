@@ -5,6 +5,12 @@ import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import {
+  RecordCard,
+  RecordCardActions,
+  RecordCardHeader,
+  RecordField,
+} from "@/components/shared/record-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,6 +50,7 @@ import { ApiError } from "@/lib/api-client";
 import {
   matchConfirmationReasonLabels,
   matchConfirmationStatusLabels,
+  type AdminConfirmationQueueItemDTO,
   type AdminMatchConfirmationDTO,
 } from "@/types/admin";
 import { commissionChargeStatusLabels } from "@/types/billing";
@@ -93,6 +100,144 @@ function statusBadgeClass(status: MatchConfirmationStatus) {
   }
 }
 
+// ─── Células compartilhadas (tabela desktop + card mobile) ────────────
+
+function StatusCell({ c }: { c: AdminMatchConfirmationDTO }) {
+  return (
+    <div className="flex flex-col items-end gap-1 md:items-start">
+      <Badge variant="secondary" className={statusBadgeClass(c.status)}>
+        {matchConfirmationStatusLabels[c.status]}
+      </Badge>
+      {c.pendingReason && (
+        <span className="text-muted-foreground text-xs">
+          {matchConfirmationReasonLabels[c.pendingReason]}
+        </span>
+      )}
+      {c.adminReviewed && (
+        <span className="text-success flex items-center gap-1 text-xs">
+          <BadgeCheck className="size-3" />
+          Revisado
+        </span>
+      )}
+    </div>
+  );
+}
+
+function PartyOutcome({
+  outcome,
+  amount,
+}: {
+  outcome: string | null;
+  amount: number | null;
+}) {
+  if (!outcome) return <span className="text-muted-foreground">—</span>;
+  return (
+    <>
+      {outcomeLabel[outcome] ?? outcome}
+      {amount != null && (
+        <div className="text-muted-foreground text-xs tabular-nums">
+          {money(amount)}
+        </div>
+      )}
+    </>
+  );
+}
+
+function ValorFinal({ c }: { c: AdminMatchConfirmationDTO }) {
+  return (
+    <div className="text-sm tabular-nums">
+      {c.confirmedAmount != null ? (
+        <span className="text-success font-semibold">
+          {money(c.confirmedAmount)}
+          {c.resolution === "ADMIN_SET_VALUE" && (
+            <span className="text-muted-foreground ml-1 text-xs">(suporte)</span>
+          )}
+        </span>
+      ) : c.status === "CLOSED_NO_CHARGE" || c.status === "CLOSED_UNRESOLVED" ? (
+        <span className="text-muted-foreground">sem valor</span>
+      ) : (
+        <span className="text-muted-foreground">
+          sug. {money(c.suggestedAmount)}
+        </span>
+      )}
+      {c.chargeStatus && (
+        <div className="text-muted-foreground mt-0.5 text-xs">
+          Comissão: {chargeLabel(c.chargeStatus)}
+          {c.chargeAmount != null && ` · ${money(c.chargeAmount)}`}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Botão "Marcar revisado / Editar nota" + o dialog. Estado por linha. */
+function ReviewControl({ c }: { c: AdminMatchConfirmationDTO }) {
+  const [open, setOpen] = useState(false);
+  const [note, setNote] = useState("");
+  const review = useReviewConfirmation();
+
+  return (
+    <>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => {
+          setNote(c.adminNote ?? "");
+          setOpen(true);
+        }}
+      >
+        {c.adminReviewed ? "Editar nota" : "Marcar revisado"}
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Marcar como revisado</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <Label htmlFor={`note-${c.matchId}`}>Nota (opcional)</Label>
+            <Textarea
+              id={`note-${c.matchId}`}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="O que você verificou / decidiu neste caso"
+              rows={4}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              disabled={review.isPending}
+              onClick={() =>
+                review.mutate(
+                  { matchId: c.matchId, note: note.trim() || null },
+                  {
+                    onSuccess: () => {
+                      toast.success("Caso marcado como revisado.");
+                      setOpen(false);
+                    },
+                    onError: (error) =>
+                      toast.error(
+                        error instanceof ApiError
+                          ? error.message
+                          : "Não foi possível salvar.",
+                      ),
+                  },
+                )
+              }
+            >
+              {review.isPending ? "Salvando…" : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+// ─── Página ──────────────────────────────────────────────────────────
+
 export default function AdminConfirmationsPage() {
   const [statusFilter, setStatusFilter] = useState<
     MatchConfirmationStatus | "ALL"
@@ -121,8 +266,8 @@ export default function AdminConfirmationsPage() {
         }
       >
         <CardContent className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2 text-sm font-semibold">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
               <ShieldAlert
                 className={
                   pendingCount > 0 ? "text-destructive size-4" : "size-4"
@@ -145,6 +290,7 @@ export default function AdminConfirmationsPage() {
             asChild
             variant={pendingCount > 0 ? "default" : "outline"}
             size="sm"
+            className="w-full sm:w-auto"
           >
             <Link href="/admin/confirmations/reconciliation">
               Abrir fila de reconciliação
@@ -185,87 +331,96 @@ export default function AdminConfirmationsPage() {
                   Nenhuma empresa pedindo atenção agora.
                 </p>
               ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Empresa</TableHead>
-                        <TableHead className="text-center">
-                          Em análise
-                        </TableHead>
-                        <TableHead className="text-center">
-                          Ninguém concluiu
-                        </TableHead>
-                        <TableHead className="text-center">
-                          Divergência
-                        </TableHead>
-                        <TableHead className="text-center">
-                          Sem resposta
-                        </TableHead>
-                        <TableHead className="text-center">
-                          Não revisados
-                        </TableHead>
-                        <TableHead className="text-right">Ação</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {queue.data.map((row) => (
-                        <TableRow key={row.companyId}>
-                          <TableCell>
-                            <div className="flex flex-wrap items-center gap-1.5 font-medium">
-                              {row.companyName}
-                              {row.suspicious && (
-                                <Badge className="bg-destructive/15 text-destructive">
-                                  <ShieldAlert className="size-3" />
-                                  Suspeita
-                                </Badge>
-                              )}
-                              {row.underObservation && (
-                                <Badge
-                                  variant="outline"
-                                  className="border-warning/40 text-warning"
-                                >
-                                  <Eye className="size-3" />
-                                  Sob observação
-                                </Badge>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-center tabular-nums">
-                            {row.pendingReviewCount}
-                          </TableCell>
-                          <TableCell className="text-center tabular-nums">
-                            {row.closedNoChargeCount}
-                          </TableCell>
-                          <TableCell className="text-center tabular-nums">
-                            {row.valueDivergenceCount}
-                          </TableCell>
-                          <TableCell className="text-center tabular-nums">
-                            {row.noResponseCount}
-                          </TableCell>
-                          <TableCell className="text-center tabular-nums">
-                            {row.unreviewedCount}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button variant="ghost" size="sm" asChild>
-                              <Link href={`/admin/company/${row.companyId}`}>
-                                <Eye className="size-3.5" />
-                                Histórico
-                              </Link>
-                            </Button>
-                          </TableCell>
+                <>
+                  {/* Mobile */}
+                  <div className="flex flex-col gap-2 px-4 md:hidden">
+                    {queue.data.map((row) => (
+                      <QueueCardMobile key={row.companyId} row={row} />
+                    ))}
+                  </div>
+                  {/* Desktop */}
+                  <div className="hidden md:block">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Empresa</TableHead>
+                          <TableHead className="text-center">
+                            Em análise
+                          </TableHead>
+                          <TableHead className="text-center">
+                            Ninguém concluiu
+                          </TableHead>
+                          <TableHead className="text-center">
+                            Divergência
+                          </TableHead>
+                          <TableHead className="text-center">
+                            Sem resposta
+                          </TableHead>
+                          <TableHead className="text-center">
+                            Não revisados
+                          </TableHead>
+                          <TableHead className="text-right">Ação</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                      </TableHeader>
+                      <TableBody>
+                        {queue.data.map((row) => (
+                          <TableRow key={row.companyId}>
+                            <TableCell>
+                              <div className="flex flex-wrap items-center gap-1.5 font-medium">
+                                {row.companyName}
+                                {row.suspicious && (
+                                  <Badge className="bg-destructive/15 text-destructive">
+                                    <ShieldAlert className="size-3" />
+                                    Suspeita
+                                  </Badge>
+                                )}
+                                {row.underObservation && (
+                                  <Badge
+                                    variant="outline"
+                                    className="border-warning/40 text-warning"
+                                  >
+                                    <Eye className="size-3" />
+                                    Sob observação
+                                  </Badge>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-center tabular-nums">
+                              {row.pendingReviewCount}
+                            </TableCell>
+                            <TableCell className="text-center tabular-nums">
+                              {row.closedNoChargeCount}
+                            </TableCell>
+                            <TableCell className="text-center tabular-nums">
+                              {row.valueDivergenceCount}
+                            </TableCell>
+                            <TableCell className="text-center tabular-nums">
+                              {row.noResponseCount}
+                            </TableCell>
+                            <TableCell className="text-center tabular-nums">
+                              {row.unreviewedCount}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button variant="ghost" size="sm" asChild>
+                                <Link href={`/admin/company/${row.companyId}`}>
+                                  <Eye className="size-3.5" />
+                                  Histórico
+                                </Link>
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="all" className="mt-4 flex flex-col gap-3">
-          <div className="max-w-xs space-y-1">
+          <div className="w-full space-y-1 sm:max-w-xs">
             <Label className="text-xs">Status</Label>
             <Select
               value={statusFilter}
@@ -286,16 +441,25 @@ export default function AdminConfirmationsPage() {
             </Select>
           </div>
 
-          <Card>
-            <CardContent className="px-0">
-              {list.isLoading ? (
-                <Skeleton className="mx-4 h-40" />
-              ) : !list.data || list.data.length === 0 ? (
-                <p className="text-muted-foreground px-4 py-6 text-center text-sm">
-                  Nenhuma confirmação neste filtro.
-                </p>
-              ) : (
-                <div className="overflow-x-auto">
+          {list.isLoading ? (
+            <Skeleton className="h-40" />
+          ) : !list.data || list.data.length === 0 ? (
+            <Card>
+              <CardContent className="text-muted-foreground py-6 text-center text-sm">
+                Nenhuma confirmação neste filtro.
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {/* Mobile */}
+              <div className="flex flex-col gap-2 md:hidden">
+                {list.data.map((c) => (
+                  <ConfirmationCard key={c.matchId} confirmation={c} />
+                ))}
+              </div>
+              {/* Desktop */}
+              <Card className="hidden p-0 md:block">
+                <CardContent className="p-0">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -313,13 +477,61 @@ export default function AdminConfirmationsPage() {
                       ))}
                     </TableBody>
                   </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+function QueueCardMobile({ row }: { row: AdminConfirmationQueueItemDTO }) {
+  return (
+    <RecordCard>
+      <div className="flex flex-wrap items-center gap-1.5 font-medium">
+        {row.companyName}
+        {row.suspicious && (
+          <Badge className="bg-destructive/15 text-destructive">
+            <ShieldAlert className="size-3" />
+            Suspeita
+          </Badge>
+        )}
+        {row.underObservation && (
+          <Badge
+            variant="outline"
+            className="border-warning/40 text-warning"
+          >
+            <Eye className="size-3" />
+            Sob observação
+          </Badge>
+        )}
+      </div>
+      <RecordField label="Em análise">
+        <span className="tabular-nums">{row.pendingReviewCount}</span>
+      </RecordField>
+      <RecordField label="Ninguém concluiu">
+        <span className="tabular-nums">{row.closedNoChargeCount}</span>
+      </RecordField>
+      <RecordField label="Divergência">
+        <span className="tabular-nums">{row.valueDivergenceCount}</span>
+      </RecordField>
+      <RecordField label="Sem resposta">
+        <span className="tabular-nums">{row.noResponseCount}</span>
+      </RecordField>
+      <RecordField label="Não revisados">
+        <span className="tabular-nums">{row.unreviewedCount}</span>
+      </RecordField>
+      <RecordCardActions>
+        <Button variant="outline" size="sm" asChild>
+          <Link href={`/admin/company/${row.companyId}`}>
+            <Eye className="size-3.5" />
+            Histórico
+          </Link>
+        </Button>
+      </RecordCardActions>
+    </RecordCard>
   );
 }
 
@@ -328,10 +540,6 @@ function ConfirmationRow({
 }: {
   confirmation: AdminMatchConfirmationDTO;
 }) {
-  const [open, setOpen] = useState(false);
-  const [note, setNote] = useState("");
-  const review = useReviewConfirmation();
-
   return (
     <TableRow>
       <TableCell>
@@ -346,132 +554,63 @@ function ConfirmationRow({
         </div>
       </TableCell>
       <TableCell>
-        <div className="flex flex-col gap-1">
-          <Badge variant="secondary" className={statusBadgeClass(c.status)}>
-            {matchConfirmationStatusLabels[c.status]}
-          </Badge>
-          {c.pendingReason && (
-            <span className="text-muted-foreground text-xs">
-              {matchConfirmationReasonLabels[c.pendingReason]}
-            </span>
-          )}
-          {c.adminReviewed && (
-            <span className="text-success flex items-center gap-1 text-xs">
-              <BadgeCheck className="size-3" />
-              Revisado
-            </span>
-          )}
-        </div>
+        <StatusCell c={c} />
       </TableCell>
       <TableCell className="text-sm">
-        {c.companyOutcome ? (
-          <>
-            {outcomeLabel[c.companyOutcome] ?? c.companyOutcome}
-            {c.companyAmount != null && (
-              <div className="text-muted-foreground text-xs tabular-nums">
-                {money(c.companyAmount)}
-              </div>
-            )}
-          </>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        )}
+        <PartyOutcome outcome={c.companyOutcome} amount={c.companyAmount} />
       </TableCell>
       <TableCell className="text-sm">
-        {c.professionalOutcome ? (
-          <>
-            {outcomeLabel[c.professionalOutcome] ?? c.professionalOutcome}
-            {c.professionalAmount != null && (
-              <div className="text-muted-foreground text-xs tabular-nums">
-                {money(c.professionalAmount)}
-              </div>
-            )}
-          </>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        )}
+        <PartyOutcome
+          outcome={c.professionalOutcome}
+          amount={c.professionalAmount}
+        />
       </TableCell>
-      <TableCell className="text-sm tabular-nums">
-        {c.confirmedAmount != null ? (
-          <span className="text-success font-semibold">
-            {money(c.confirmedAmount)}
-            {c.resolution === "ADMIN_SET_VALUE" && (
-              <span className="text-muted-foreground ml-1 text-xs">
-                (suporte)
-              </span>
-            )}
-          </span>
-        ) : c.status === "CLOSED_NO_CHARGE" ||
-          c.status === "CLOSED_UNRESOLVED" ? (
-          <span className="text-muted-foreground">sem valor</span>
-        ) : (
-          <span className="text-muted-foreground">
-            sug. {money(c.suggestedAmount)}
-          </span>
-        )}
-        {c.chargeStatus && (
-          <div className="text-muted-foreground mt-0.5 text-xs">
-            Comissão: {chargeLabel(c.chargeStatus)}
-            {c.chargeAmount != null && ` · ${money(c.chargeAmount)}`}
-          </div>
-        )}
+      <TableCell>
+        <ValorFinal c={c} />
       </TableCell>
       <TableCell className="text-right">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => {
-            setNote(c.adminNote ?? "");
-            setOpen(true);
-          }}
-        >
-          {c.adminReviewed ? "Editar nota" : "Marcar revisado"}
-        </Button>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Marcar como revisado</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-1.5">
-              <Label htmlFor={`note-${c.matchId}`}>Nota (opcional)</Label>
-              <Textarea
-                id={`note-${c.matchId}`}
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="O que você verificou / decidiu neste caso"
-                rows={4}
-              />
-            </div>
-            <DialogFooter>
-              <Button variant="ghost" onClick={() => setOpen(false)}>
-                Cancelar
-              </Button>
-              <Button
-                disabled={review.isPending}
-                onClick={() =>
-                  review.mutate(
-                    { matchId: c.matchId, note: note.trim() || null },
-                    {
-                      onSuccess: () => {
-                        toast.success("Caso marcado como revisado.");
-                        setOpen(false);
-                      },
-                      onError: (error) =>
-                        toast.error(
-                          error instanceof ApiError
-                            ? error.message
-                            : "Não foi possível salvar."
-                        ),
-                    }
-                  )
-                }
-              >
-                {review.isPending ? "Salvando…" : "Salvar"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <ReviewControl c={c} />
       </TableCell>
     </TableRow>
+  );
+}
+
+function ConfirmationCard({
+  confirmation: c,
+}: {
+  confirmation: AdminMatchConfirmationDTO;
+}) {
+  return (
+    <RecordCard>
+      <RecordCardHeader
+        title={
+          <Link
+            href={`/admin/company/${c.companyId}`}
+            className="hover:underline"
+          >
+            {c.companyName}
+          </Link>
+        }
+        aside={<StatusCell c={c} />}
+      />
+      <p className="text-muted-foreground text-xs break-words">
+        {c.professionalName} · {c.projectTitle}
+      </p>
+      <RecordField label="Contratante disse">
+        <PartyOutcome outcome={c.companyOutcome} amount={c.companyAmount} />
+      </RecordField>
+      <RecordField label="Profissional disse">
+        <PartyOutcome
+          outcome={c.professionalOutcome}
+          amount={c.professionalAmount}
+        />
+      </RecordField>
+      <RecordField label="Valor final">
+        <ValorFinal c={c} />
+      </RecordField>
+      <RecordCardActions>
+        <ReviewControl c={c} />
+      </RecordCardActions>
+    </RecordCard>
   );
 }

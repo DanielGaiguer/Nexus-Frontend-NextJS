@@ -44,7 +44,10 @@ export function SupportChatWindow({
     side,
     conversationId
   );
-  const { data: messages, isLoading } = useSupportMessages(side, conversationId);
+  const { data: messages, isLoading } = useSupportMessages(
+    side,
+    conversationId
+  );
   const closeConversation = useCloseSupportConversation();
 
   const isOpen = conversation?.status === "OPEN";
@@ -70,15 +73,16 @@ export function SupportChatWindow({
       ? (conversation?.userName ?? "Conversa de suporte")
       : "Suporte Nexus";
   const subtitle =
-    conversation?.subject ??
-    (side === "admin" ? roleLabel : "Atendimento");
+    conversation?.subject ?? (side === "admin" ? roleLabel : "Atendimento");
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-6rem)] max-w-[848px] flex-col overflow-hidden rounded-lg border">
+    <div className="mx-auto flex h-[calc(100dvh-6rem)] max-w-4xl flex-col overflow-hidden rounded-lg border">
       <div className="flex shrink-0 items-center gap-3 border-b p-3">
         <button
           type="button"
-          onClick={() => router.push(side === "admin" ? "/admin/support" : "/support")}
+          onClick={() =>
+            router.push(side === "admin" ? "/admin/support" : "/support")
+          }
           className="text-muted-foreground hover:text-foreground shrink-0"
           aria-label="Voltar"
         >
@@ -119,8 +123,15 @@ export function SupportChatWindow({
             {side === "admin" && isOpen && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button size="sm" variant="outline">
-                    Fechar conversa
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="shrink-0"
+                    title="Fechar conversa"
+                    aria-label="Fechar conversa"
+                  >
+                    <Lock className="size-4 sm:hidden" />
+                    <span className="hidden sm:inline">Fechar conversa</span>
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -155,13 +166,14 @@ export function SupportChatWindow({
             )}
           </>
         )}
-        {isOpen && !isConnected && (
-          <span className="text-warning flex shrink-0 items-center gap-1 text-xs">
-            <WifiOff className="size-3.5" />
-            Conectando…
-          </span>
-        )}
       </div>
+
+      {isOpen && !isConnected && (
+        <div className="text-warning bg-warning/10 flex shrink-0 items-center gap-2 px-4 py-2 text-xs">
+          <WifiOff className="size-3.5 shrink-0" />
+          Conectando…
+        </div>
+      )}
 
       {!isOpen && !loadingConv && (
         <div className="bg-muted text-muted-foreground flex shrink-0 items-center gap-2 px-4 py-2 text-sm">

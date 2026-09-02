@@ -4,13 +4,14 @@ import {
   DollarSign,
   Eye,
   FileQuestion,
+  FileText,
   FolderOpen,
+  GitCompare,
   Star,
   User,
   Users,
   Wrench,
 } from "lucide-react";
-import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { AcceptProposalDialog } from "@/components/company/accept-proposal-dialog";
@@ -20,16 +21,18 @@ import { ProposalDetails } from "@/components/matches/proposal-details";
 import { ScoreBreakdownGrid } from "@/components/matches/score-breakdown-grid";
 import { ScreeningInvitationBadges } from "@/components/matches/screening-invitation-badges";
 import { ScoreRing } from "@/components/professional/score-ring";
+import {
+  RowActions,
+  type RowActionItem,
+} from "@/components/shared/row-actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import type { MatchResponseDTO } from "@/types/match";
 import {
@@ -61,22 +64,79 @@ function formatCurrency(value: number) {
  * visão geral em company/proposals (com `showProjectTitle`, já que ali cruza vários projetos).
  * `match` é o Match por trás da proposta (achado via proposal.matchId na tela que lista) --
  * pode não existir ainda em teoria, então os botões que dependem dele somem com segurança.
- * `extraActions` entra depois dos botões padrão -- usado pela visão geral pra anexar
- * chat/contato/avaliação quando a proposta já foi aceita. */
+ * Ações: as de decisão (Aceitar/Recusar + `primaryActions`) ficam visíveis; navegação e
+ * diálogos secundários vão pro menu "Ações" (base + `menuItems` da tela). */
 export function ProposalCard({
   proposal,
   match,
   showProjectTitle = false,
-  extraActions,
+  primaryActions,
+  menuItems,
 }: {
   proposal: ProposalResponseDTO;
   match?: MatchResponseDTO;
   showProjectTitle?: boolean;
-  extraActions?: ReactNode;
+  /** Ações de decisão extras da tela (ex.: "Cancelar Match" numa proposta já aceita). */
+  primaryActions?: ReactNode;
+  /** Itens extras pro menu "Ações" (ex.: chat/contato/avaliar numa proposta aceita). */
+  menuItems?: RowActionItem[];
 }) {
   const statusLabel = proposal.autoRejectedPositionFilled
     ? "Vaga preenchida"
     : proposalStatusLabels[proposal.status];
+
+  const items: RowActionItem[] = [
+    {
+      key: "opp",
+      label: "Ver oportunidade",
+      icon: Eye,
+      href: `/public/opportunity/${proposal.projectId}`,
+    },
+    {
+      key: "prof",
+      label: "Ver profissional",
+      icon: User,
+      href:
+        match?.status === "MATCHED"
+          ? `/company/professionals/${proposal.professionalId}`
+          : `/public/professional/${proposal.professionalId}`,
+    },
+  ];
+  if (match) {
+    const m = match;
+    items.push({
+      key: "compare",
+      label: "Comparar",
+      icon: GitCompare,
+      dialog: (p) => (
+        <MatchCompareDialog match={m} viewer="company" hideTrigger {...p} />
+      ),
+    });
+  }
+  if (proposal.screeningInvitations.length > 0) {
+    items.push({
+      key: "screening",
+      label: "Ver processo",
+      icon: FileQuestion,
+      href: `/company/screening-invitations/${proposal.screeningInvitations[0].id}`,
+    });
+  }
+  items.push({
+    key: "details",
+    label: "Ver proposta completa",
+    icon: FileText,
+    dialog: ({ open, onOpenChange }) => (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="thin-scrollbar max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Proposta de {proposal.professionalName}</DialogTitle>
+          </DialogHeader>
+          <ProposalDetails proposal={proposal} />
+        </DialogContent>
+      </Dialog>
+    ),
+  });
+  if (menuItems) items.push(...menuItems);
 
   return (
     <Card>
@@ -154,64 +214,29 @@ export function ProposalCard({
 
         <ScoreBreakdownGrid breakdown={proposal.scoreBreakdown} />
       </CardContent>
-      <div className="flex flex-wrap justify-end gap-2 border-t px-6 py-3">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href={`/public/opportunity/${proposal.projectId}`}>
-            <Eye className="size-4" />
-            Ver oportunidade
-          </Link>
-        </Button>
-        <Button variant="ghost" size="sm" asChild>
-          <Link
-            href={
-              match?.status === "MATCHED"
-                ? `/company/professionals/${proposal.professionalId}`
-                : `/public/professional/${proposal.professionalId}`
-            }
-          >
-            <User className="size-4" />
-            Ver profissional
-          </Link>
-        </Button>
-        {match && <MatchCompareDialog match={match} viewer="company" />}
-        {proposal.screeningInvitations.length > 0 && (
-          <Button size="sm" variant="outline" asChild>
-            <Link
-              href={`/company/screening-invitations/${proposal.screeningInvitations[0].id}`}
-            >
-              <FileQuestion className="size-4" />
-              Ver processo
-            </Link>
-          </Button>
-        )}
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm">
-              Ver proposta completa
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="thin-scrollbar max-h-[85vh] overflow-y-auto sm:max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Proposta de {proposal.professionalName}</DialogTitle>
-            </DialogHeader>
-            <ProposalDetails proposal={proposal} />
-          </DialogContent>
-        </Dialog>
-        {proposal.status === "PENDING" && (
-          <>
-            <RejectProposalDialog
-              proposalId={proposal.id}
-              projectId={proposal.projectId}
-              professionalName={proposal.professionalName}
-            />
-            <AcceptProposalDialog
-              proposalId={proposal.id}
-              projectId={proposal.projectId}
-              professionalName={proposal.professionalName}
-            />
-          </>
-        )}
-        {extraActions}
+      <div className="border-t px-6 py-3">
+        <RowActions
+          primary={
+            <>
+              {proposal.status === "PENDING" && (
+                <>
+                  <RejectProposalDialog
+                    proposalId={proposal.id}
+                    projectId={proposal.projectId}
+                    professionalName={proposal.professionalName}
+                  />
+                  <AcceptProposalDialog
+                    proposalId={proposal.id}
+                    projectId={proposal.projectId}
+                    professionalName={proposal.professionalName}
+                  />
+                </>
+              )}
+              {primaryActions}
+            </>
+          }
+          items={items}
+        />
       </div>
     </Card>
   );

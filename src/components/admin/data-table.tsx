@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Search,
 } from "lucide-react";
+import type { ReactNode } from "react";
 
 import {
   adminTableFeatures,
@@ -25,6 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 /** `DataTable` genérico do admin — ordenação por coluna, busca global e paginação (10/página). */
 export function DataTable<TData extends RowData>({
@@ -34,6 +36,7 @@ export function DataTable<TData extends RowData>({
   searchPlaceholder = "Buscar...",
   emptyMessage = "Nenhum resultado encontrado.",
   hideSearch = false,
+  renderMobileCard,
 }: {
   // Array de colunas heterogêneo (cada uma com seu próprio TValue de
   // accessor) — igual ao v8, só tipa em ColumnDef<Features, TData, any>[].
@@ -45,6 +48,10 @@ export function DataTable<TData extends RowData>({
   emptyMessage?: string;
   /** Pra telas que já têm seu próprio campo "Buscar" fora da tabela (ex.: admin/projects, que espelha o painel de filtros único do admin-projects.html original) — evita um segundo campo de busca redundante. */
   hideSearch?: boolean;
+  /** Abaixo de `md`, cada linha é renderizada por esta função como um card
+   * empilhado (mesma paginação/busca/ordenação). Sem ela, a tabela cai no
+   * scroll horizontal do container. */
+  renderMobileCard?: (row: TData) => ReactNode;
 }) {
   const table = useTable({
     features: adminTableFeatures,
@@ -72,7 +79,26 @@ export function DataTable<TData extends RowData>({
         </div>
       )}
 
-      <div className="bg-card min-w-0 rounded-md border">
+      {renderMobileCard && (
+        <div className="flex flex-col gap-2 md:hidden">
+          {rows.length === 0 ? (
+            <div className="bg-card text-muted-foreground rounded-md border p-6 text-center text-sm">
+              {emptyMessage}
+            </div>
+          ) : (
+            rows.map((row) => (
+              <div key={row.id}>{renderMobileCard(row.original)}</div>
+            ))
+          )}
+        </div>
+      )}
+
+      <div
+        className={cn(
+          "bg-card min-w-0 rounded-md border",
+          renderMobileCard && "hidden md:block"
+        )}
+      >
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (

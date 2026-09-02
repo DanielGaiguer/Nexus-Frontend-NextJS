@@ -225,40 +225,72 @@ export function SubscriptionBillingCard() {
         </div>
 
         {charges && charges.length > 0 && (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Vencimento</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {charges.map((c) => (
-                  <TableRow key={c.id}>
-                    <TableCell>{dateOnly(c.dueDate)}</TableCell>
-                    <TableCell className="tabular-nums">
-                      {money(c.amount)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="secondary"
-                        className={chargeBadgeClass[c.status] ?? ""}
-                      >
-                        {portalSubscriptionChargeStatusLabel[c.status]}
-                      </Badge>
-                      {c.failureReason && (
-                        <div className="text-destructive mt-0.5 text-xs">
-                          {c.failureReason}
-                        </div>
-                      )}
-                    </TableCell>
+          <>
+            {/* Mobile: lista */}
+            <div className="flex flex-col gap-2 sm:hidden">
+              {charges.map((c) => (
+                <div
+                  key={c.id}
+                  className="flex flex-col gap-1 rounded-md border p-3"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium">{dateOnly(c.dueDate)}</span>
+                    <Badge
+                      variant="secondary"
+                      className={chargeBadgeClass[c.status] ?? ""}
+                    >
+                      {portalSubscriptionChargeStatusLabel[c.status]}
+                    </Badge>
+                  </div>
+                  <div className="text-muted-foreground flex items-center justify-between gap-2 text-xs">
+                    <span>Valor</span>
+                    <span className="tabular-nums">{money(c.amount)}</span>
+                  </div>
+                  {c.failureReason && (
+                    <div className="text-destructive text-xs">
+                      {c.failureReason}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop: tabela */}
+            <div className="hidden sm:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Vencimento</TableHead>
+                    <TableHead>Valor</TableHead>
+                    <TableHead>Status</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {charges.map((c) => (
+                    <TableRow key={c.id}>
+                      <TableCell>{dateOnly(c.dueDate)}</TableCell>
+                      <TableCell className="tabular-nums">
+                        {money(c.amount)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="secondary"
+                          className={chargeBadgeClass[c.status] ?? ""}
+                        >
+                          {portalSubscriptionChargeStatusLabel[c.status]}
+                        </Badge>
+                        {c.failureReason && (
+                          <div className="text-destructive mt-0.5 text-xs">
+                            {c.failureReason}
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </>
         )}
 
         <p className="text-muted-foreground text-xs">

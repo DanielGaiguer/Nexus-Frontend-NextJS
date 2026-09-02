@@ -95,7 +95,7 @@ export function CompanyConfirmationsCard({ companyId }: { companyId: number }) {
               <Metric label="Aguardando" value={data.awaitingCount} />
             </div>
 
-            <label className="flex items-center gap-3 rounded-md border p-3">
+            <label className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border p-3">
               <Switch
                 checked={data.underObservation}
                 disabled={setObservation.isPending}
@@ -117,7 +117,7 @@ export function CompanyConfirmationsCard({ companyId }: { companyId: number }) {
                 <Eye className="size-4" />
                 Empresa sob observação
               </span>
-              <span className="text-muted-foreground text-xs">
+              <span className="text-muted-foreground w-full text-xs sm:w-auto sm:flex-1">
                 Sinalizador manual — não bloqueia nem suspende automaticamente.
               </span>
             </label>
@@ -177,7 +177,7 @@ function ConfirmationItem({ c }: { c: AdminMatchConfirmationDTO }) {
           Motivo: {matchConfirmationReasonLabels[c.pendingReason]}
         </div>
       )}
-      <div className="text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs">
+      <div className="text-muted-foreground grid grid-cols-1 gap-x-4 gap-y-0.5 text-xs sm:grid-cols-2">
         <span>
           Contratante:{" "}
           {c.companyOutcome

@@ -33,6 +33,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { RowActions } from "@/components/shared/row-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -221,59 +222,67 @@ export function ProjectCard({ project }: { project: ProjectResponseDTO }) {
           </div>
         )}
 
-        <div className="flex flex-wrap justify-end gap-2 border-t pt-3">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href={`/public/opportunity/${project.id}`}>
-              <Eye className="size-3.5" />
-              Ver oportunidade
-            </Link>
-          </Button>
-          <Button variant="ghost" size="sm" asChild>
-            <Link href={`/company/projects/${project.id}/ranking`}>
-              <Users className="size-3.5" />
-              Ranking
-            </Link>
-          </Button>
-          {project.acceptsProposals && (
-            <Button variant="ghost" size="sm" asChild>
-              <Link href={`/company/projects/${project.id}/proposals`}>
-                <FileEdit className="size-3.5" />
-                Propostas
-              </Link>
-            </Button>
-          )}
-          <Button variant="ghost" size="sm" asChild>
-            <Link href={`/company/projects/${project.id}/edit`}>
-              <Pencil className="size-3.5" />
-              Editar
-            </Link>
-          </Button>
-
-          {project.status === "OPEN" && (
-            <CloseProjectDialog project={project} />
-          )}
-
-          {project.status === "PAUSED" && (
-            <>
-              <ResumeProjectDialog project={project} />
-              {/* Vagas preenchidas e a empresa não quer abrir mais posições
-                  — precisa poder encerrar direto daqui, sem passar pelo
-                  modal automático (que só aparece uma vez, pro primeiro
-                  projeto pausado). */}
-              <CloseProjectDialog project={project} />
-            </>
-          )}
-          {project.status === "CLOSED" && (
-            <ReopenProjectDialog project={project} />
-          )}
+        <div className="border-t pt-3">
+          <RowActions
+            primary={
+              <>
+                {project.status === "OPEN" && (
+                  <CloseProjectDialog project={project} />
+                )}
+                {project.status === "PAUSED" && (
+                  <>
+                    <ResumeProjectDialog project={project} />
+                    {/* Vagas preenchidas e a empresa não quer abrir mais
+                        posições — precisa poder encerrar direto daqui, sem
+                        passar pelo modal automático (que só aparece uma vez,
+                        pro primeiro projeto pausado). */}
+                    <CloseProjectDialog project={project} />
+                  </>
+                )}
+                {project.status === "CLOSED" && (
+                  <ReopenProjectDialog project={project} />
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-destructive"
+                  onClick={() => setConfirmDelete(true)}
+                >
+                  <Trash2 className="size-3.5" />
+                  Excluir
+                </Button>
+              </>
+            }
+            items={[
+              {
+                key: "opp",
+                label: "Ver oportunidade",
+                icon: Eye,
+                href: `/public/opportunity/${project.id}`,
+              },
+              {
+                key: "ranking",
+                label: "Ranking",
+                icon: Users,
+                href: `/company/projects/${project.id}/ranking`,
+              },
+              {
+                key: "proposals",
+                label: "Propostas",
+                icon: FileEdit,
+                href: `/company/projects/${project.id}/proposals`,
+                hidden: !project.acceptsProposals,
+              },
+              {
+                key: "edit",
+                label: "Editar",
+                icon: Pencil,
+                href: `/company/projects/${project.id}/edit`,
+              },
+            ]}
+          />
 
           <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
-            <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="sm" className="text-destructive">
-                <Trash2 className="size-3.5" />
-                Excluir
-              </Button>
-            </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Excluir oportunidade</AlertDialogTitle>

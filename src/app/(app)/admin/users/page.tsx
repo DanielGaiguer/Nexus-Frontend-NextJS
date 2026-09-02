@@ -165,6 +165,67 @@ export default function AdminUsersPage() {
           data={filtered}
           searchPlaceholder="Buscar por nome ou e-mail..."
           emptyMessage="Nenhum usuário encontrado."
+          renderMobileCard={(user) => {
+            const badge = typeBadge[user.type];
+            const Icon = badge.icon;
+            const profileHref =
+              user.type === "PROFESSIONAL" && user.entityId != null
+                ? `/admin/professional/${user.entityId}`
+                : user.type === "COMPANY" && user.entityId != null
+                  ? `/admin/company/${user.entityId}`
+                  : null;
+            return (
+              <div className="bg-card flex flex-col gap-2 rounded-lg border p-3 text-sm">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Avatar className="size-8 shrink-0">
+                      <AvatarImage
+                        src={user.profilePhotoUrl ?? undefined}
+                        alt=""
+                      />
+                      <AvatarFallback>
+                        {user.name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <div className="font-medium break-words">{user.name}</div>
+                      <div className="text-muted-foreground text-xs break-all">
+                        {user.email}
+                      </div>
+                    </div>
+                  </div>
+                  <Badge
+                    variant={user.active ? "default" : "outline"}
+                    className="shrink-0"
+                  >
+                    {user.active ? "Ativo" : "Inativo"}
+                  </Badge>
+                </div>
+                <Badge
+                  variant="outline"
+                  className={`w-fit gap-1 ${badge.className}`}
+                >
+                  <Icon className="size-3" />
+                  {badge.label}
+                </Badge>
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  {profileHref && (
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={profileHref}>
+                        <Eye className="size-3.5" />
+                        Ver perfil
+                      </Link>
+                    </Button>
+                  )}
+                  <ToggleUserDialog
+                    userId={user.id}
+                    email={user.email}
+                    active={user.active}
+                  />
+                </div>
+              </div>
+            );
+          }}
         />
       )}
     </div>

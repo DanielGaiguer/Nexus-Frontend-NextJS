@@ -1,11 +1,13 @@
 "use client";
 
 import {
+  Building2,
   Check,
   ChevronsUpDown,
   Eye,
   FileEdit,
   FileText,
+  GitCompare,
   Handshake,
   Search,
   Sparkles,
@@ -19,6 +21,7 @@ import { toast } from "sonner";
 import { MatchCompareDialog } from "@/components/company/match-compare-dialog";
 import { MatchCard } from "@/components/professional/match-card";
 import { EmptyState } from "@/components/shared/empty-state";
+import type { RowActionItem } from "@/components/shared/row-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -215,7 +218,9 @@ export default function OpportunitiesPage() {
     showInterest.mutate(projectId, {
       onSuccess: (result) => {
         if (result.screeningRequired) {
-          router.push(`/pro/screening-invitations/${result.screeningInvitationId}/take`);
+          router.push(
+            `/pro/screening-invitations/${result.screeningInvitationId}/take`
+          );
           return;
         }
         setSentIds((ids) => [...ids, projectId]);
@@ -516,51 +521,53 @@ export default function OpportunitiesPage() {
               key={match.id}
               match={match}
               mySkills={profile?.skills}
-              actions={
-                <>
-                  <MatchCompareDialog match={match} viewer="professional" />
-                  {match.project.companyId != null && (
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/pro/companies/${match.project.companyId}`}>
-                        Ver contratante
-                      </Link>
-                    </Button>
-                  )}
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/public/opportunity/${match.project.id}`}>
-                      <Eye className="size-4" />
-                      Ver detalhes
-                    </Link>
-                  </Button>
-                  {acceptsProposals && (
-                    <Button variant="outline" size="sm" asChild>
-                      <Link
-                        href={`/pro/opportunities/${match.project.id}/proposal`}
-                      >
-                        {myPendingProposal ? (
-                          <>
-                            <FileEdit className="size-4" />
-                            Ver/editar minha proposta
-                          </>
-                        ) : (
-                          <>
-                            <FileText className="size-4" />
-                            Enviar proposta
-                          </>
-                        )}
-                      </Link>
-                    </Button>
-                  )}
-                  <Button
-                    size="sm"
-                    disabled={alreadySent || showInterest.isPending}
-                    onClick={() => handleInterest(match.project.id)}
-                  >
-                    <Handshake className="size-4" />
-                    {alreadySent ? "Interesse enviado" : "Demonstrar interesse"}
-                  </Button>
-                </>
+              primaryActions={
+                <Button
+                  size="sm"
+                  disabled={alreadySent || showInterest.isPending}
+                  onClick={() => handleInterest(match.project.id)}
+                >
+                  <Handshake className="size-4" />
+                  {alreadySent ? "Interesse enviado" : "Demonstrar interesse"}
+                </Button>
               }
+              menuItems={[
+                {
+                  key: "compare",
+                  label: "Comparar",
+                  icon: GitCompare,
+                  dialog: (p) => (
+                    <MatchCompareDialog
+                      match={match}
+                      viewer="professional"
+                      hideTrigger
+                      {...p}
+                    />
+                  ),
+                },
+                {
+                  key: "company",
+                  label: "Ver contratante",
+                  icon: Building2,
+                  href: `/pro/companies/${match.project.companyId}`,
+                  hidden: match.project.companyId == null,
+                },
+                {
+                  key: "details",
+                  label: "Ver detalhes",
+                  icon: Eye,
+                  href: `/public/opportunity/${match.project.id}`,
+                },
+                {
+                  key: "proposal",
+                  label: myPendingProposal
+                    ? "Ver/editar minha proposta"
+                    : "Enviar proposta",
+                  icon: myPendingProposal ? FileEdit : FileText,
+                  href: `/pro/opportunities/${match.project.id}/proposal`,
+                  hidden: !acceptsProposals,
+                } satisfies RowActionItem,
+              ]}
             />
           );
         })}

@@ -16,6 +16,10 @@ import { ScoreBreakdownGrid } from "@/components/matches/score-breakdown-grid";
 import { ScreeningInvitationBadges } from "@/components/matches/screening-invitation-badges";
 import { ScoreRing } from "@/components/professional/score-ring";
 import { CompanyTypeBadge } from "@/components/shared/company-type-badge";
+import {
+  RowActions,
+  type RowActionItem,
+} from "@/components/shared/row-actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -65,13 +69,20 @@ export function MatchCard({
   showScore = true,
   badge,
   actions,
+  primaryActions,
+  menuItems,
 }: {
   match: MatchResponseDTO;
   mySkills?: string[];
   showScore?: boolean;
   /** Selo de status específico do match (ex.: "Match Confirmado", aviso de expiração) — vai logo abaixo do nome da empresa. */
   badge?: ReactNode;
+  /** Legado: fragmento cru de botões (ainda usado por telas não migradas). */
   actions?: ReactNode;
+  /** Ações de decisão, sempre visíveis (Aceitar/Recusar/Cancelar…). */
+  primaryActions?: ReactNode;
+  /** Ações secundárias — vão pro menu "Ações". "Ver processo" (triagem) é anexado automaticamente quando houver. */
+  menuItems?: RowActionItem[];
 }) {
   const { project } = match;
   const isJob = project.opportunityType === "JOB";
@@ -248,18 +259,39 @@ export function MatchCard({
           <ScoreBreakdownGrid breakdown={match.scoreBreakdown} />
         )}
       </CardContent>
-      {(actions || screeningHref) && (
-        <div className="flex flex-wrap justify-end gap-2 border-t px-6 py-3">
-          {screeningHref && (
-            <Button size="sm" variant="outline" asChild>
-              <Link href={screeningHref}>
-                <FileQuestion className="size-4" />
-                Ver processo
-              </Link>
-            </Button>
-          )}
-          {actions}
+      {primaryActions !== undefined || menuItems !== undefined ? (
+        <div className="border-t px-6 py-3">
+          <RowActions
+            primary={primaryActions}
+            items={[
+              ...(screeningHref
+                ? [
+                    {
+                      key: "screening",
+                      label: "Ver processo",
+                      icon: FileQuestion,
+                      href: screeningHref,
+                    } satisfies RowActionItem,
+                  ]
+                : []),
+              ...(menuItems ?? []),
+            ]}
+          />
         </div>
+      ) : (
+        (actions || screeningHref) && (
+          <div className="flex flex-wrap justify-end gap-2 border-t px-6 py-3">
+            {screeningHref && (
+              <Button size="sm" variant="outline" asChild>
+                <Link href={screeningHref}>
+                  <FileQuestion className="size-4" />
+                  Ver processo
+                </Link>
+              </Button>
+            )}
+            {actions}
+          </div>
+        )
       )}
     </Card>
   );

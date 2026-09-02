@@ -53,8 +53,8 @@ export default function AdminSupportPage() {
         <OpenSupportConversationDialog />
       </div>
 
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="min-w-[200px] flex-1 space-y-1">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+        <div className="w-full space-y-1 sm:min-w-48 sm:flex-1">
           <Label htmlFor="support-search" className="text-xs">
             Buscar
           </Label>
@@ -70,7 +70,7 @@ export default function AdminSupportPage() {
           </div>
         </div>
 
-        <div className="w-[160px] space-y-1">
+        <div className="w-full space-y-1 sm:w-40">
           <Label className="text-xs">Tipo de usuário</Label>
           <Select
             value={role}
@@ -78,7 +78,7 @@ export default function AdminSupportPage() {
               setRole(v as "ALL" | "COMPANY" | "PROFESSIONAL")
             }
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -91,7 +91,7 @@ export default function AdminSupportPage() {
           </Select>
         </div>
 
-        <div className="w-[150px] space-y-1">
+        <div className="w-full space-y-1 sm:w-40">
           <Label className="text-xs">Status</Label>
           <Select
             value={status}
@@ -99,7 +99,7 @@ export default function AdminSupportPage() {
               setStatus(v as SupportConversationStatus | "ALL")
             }
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

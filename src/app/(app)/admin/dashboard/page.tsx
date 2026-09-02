@@ -223,7 +223,7 @@ export default function AdminDashboardPage() {
         </Card>
 
         <Card className="lg:col-span-5">
-          <CardHeader className="flex-row items-center justify-between">
+          <CardHeader className="flex-row flex-wrap items-center justify-between gap-2">
             <div>
               <CardTitle className="text-sm">Aguardando aprovação</CardTitle>
               <p className="text-muted-foreground text-xs">
@@ -284,7 +284,7 @@ export default function AdminDashboardPage() {
       </div>
 
       <Card>
-        <CardHeader className="flex-row items-center justify-between">
+        <CardHeader className="flex-row flex-wrap items-center justify-between gap-2">
           <CardTitle className="text-sm">
             Últimos contratantes cadastrados
           </CardTitle>
@@ -296,36 +296,27 @@ export default function AdminDashboardPage() {
           </Link>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Contratante</TableHead>
-                <TableHead>Documento</TableHead>
-                <TableHead>Cidade</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {!latest.data || latest.data.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={4}
-                    className="text-muted-foreground h-24 text-center"
-                  >
-                    Nenhum contratante cadastrado ainda
-                  </TableCell>
-                </TableRow>
-              ) : (
-                latest.data.map((company) => {
+          {!latest.data || latest.data.length === 0 ? (
+            <p className="text-muted-foreground py-6 text-center text-sm">
+              Nenhum contratante cadastrado ainda
+            </p>
+          ) : (
+            <>
+              {/* Mobile: lista de cards */}
+              <div className="flex flex-col gap-2 md:hidden">
+                {latest.data.map((company) => {
                   const status = statusLabels[company.status] ?? {
                     label: company.status,
                     variant: "outline" as const,
                   };
                   return (
-                    <TableRow key={company.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Avatar className="size-7">
+                    <div
+                      key={company.id}
+                      className="flex flex-col gap-2 rounded-lg border p-3"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <Avatar className="size-7 shrink-0">
                             <AvatarImage
                               src={company.profilePhotoUrl ?? undefined}
                               alt=""
@@ -334,29 +325,87 @@ export default function AdminDashboardPage() {
                               {company.companyName.charAt(0).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="font-medium">
+                          <span className="min-w-0 font-medium break-words">
                             {company.companyName}
                           </span>
-                          <CompanyTypeBadge type={company.type} />
                         </div>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground tabular-nums">
-                        {company.taxId ?? "—"}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {[company.city, company.uf]
-                          .filter(Boolean)
-                          .join(", ") || "—"}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={status.variant}>{status.label}</Badge>
-                      </TableCell>
-                    </TableRow>
+                        <Badge variant={status.variant} className="shrink-0">
+                          {status.label}
+                        </Badge>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
+                        <CompanyTypeBadge type={company.type} />
+                        <span className="text-muted-foreground tabular-nums">
+                          {company.taxId ?? "—"}
+                        </span>
+                        <span className="text-muted-foreground">
+                          {[company.city, company.uf]
+                            .filter(Boolean)
+                            .join(", ") || "—"}
+                        </span>
+                      </div>
+                    </div>
                   );
-                })
-              )}
-            </TableBody>
-          </Table>
+                })}
+              </div>
+
+              {/* Desktop: tabela */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Contratante</TableHead>
+                      <TableHead>Documento</TableHead>
+                      <TableHead>Cidade</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {latest.data.map((company) => {
+                      const status = statusLabels[company.status] ?? {
+                        label: company.status,
+                        variant: "outline" as const,
+                      };
+                      return (
+                        <TableRow key={company.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Avatar className="size-7">
+                                <AvatarImage
+                                  src={company.profilePhotoUrl ?? undefined}
+                                  alt=""
+                                />
+                                <AvatarFallback>
+                                  {company.companyName.charAt(0).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="font-medium">
+                                {company.companyName}
+                              </span>
+                              <CompanyTypeBadge type={company.type} />
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground tabular-nums">
+                            {company.taxId ?? "—"}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {[company.city, company.uf]
+                              .filter(Boolean)
+                              .join(", ") || "—"}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={status.variant}>
+                              {status.label}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>

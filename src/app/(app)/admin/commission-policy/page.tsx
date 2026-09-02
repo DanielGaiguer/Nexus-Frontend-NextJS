@@ -39,7 +39,8 @@ export default function AdminCommissionPolicyPage() {
 
   const parsed = parsePercent(value);
   const invalid = value.trim() !== "" && parsed === null;
-  const dirty = policy != null && parsed !== null && parsed !== policy.percentage;
+  const dirty =
+    policy != null && parsed !== null && parsed !== policy.percentage;
 
   function handleSave() {
     if (parsed === null) {
@@ -86,7 +87,7 @@ export default function AdminCommissionPolicyPage() {
             <Skeleton className="h-10 w-48" />
           ) : (
             <>
-              <div className="flex flex-wrap items-end gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
                 <div className="space-y-1.5">
                   <Label htmlFor="commission-percent">Comissão (%)</Label>
                   <div className="flex items-center gap-2">
@@ -96,6 +97,7 @@ export default function AdminCommissionPolicyPage() {
                       min="0"
                       max="100"
                       step="0.5"
+                      inputMode="decimal"
                       className="w-32"
                       value={value}
                       onChange={(e) => setValue(e.target.value)}
@@ -105,6 +107,7 @@ export default function AdminCommissionPolicyPage() {
                   </div>
                 </div>
                 <Button
+                  className="w-full sm:w-auto"
                   disabled={!dirty || updatePolicy.isPending}
                   onClick={handleSave}
                 >

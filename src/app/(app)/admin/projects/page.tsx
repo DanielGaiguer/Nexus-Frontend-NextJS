@@ -512,6 +512,70 @@ export default function AdminProjectsPage() {
           data={filtered}
           hideSearch
           emptyMessage="Nenhum projeto na plataforma."
+          renderMobileCard={(project) => {
+            const isJob = project.opportunityType === "JOB";
+            const money = isJob
+              ? project.monthlySalaryMin != null
+                ? `R$${formatMoney(project.monthlySalaryMin)}/mês`
+                : null
+              : project.minimumBudget != null && project.maximumBudget != null
+                ? `R$${formatMoney(project.minimumBudget)}–R$${formatMoney(project.maximumBudget)}`
+                : null;
+            return (
+              <div className="bg-card flex flex-col gap-2 rounded-lg border p-3 text-sm">
+                <div className="flex items-start justify-between gap-2">
+                  <Link
+                    href={`/public/opportunity/${project.id}`}
+                    className="min-w-0 font-medium break-words hover:underline"
+                  >
+                    {project.title}
+                  </Link>
+                  <Badge
+                    variant={statusVariant[project.status]}
+                    className="shrink-0"
+                  >
+                    {statusLabels[project.status]}
+                  </Badge>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                  <Badge
+                    variant={isJob ? "default" : "secondary"}
+                    className="text-[10px]"
+                  >
+                    {isJob ? "Vaga" : "Projeto"}
+                  </Badge>
+                  {money && (
+                    <span className="text-muted-foreground">{money}</span>
+                  )}
+                  {project.workMode && (
+                    <span className="text-muted-foreground">
+                      · {modalityLabels[project.workMode] ?? project.workMode}
+                    </span>
+                  )}
+                </div>
+                <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
+                  <Link
+                    href={`/admin/company/${project.companyId}`}
+                    className="hover:underline"
+                  >
+                    {project.companyName}
+                  </Link>
+                  <span className="tabular-nums">
+                    {project.filledPositions ?? 0}/{project.maxPositions ?? "—"}{" "}
+                    posições
+                  </span>
+                  <span>
+                    {new Date(project.createdAt).toLocaleDateString("pt-BR")}
+                  </span>
+                </div>
+                {project.status === "OPEN" && (
+                  <div className="pt-1">
+                    <CloseProjectAction project={project} />
+                  </div>
+                )}
+              </div>
+            );
+          }}
         />
       )}
     </div>

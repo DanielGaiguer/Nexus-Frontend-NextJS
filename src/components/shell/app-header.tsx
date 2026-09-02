@@ -19,7 +19,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { useDisplayName } from "@/hooks/queries/useDisplayName";
+import {
+  useDisplayName,
+  useDisplayPhotoUrl,
+} from "@/hooks/queries/useDisplayName";
 import { useLogout } from "@/hooks/mutations/useLogout";
 import { ApiError } from "@/lib/api-client";
 import type { SessionClaims } from "@/types/auth";
@@ -27,6 +30,7 @@ import type { SessionClaims } from "@/types/auth";
 export function AppHeader({ session }: { session: SessionClaims }) {
   const router = useRouter();
   const displayName = useDisplayName(session.role);
+  const photoUrl = useDisplayPhotoUrl(session.role);
   const logout = useLogout();
 
   function handleLogout() {
@@ -57,7 +61,7 @@ export function AppHeader({ session }: { session: SessionClaims }) {
       <DropdownMenu>
         <DropdownMenuTrigger className="flex items-center gap-2 rounded-md p-1 pr-2 text-sm outline-none">
           <Avatar className="size-7">
-            <AvatarImage src="" alt="" />
+            <AvatarImage src={photoUrl ?? undefined} alt="" />
             <AvatarFallback>{initial}</AvatarFallback>
           </Avatar>
           <span className="hidden font-medium sm:inline">{displayName}</span>

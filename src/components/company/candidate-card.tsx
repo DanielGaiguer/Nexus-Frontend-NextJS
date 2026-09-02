@@ -1,4 +1,10 @@
-import { Briefcase, Building2, FileQuestion, Star } from "lucide-react";
+import {
+  Briefcase,
+  Building2,
+  FileQuestion,
+  GitCompare,
+  Star,
+} from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -7,6 +13,10 @@ import { MatchConfirmationBadge } from "@/components/matches/match-confirmation-
 import { ScoreBreakdownGrid } from "@/components/matches/score-breakdown-grid";
 import { ScreeningInvitationBadges } from "@/components/matches/screening-invitation-badges";
 import { ScoreRing } from "@/components/professional/score-ring";
+import {
+  RowActions,
+  type RowActionItem,
+} from "@/components/shared/row-actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,13 +31,20 @@ export function CandidateCard({
   showProject = true,
   badge,
   actions,
+  primaryActions,
+  menuItems,
 }: {
   match: MatchResponseDTO;
   showScore?: boolean;
   showProject?: boolean;
   /** Selo de status do match (ex.: "Match Confirmado", aviso de expiração) — vai logo abaixo do nome do candidato. */
   badge?: ReactNode;
+  /** Legado: fragmento cru de botões. */
   actions?: ReactNode;
+  /** Ações de decisão, sempre visíveis (Aceitar/Recusar/Cancelar…). */
+  primaryActions?: ReactNode;
+  /** Ações secundárias — vão pro menu "Ações" (Comparar e "Ver processo" são anexados automaticamente). */
+  menuItems?: RowActionItem[];
 }) {
   const { professional } = match;
   const score = match.scoreBreakdown
@@ -125,20 +142,49 @@ export function CandidateCard({
           <ScoreBreakdownGrid breakdown={match.scoreBreakdown} />
         )}
       </CardContent>
-      <div className="flex flex-wrap justify-end gap-2 border-t px-6 py-3">
-        <MatchCompareDialog match={match} />
-        {match.screeningInvitations.length > 0 && (
-          <Button size="sm" variant="outline" asChild>
-            <Link
-              href={`/company/screening-invitations/${match.screeningInvitations[0].id}`}
-            >
-              <FileQuestion className="size-4" />
-              Ver processo
-            </Link>
-          </Button>
-        )}
-        {actions}
-      </div>
+      {primaryActions !== undefined || menuItems !== undefined ? (
+        <div className="border-t px-6 py-3">
+          <RowActions
+            primary={primaryActions}
+            items={[
+              {
+                key: "compare",
+                label: "Comparar",
+                icon: GitCompare,
+                dialog: (p) => (
+                  <MatchCompareDialog match={match} hideTrigger {...p} />
+                ),
+              },
+              ...(match.screeningInvitations.length > 0
+                ? [
+                    {
+                      key: "screening",
+                      label: "Ver processo",
+                      icon: FileQuestion,
+                      href: `/company/screening-invitations/${match.screeningInvitations[0].id}`,
+                    } satisfies RowActionItem,
+                  ]
+                : []),
+              ...(menuItems ?? []),
+            ]}
+          />
+        </div>
+      ) : (
+        <div className="flex flex-wrap justify-end gap-2 border-t px-6 py-3">
+          <MatchCompareDialog match={match} />
+          {match.screeningInvitations.length > 0 && (
+            <Button size="sm" variant="outline" asChild>
+              <Link
+                href={`/company/screening-invitations/${match.screeningInvitations[0].id}`}
+              >
+                <FileQuestion className="size-4" />
+                Ver processo
+              </Link>
+            </Button>
+          )}
+          {actions}
+        </div>
+      )}
     </Card>
   );
 }

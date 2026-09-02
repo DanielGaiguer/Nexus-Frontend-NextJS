@@ -138,7 +138,7 @@ export const navByRole: Record<UserRole, NavSection[]> = {
         { title: "Financeiro", href: "/admin/finance", icon: Wallet },
         { title: "Comissão", href: "/admin/commission-policy", icon: Percent },
         {
-          title: "Config fiscal",
+          title: "Configuração fiscal",
           href: "/admin/fiscal-config",
           icon: Landmark,
         },

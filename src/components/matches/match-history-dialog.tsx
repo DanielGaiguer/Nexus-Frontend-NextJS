@@ -24,18 +24,36 @@ const statusLabel: Record<string, string> = {
 };
 
 /** "Ver histórico" — timeline de mudanças de status do match. Espelha o modal `.history-trigger` do app antigo. */
-export function MatchHistoryDialog({ matchId }: { matchId: number }) {
-  const [open, setOpen] = useState(false);
+export function MatchHistoryDialog({
+  matchId,
+  open: openProp,
+  onOpenChange,
+  hideTrigger,
+}: {
+  matchId: number;
+  /** Modo controlado (ex.: item de menu). */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
+}) {
+  const [openState, setOpenState] = useState(false);
+  const open = openProp ?? openState;
+  const setOpen = (next: boolean) => {
+    onOpenChange?.(next);
+    setOpenState(next);
+  };
   const { data: history, isLoading } = useMatchHistory(matchId, open);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">
-          <History className="size-4" />
-          Ver histórico
-        </Button>
-      </DialogTrigger>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button variant="ghost" size="sm">
+            <History className="size-4" />
+            Ver histórico
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Histórico do match</DialogTitle>

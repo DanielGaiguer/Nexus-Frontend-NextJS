@@ -9,12 +9,12 @@ import {
   Mail,
   MessageCircle,
   Search,
+  Star,
   ThumbsDown,
   X,
 } from "lucide-react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { BillingBlockBanner } from "@/components/billing/billing-block-banner";
@@ -23,6 +23,7 @@ import { ContactDialog } from "@/components/matches/contact-dialog";
 import { MatchHistoryDialog } from "@/components/matches/match-history-dialog";
 import { MatchReviewDialog } from "@/components/matches/match-review-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
+import type { RowActionItem } from "@/components/shared/row-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -93,83 +94,123 @@ function Loading() {
   );
 }
 
-/** Ações extras quando a proposta já virou match confirmado -- as mesmas de
- * ConfirmedCandidateCard em /company/matches, só que ancoradas aqui pelo Match
- * resolvido (nunca falta nesse caso: aceitar cria o Match se ele não existir). */
-function ConfirmedProposalExtras({
-  match,
-  reviewedMatchIds,
-  ended,
-}: {
-  match: MatchResponseDTO;
-  reviewedMatchIds: number[] | undefined;
-  ended: boolean;
-}) {
+/** Ações extras (contato/histórico/chat/avaliar/cancelar) quando a proposta já
+ * virou match confirmado -- devolve as decisões visíveis (`primaryActions`) e os
+ * itens do menu "Ações" pro ProposalCard. As mesmas de /company/matches. */
+function useConfirmedProposalExtras(
+  match: MatchResponseDTO,
+  reviewedMatchIds: number[] | undefined,
+  ended: boolean
+): { primaryActions: ReactNode; menuItems: RowActionItem[] } {
   const [revealed, setRevealed] = useState(false);
   const contact = useProfessionalContact(match.professional.id, revealed);
   const cancelMatch = useCompanyCancelMatch();
   const reviewed = reviewedMatchIds?.includes(match.id) ?? false;
 
-  return (
-    <>
-      {!ended && (
-        <>
-          <Button variant="outline" size="sm" onClick={() => setRevealed(true)}>
-            <Mail className="size-4" />
-            Entrar em contato
-          </Button>
-          <ContactDialog
-            open={revealed}
-            onOpenChange={setRevealed}
-            isLoading={contact.isLoading}
-            isError={contact.isError}
-            email={contact.data?.email}
-            phone={contact.data?.phone}
-          />
-        </>
-      )}
-      <MatchHistoryDialog matchId={match.id} />
-      <Button size="sm" variant="outline" asChild>
-        <Link href={`/chat/${match.id}`}>
-          <MessageCircle className="size-4" />
-          Chat
-        </Link>
-      </Button>
-      {reviewed ? (
-        <Button size="sm" variant="ghost" disabled>
-          <CircleCheck className="size-4" />
-          Avaliado
-        </Button>
-      ) : (
-        <MatchReviewDialog
-          matchId={match.id}
-          authorType="COMPANY"
-          projectTitle={match.project.title}
+  const menuItems: RowActionItem[] = [];
+  if (!ended) {
+    menuItems.push({
+      key: "contact",
+      label: "Entrar em contato",
+      icon: Mail,
+      onSelect: () => setRevealed(true),
+      dialog: ({ open, onOpenChange }) => (
+        <ContactDialog
+          open={open}
+          onOpenChange={(o) => {
+            onOpenChange(o);
+            if (!o) setRevealed(false);
+          }}
+          isLoading={contact.isLoading}
+          isError={contact.isError}
+          email={contact.data?.email}
+          phone={contact.data?.phone}
         />
-      )}
-      {!ended && (
-        <Button
-          size="sm"
-          variant="outline"
-          className="text-destructive"
-          disabled={cancelMatch.isPending}
-          onClick={() =>
-            cancelMatch.mutate(match.id, {
-              onSuccess: () => toast.success("Match cancelado."),
-              onError: (error) =>
-                toast.error(
-                  error instanceof ApiError
-                    ? error.message
-                    : "Não foi possível cancelar."
-                ),
-            })
-          }
-        >
-          <X className="size-4" />
-          Cancelar Match
-        </Button>
-      )}
-    </>
+      ),
+    });
+  }
+  menuItems.push({
+    key: "history",
+    label: "Histórico",
+    icon: History,
+    dialog: (p) => <MatchHistoryDialog matchId={match.id} hideTrigger {...p} />,
+  });
+  menuItems.push({
+    key: "chat",
+    label: "Chat",
+    icon: MessageCircle,
+    href: `/chat/${match.id}`,
+  });
+  menuItems.push(
+    reviewed
+      ? { key: "review", label: "Avaliado", icon: CircleCheck, disabled: true }
+      : {
+          key: "review",
+          label: "Avaliar",
+          icon: Star,
+          dialog: (p) => (
+            <MatchReviewDialog
+              matchId={match.id}
+              authorType="COMPANY"
+              projectTitle={match.project.title}
+              hideTrigger
+              {...p}
+            />
+          ),
+        }
+  );
+
+  const primaryActions: ReactNode = ended ? undefined : (
+    <Button
+      size="sm"
+      variant="outline"
+      className="text-destructive"
+      disabled={cancelMatch.isPending}
+      onClick={() =>
+        cancelMatch.mutate(match.id, {
+          onSuccess: () => toast.success("Match cancelado."),
+          onError: (error) =>
+            toast.error(
+              error instanceof ApiError
+                ? error.message
+                : "Não foi possível cancelar."
+            ),
+        })
+      }
+    >
+      <X className="size-4" />
+      Cancelar Match
+    </Button>
+  );
+
+  return { primaryActions, menuItems };
+}
+
+/** Proposta confirmada/anterior com o Match resolvido — chama o hook de extras. */
+function ConfirmedProposalRowInner({
+  proposal,
+  match,
+  reviewedMatchIds,
+  ended,
+}: {
+  proposal: ProposalResponseDTO;
+  match: MatchResponseDTO;
+  reviewedMatchIds: number[] | undefined;
+  ended: boolean;
+}) {
+  const { primaryActions, menuItems } = useConfirmedProposalExtras(
+    match,
+    reviewedMatchIds,
+    ended
+  );
+  return (
+    <ProposalCard
+      proposal={proposal}
+      match={match}
+      showProjectTitle
+      primaryActions={primaryActions}
+      menuItems={menuItems}
+    />
   );
 }
 
@@ -179,14 +220,17 @@ function ProposalSection({
   emptyIcon,
   emptyTitle,
   emptyDescription,
-  extraActionsFor,
+  extras,
+  reviewedMatchIds,
 }: {
   entries: ProposalEntry[];
   isLoading: boolean;
   emptyIcon: typeof HeartHandshake;
   emptyTitle: string;
   emptyDescription: string;
-  extraActionsFor?: (match: MatchResponseDTO | undefined) => React.ReactNode;
+  /** "active" = match confirmado em andamento; "ended" = encerrado (sem cancelar). */
+  extras?: "active" | "ended";
+  reviewedMatchIds?: number[];
 }) {
   if (isLoading) return <Loading />;
   if (entries.length === 0) {
@@ -199,15 +243,24 @@ function ProposalSection({
     );
   }
 
-  return entries.map(({ proposal, match }) => (
-    <ProposalCard
-      key={proposal.id}
-      proposal={proposal}
-      match={match}
-      showProjectTitle
-      extraActions={extraActionsFor?.(match)}
-    />
-  ));
+  return entries.map(({ proposal, match }) =>
+    extras && match ? (
+      <ConfirmedProposalRowInner
+        key={proposal.id}
+        proposal={proposal}
+        match={match}
+        reviewedMatchIds={reviewedMatchIds}
+        ended={extras === "ended"}
+      />
+    ) : (
+      <ProposalCard
+        key={proposal.id}
+        proposal={proposal}
+        match={match}
+        showProjectTitle
+      />
+    )
+  );
 }
 
 function CompanyProposalsPageContent() {
@@ -443,15 +496,8 @@ function CompanyProposalsPageContent() {
             emptyIcon={HeartHandshake}
             emptyTitle="Nenhuma proposta aceita ainda"
             emptyDescription="Propostas que você aceitar aparecerão aqui, com o match já confirmado."
-            extraActionsFor={(match) =>
-              match && (
-                <ConfirmedProposalExtras
-                  match={match}
-                  reviewedMatchIds={reviewedMatchIds}
-                  ended={false}
-                />
-              )
-            }
+            extras="active"
+            reviewedMatchIds={reviewedMatchIds}
           />
         </TabsContent>
 
@@ -482,15 +528,8 @@ function CompanyProposalsPageContent() {
             emptyIcon={History}
             emptyTitle="Nenhuma proposta anterior"
             emptyDescription="Propostas aceitas cujo match já foi encerrado aparecerão aqui como histórico."
-            extraActionsFor={(match) =>
-              match && (
-                <ConfirmedProposalExtras
-                  match={match}
-                  reviewedMatchIds={reviewedMatchIds}
-                  ended={true}
-                />
-              )
-            }
+            extras="ended"
+            reviewedMatchIds={reviewedMatchIds}
           />
         </TabsContent>
 

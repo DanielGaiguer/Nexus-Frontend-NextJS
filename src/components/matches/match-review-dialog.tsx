@@ -36,30 +36,40 @@ export function MatchReviewDialog({
   matchId,
   authorType,
   projectTitle,
+  open: openProp,
+  onOpenChange,
+  hideTrigger,
 }: {
   matchId: number;
   authorType: AuthorType;
   projectTitle: string;
+  /** Modo controlado (ex.: item de menu). */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [openState, setOpenState] = useState(false);
+  const open = openProp ?? openState;
   const [blockedReason, setBlockedReason] = useState<
     "status-check" | "no-contact" | null
   >(null);
 
+  function setOpen(next: boolean) {
+    onOpenChange?.(next);
+    setOpenState(next);
+    if (!next) setBlockedReason(null);
+  }
+
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(next) => {
-        setOpen(next);
-        if (!next) setBlockedReason(null);
-      }}
-    >
-      <DialogTrigger asChild>
-        <Button size="sm" variant="ghost">
-          <Star className="size-4" />
-          Avaliar
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={setOpen}>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button size="sm" variant="ghost">
+            <Star className="size-4" />
+            Avaliar
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="thin-scrollbar max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Avaliar Match</DialogTitle>

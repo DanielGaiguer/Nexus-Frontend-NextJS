@@ -445,7 +445,41 @@ export function AdminPortalAnalyticsView({
                 </BarChart>
               </ChartContainer>
 
-              <div className="overflow-x-auto">
+              {/* Mobile: lista */}
+              <div className="flex flex-col gap-2 md:hidden">
+                {data.topPortals.map((p) => (
+                  <div
+                    key={p.portalId}
+                    className="flex flex-col gap-1 rounded-md border p-3 text-sm"
+                  >
+                    <div className="font-medium break-words">
+                      {p.companyName}
+                    </div>
+                    <div className="text-muted-foreground text-xs break-all">
+                      {p.subdomain}.nexus.com.br
+                    </div>
+                    <div className="mt-1 grid grid-cols-3 gap-2 text-xs">
+                      <div>
+                        <div className="text-muted-foreground">Acessos</div>
+                        <div className="tabular-nums">{p.views}</div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">Cliques</div>
+                        <div className="tabular-nums">{p.applyClicks}</div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">Conversão</div>
+                        <div className="tabular-nums">
+                          {p.conversionRate.toFixed(1)}%
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop: tabela */}
+              <div className="hidden md:block">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-muted-foreground text-left text-xs">

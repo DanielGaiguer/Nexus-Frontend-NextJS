@@ -81,12 +81,25 @@ export function CustomPortalStatusDialog({
   portalId,
   action,
   companyName,
+  open: openProp,
+  onOpenChange,
+  hideTrigger,
 }: {
   portalId: number;
   action: Action;
   companyName: string;
+  /** Modo controlado: quando definido, o estado de abertura vem do pai. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  /** Esconde o botão-gatilho padrão (usar quando o gatilho é externo, ex.: item de menu). */
+  hideTrigger?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [openState, setOpenState] = useState(false);
+  const open = openProp ?? openState;
+  const setOpen = (next: boolean) => {
+    onOpenChange?.(next);
+    setOpenState(next);
+  };
   const [note, setNote] = useState("");
   const copy = COPY[action];
 
@@ -101,7 +114,7 @@ export function CustomPortalStatusDialog({
         : cancel;
 
   function handleOpenChange(next: boolean) {
-    if (next) setNote("");
+    setNote("");
     setOpen(next);
   }
 
@@ -128,16 +141,18 @@ export function CustomPortalStatusDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
-      <AlertDialogTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className={copy.destructive ? "text-destructive" : undefined}
-        >
-          <Icon className="size-4" />
-          {copy.trigger}
-        </Button>
-      </AlertDialogTrigger>
+      {!hideTrigger && (
+        <AlertDialogTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className={copy.destructive ? "text-destructive" : undefined}
+          >
+            <Icon className="size-4" />
+            {copy.trigger}
+          </Button>
+        </AlertDialogTrigger>
+      )}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{copy.title}</AlertDialogTitle>

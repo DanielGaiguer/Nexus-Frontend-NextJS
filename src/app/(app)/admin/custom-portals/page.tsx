@@ -1,6 +1,17 @@
 "use client";
 
-import { BarChart3, History, Palette, Search, Store } from "lucide-react";
+import {
+  Ban,
+  BarChart3,
+  History,
+  MoreHorizontal,
+  Palette,
+  Pause,
+  Pencil,
+  Play,
+  Search,
+  Store,
+} from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
@@ -11,6 +22,12 @@ import { CustomPortalStatusDialog } from "@/components/admin/custom-portal-statu
 import { CustomPortalSubscriptionDialog } from "@/components/admin/custom-portal-subscription-dialog";
 import { RejectCustomPortalRequestDialog } from "@/components/admin/reject-custom-portal-request-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
+import {
+  RecordCard,
+  RecordCardActions,
+  RecordCardHeader,
+  RecordField,
+} from "@/components/shared/record-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +37,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -47,6 +70,7 @@ import {
   useAdminCustomPortalSystemAnalytics,
   type AnalyticsRange,
 } from "@/hooks/queries/useCustomPortalAnalytics";
+import { cn } from "@/lib/utils";
 import {
   customPortalPaymentStatusLabel,
   customPortalRequestStatusLabel,
@@ -163,9 +187,9 @@ function RequestsTab({
   if (isLoading) return <Skeleton className="h-64" />;
 
   const filters = (
-    <div className="flex justify-end">
+    <div className="flex sm:justify-end">
       <Select value={scope} onValueChange={(v) => setScope(v as typeof scope)}>
-        <SelectTrigger className="w-44">
+        <SelectTrigger className="w-full sm:w-56">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -199,66 +223,119 @@ function RequestsTab({
           description="A fila está vazia. Use “Todas as solicitações” para ver o histórico."
         />
       ) : (
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Contratante</TableHead>
-                <TableHead>Solicitada em</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((r) => (
-                <TableRow key={r.id}>
-                  <TableCell>
-                    <div className="font-medium">{r.companyName}</div>
-                    {r.message && (
-                      <div className="text-muted-foreground max-w-sm truncate text-xs">
-                        “{r.message}”
-                      </div>
-                    )}
-                    {r.status === "REJECTED" && r.decisionReason && (
-                      <div className="text-destructive/80 max-w-sm truncate text-xs">
-                        Motivo: {r.decisionReason}
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
-                    {formatDateTime(r.requestedAt)}
-                  </TableCell>
-                  <TableCell>
+        <>
+          {/* Mobile: lista de cards */}
+          <div className="flex flex-col gap-2 md:hidden">
+            {filtered.map((r) => (
+              <RecordCard key={r.id}>
+                <RecordCardHeader
+                  title={r.companyName}
+                  aside={
                     <Badge
                       variant="secondary"
                       className={requestBadgeClass[r.status] ?? ""}
                     >
                       {customPortalRequestStatusLabel[r.status]}
                     </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {r.status === "PENDING" ? (
-                      <div className="flex justify-end gap-2">
-                        <RejectCustomPortalRequestDialog
-                          requestId={r.id}
-                          companyName={r.companyName}
-                        />
-                        <ApproveCustomPortalRequestDialog
-                          requestId={r.id}
-                          companyName={r.companyName}
-                        />
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground text-xs">
-                        {r.reviewedByEmail ? `por ${r.reviewedByEmail}` : "—"}
-                      </span>
-                    )}
-                  </TableCell>
+                  }
+                />
+                {r.message && (
+                  <p className="text-muted-foreground text-xs break-words">
+                    “{r.message}”
+                  </p>
+                )}
+                {r.status === "REJECTED" && r.decisionReason && (
+                  <p className="text-destructive/80 text-xs break-words">
+                    Motivo: {r.decisionReason}
+                  </p>
+                )}
+                <RecordField label="Solicitada em">
+                  {formatDateTime(r.requestedAt)}
+                </RecordField>
+                {r.status === "PENDING" ? (
+                  <RecordCardActions>
+                    <RejectCustomPortalRequestDialog
+                      requestId={r.id}
+                      companyName={r.companyName}
+                    />
+                    <ApproveCustomPortalRequestDialog
+                      requestId={r.id}
+                      companyName={r.companyName}
+                    />
+                  </RecordCardActions>
+                ) : (
+                  <p className="text-muted-foreground text-xs">
+                    {r.reviewedByEmail
+                      ? `Revisada por ${r.reviewedByEmail}`
+                      : "—"}
+                  </p>
+                )}
+              </RecordCard>
+            ))}
+          </div>
+
+          {/* Desktop: tabela */}
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Contratante</TableHead>
+                  <TableHead>Solicitada em</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((r) => (
+                  <TableRow key={r.id}>
+                    <TableCell>
+                      <div className="font-medium">{r.companyName}</div>
+                      {r.message && (
+                        <div className="text-muted-foreground max-w-sm truncate text-xs">
+                          “{r.message}”
+                        </div>
+                      )}
+                      {r.status === "REJECTED" && r.decisionReason && (
+                        <div className="text-destructive/80 max-w-sm truncate text-xs">
+                          Motivo: {r.decisionReason}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {formatDateTime(r.requestedAt)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="secondary"
+                        className={requestBadgeClass[r.status] ?? ""}
+                      >
+                        {customPortalRequestStatusLabel[r.status]}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {r.status === "PENDING" ? (
+                        <div className="flex justify-end gap-2">
+                          <RejectCustomPortalRequestDialog
+                            requestId={r.id}
+                            companyName={r.companyName}
+                          />
+                          <ApproveCustomPortalRequestDialog
+                            requestId={r.id}
+                            companyName={r.companyName}
+                          />
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">
+                          {r.reviewedByEmail ? `por ${r.reviewedByEmail}` : "—"}
+                        </span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
     </div>
   );
@@ -288,8 +365,8 @@ function PortalsTab({
   if (isLoading) return <Skeleton className="h-64" />;
 
   const filters = (
-    <div className="flex flex-wrap items-center gap-3">
-      <div className="relative min-w-56 flex-1">
+    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+      <div className="relative w-full sm:min-w-56 sm:flex-1">
         <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
         <Input
           placeholder="Buscar por contratante ou subdomínio…"
@@ -302,7 +379,7 @@ function PortalsTab({
         value={status}
         onValueChange={(v) => setStatus(v as CustomPortalStatus | "ALL")}
       >
-        <SelectTrigger className="w-44">
+        <SelectTrigger className="w-full sm:w-56">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -341,113 +418,255 @@ function PortalsTab({
           description="Ajuste a busca ou o filtro de status."
         />
       ) : (
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Contratante</TableHead>
-                <TableHead>Subdomínio</TableHead>
-                <TableHead>Assinatura</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell>
-                    <div className="font-medium">{p.companyName}</div>
-                    <div className="text-muted-foreground text-xs">
-                      {p.createdFromRequest
-                        ? "via solicitação"
-                        : "criada pelo admin"}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    <code>{p.subdomain}.nexus.com.br</code>
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    <div>
-                      {p.planName} — R${" "}
-                      {p.planPrice.toLocaleString("pt-BR", {
-                        minimumFractionDigits: 2,
-                      })}
-                    </div>
-                    <div className="text-muted-foreground text-xs">
-                      vence {formatDateOnly(p.nextDueDate)} ·{" "}
-                      <span
-                        className={`rounded px-1 ${paymentBadgeClass[p.paymentStatus] ?? ""}`}
-                      >
-                        {customPortalPaymentStatusLabel[p.paymentStatus]}
-                      </span>
-                    </div>
-                    {p.status !== "CANCELED" && (
-                      <div className="text-muted-foreground text-xs">
-                        {p.subscriptionCardOnFile
-                          ? "cartão cadastrado"
-                          : "aguardando cartão do contratante"}
-                        {p.paymentGraceUntil &&
-                          ` · carência até ${formatDateOnly(p.paymentGraceUntil)}`}
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell>
+        <>
+          {/* Mobile: lista de cards */}
+          <div className="flex flex-col gap-2 md:hidden">
+            {filtered.map((p) => (
+              <RecordCard key={p.id}>
+                <RecordCardHeader
+                  title={p.companyName}
+                  aside={
                     <Badge
                       variant="secondary"
                       className={portalBadgeClass[p.status] ?? ""}
                     >
                       {customPortalStatusLabel[p.status]}
                     </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap justify-end gap-2">
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/admin/custom-portals/${p.id}/analytics`}>
-                          <BarChart3 className="size-4" />
-                          Analytics
-                        </Link>
-                      </Button>
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/admin/custom-portals/${p.id}/appearance`}>
-                          <Palette className="size-4" />
-                          Aparência
-                        </Link>
-                      </Button>
-                      <HistoryDialog
-                        portalId={p.id}
-                        companyName={p.companyName}
-                      />
-                      {p.status !== "CANCELED" && (
-                        <CustomPortalSubscriptionDialog portal={p} />
-                      )}
-                      {p.status === "ACTIVE" && (
-                        <CustomPortalStatusDialog
-                          portalId={p.id}
-                          action="suspend"
-                          companyName={p.companyName}
-                        />
-                      )}
-                      {p.status === "SUSPENDED" && (
-                        <CustomPortalStatusDialog
-                          portalId={p.id}
-                          action="reactivate"
-                          companyName={p.companyName}
-                        />
-                      )}
-                      {p.status !== "CANCELED" && (
-                        <CustomPortalStatusDialog
-                          portalId={p.id}
-                          action="cancel"
-                          companyName={p.companyName}
-                        />
-                      )}
-                    </div>
-                  </TableCell>
+                  }
+                />
+                <p className="text-muted-foreground text-xs">
+                  {p.createdFromRequest
+                    ? "via solicitação"
+                    : "criada pelo admin"}
+                </p>
+                <RecordField label="Subdomínio">
+                  <code className="break-all">{p.subdomain}.nexus.com.br</code>
+                </RecordField>
+                <RecordField label="Plano">
+                  {p.planName} — R${" "}
+                  {p.planPrice.toLocaleString("pt-BR", {
+                    minimumFractionDigits: 2,
+                  })}
+                </RecordField>
+                <RecordField label="Vencimento">
+                  <span>{formatDateOnly(p.nextDueDate)}</span>{" "}
+                  <span
+                    className={`rounded px-1 ${paymentBadgeClass[p.paymentStatus] ?? ""}`}
+                  >
+                    {customPortalPaymentStatusLabel[p.paymentStatus]}
+                  </span>
+                </RecordField>
+                {p.status !== "CANCELED" && (
+                  <p className="text-muted-foreground text-xs">
+                    {p.subscriptionCardOnFile
+                      ? "cartão cadastrado"
+                      : "aguardando cartão do contratante"}
+                    {p.paymentGraceUntil &&
+                      ` · carência até ${formatDateOnly(p.paymentGraceUntil)}`}
+                  </p>
+                )}
+                <PortalRowActionsMenu portal={p} className="pt-1" />
+              </RecordCard>
+            ))}
+          </div>
+
+          {/* Desktop: tabela */}
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Contratante</TableHead>
+                  <TableHead>Subdomínio</TableHead>
+                  <TableHead>Assinatura</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell>
+                      <div className="font-medium">{p.companyName}</div>
+                      <div className="text-muted-foreground text-xs">
+                        {p.createdFromRequest
+                          ? "via solicitação"
+                          : "criada pelo admin"}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      <code>{p.subdomain}.nexus.com.br</code>
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      <div>
+                        {p.planName} — R${" "}
+                        {p.planPrice.toLocaleString("pt-BR", {
+                          minimumFractionDigits: 2,
+                        })}
+                      </div>
+                      <div className="text-muted-foreground text-xs">
+                        vence {formatDateOnly(p.nextDueDate)} ·{" "}
+                        <span
+                          className={`rounded px-1 ${paymentBadgeClass[p.paymentStatus] ?? ""}`}
+                        >
+                          {customPortalPaymentStatusLabel[p.paymentStatus]}
+                        </span>
+                      </div>
+                      {p.status !== "CANCELED" && (
+                        <div className="text-muted-foreground text-xs">
+                          {p.subscriptionCardOnFile
+                            ? "cartão cadastrado"
+                            : "aguardando cartão do contratante"}
+                          {p.paymentGraceUntil &&
+                            ` · carência até ${formatDateOnly(p.paymentGraceUntil)}`}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="secondary"
+                        className={portalBadgeClass[p.status] ?? ""}
+                      >
+                        {customPortalStatusLabel[p.status]}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <PortalRowActionsMenu
+                        portal={p}
+                        className="justify-end"
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Ações da plataforma — mesmas em qualquer largura de tela: "Analytics" fica
+ * como botão à parte e o resto (Aparência, Histórico, Editar assinatura,
+ * Suspender/Reativar, Cancelar) vai para um menu "Ações", pra não poluir a
+ * linha nem no desktop. Os diálogos são acionados em modo controlado.
+ */
+function PortalRowActionsMenu({
+  portal: p,
+  className,
+}: {
+  portal: CustomPortalDTO;
+  className?: string;
+}) {
+  const [dialog, setDialog] = useState<
+    null | "history" | "subscription" | "suspend" | "reactivate" | "cancel"
+  >(null);
+  // Deixa o menu fechar antes de abrir o diálogo (evita foco/scroll travados).
+  const openLater = (d: NonNullable<typeof dialog>) =>
+    setTimeout(() => setDialog(d), 0);
+
+  return (
+    <div className={cn("flex flex-wrap items-center gap-2", className)}>
+      <Button variant="outline" size="sm" asChild>
+        <Link href={`/admin/custom-portals/${p.id}/analytics`}>
+          <BarChart3 className="size-4" />
+          Analytics
+        </Link>
+      </Button>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm">
+            <MoreHorizontal className="size-4" />
+            Ações
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-52">
+          <DropdownMenuItem asChild>
+            <Link href={`/admin/custom-portals/${p.id}/appearance`}>
+              <Palette className="size-4" />
+              Aparência
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => openLater("history")}>
+            <History className="size-4" />
+            Histórico
+          </DropdownMenuItem>
+          {p.status !== "CANCELED" && (
+            <DropdownMenuItem onSelect={() => openLater("subscription")}>
+              <Pencil className="size-4" />
+              Editar assinatura
+            </DropdownMenuItem>
+          )}
+          {p.status === "ACTIVE" && (
+            <DropdownMenuItem onSelect={() => openLater("suspend")}>
+              <Pause className="size-4" />
+              Suspender
+            </DropdownMenuItem>
+          )}
+          {p.status === "SUSPENDED" && (
+            <DropdownMenuItem onSelect={() => openLater("reactivate")}>
+              <Play className="size-4" />
+              Reativar
+            </DropdownMenuItem>
+          )}
+          {p.status !== "CANCELED" && (
+            <DropdownMenuItem
+              variant="destructive"
+              onSelect={() => openLater("cancel")}
+            >
+              <Ban className="size-4" />
+              Cancelar plataforma
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <HistoryDialog
+        portalId={p.id}
+        companyName={p.companyName}
+        hideTrigger
+        open={dialog === "history"}
+        onOpenChange={(o) => setDialog(o ? "history" : null)}
+      />
+      {p.status !== "CANCELED" && (
+        <CustomPortalSubscriptionDialog
+          portal={p}
+          hideTrigger
+          open={dialog === "subscription"}
+          onOpenChange={(o) => setDialog(o ? "subscription" : null)}
+        />
+      )}
+      {p.status === "ACTIVE" && (
+        <CustomPortalStatusDialog
+          portalId={p.id}
+          action="suspend"
+          companyName={p.companyName}
+          hideTrigger
+          open={dialog === "suspend"}
+          onOpenChange={(o) => setDialog(o ? "suspend" : null)}
+        />
+      )}
+      {p.status === "SUSPENDED" && (
+        <CustomPortalStatusDialog
+          portalId={p.id}
+          action="reactivate"
+          companyName={p.companyName}
+          hideTrigger
+          open={dialog === "reactivate"}
+          onOpenChange={(o) => setDialog(o ? "reactivate" : null)}
+        />
+      )}
+      {p.status !== "CANCELED" && (
+        <CustomPortalStatusDialog
+          portalId={p.id}
+          action="cancel"
+          companyName={p.companyName}
+          hideTrigger
+          open={dialog === "cancel"}
+          onOpenChange={(o) => setDialog(o ? "cancel" : null)}
+        />
       )}
     </div>
   );
@@ -456,11 +675,22 @@ function PortalsTab({
 function HistoryDialog({
   portalId,
   companyName,
+  open: openProp,
+  onOpenChange,
+  hideTrigger,
 }: {
   portalId: number;
   companyName: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [openState, setOpenState] = useState(false);
+  const open = openProp ?? openState;
+  const setOpen = (next: boolean) => {
+    onOpenChange?.(next);
+    setOpenState(next);
+  };
   const detail = useAdminCustomPortalDetail(portalId, open);
 
   const statusLabel = (s: CustomPortalStatus | null) =>
@@ -468,12 +698,14 @@ function HistoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">
-          <History className="size-4" />
-          Histórico
-        </Button>
-      </DialogTrigger>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button variant="ghost" size="sm">
+            <History className="size-4" />
+            Histórico
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Histórico — {companyName}</DialogTitle>

@@ -163,26 +163,33 @@ export default function AdminFinancePage() {
                 Receita recorrente, contada à parte da comissão.
               </p>
             </CardHeader>
-            <CardContent className="flex flex-wrap items-end gap-6">
-              <div>
-                <div className="text-muted-foreground text-xs">Arrecadado</div>
-                <div className="text-success text-xl font-bold tabular-nums">
-                  {brlShort(data.portalGrossRevenue)}
+            <CardContent className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:gap-6">
+              <div className="flex gap-6">
+                <div>
+                  <div className="text-muted-foreground text-xs">Arrecadado</div>
+                  <div className="text-success text-xl font-bold tabular-nums">
+                    {brlShort(data.portalGrossRevenue)}
+                  </div>
+                  <div className="text-muted-foreground text-xs">
+                    {data.portalPaidCount} mensalidade(s) paga(s)
+                  </div>
                 </div>
-                <div className="text-muted-foreground text-xs">
-                  {data.portalPaidCount} mensalidade(s) paga(s)
+                <div>
+                  <div className="text-muted-foreground text-xs">Em aberto</div>
+                  <div className="text-xl font-bold tabular-nums">
+                    {brlShort(data.portalPendingRevenue)}
+                  </div>
+                  <div className="text-muted-foreground text-xs">
+                    {data.portalPendingCount} em aberto
+                  </div>
                 </div>
               </div>
-              <div>
-                <div className="text-muted-foreground text-xs">Em aberto</div>
-                <div className="text-xl font-bold tabular-nums">
-                  {brlShort(data.portalPendingRevenue)}
-                </div>
-                <div className="text-muted-foreground text-xs">
-                  {data.portalPendingCount} em aberto
-                </div>
-              </div>
-              <Button asChild variant="outline" size="sm" className="mb-1">
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="w-full sm:mb-1 sm:w-auto"
+              >
                 <Link href="/admin/portal-subscription-charges">
                   Ver mensalidades
                 </Link>
@@ -226,7 +233,7 @@ export default function AdminFinancePage() {
               </p>
             </CardHeader>
             <CardContent className="flex flex-wrap items-end gap-3">
-              <div className="space-y-1.5">
+              <div className="w-full space-y-1.5 sm:w-32">
                 <Label htmlFor="finance-percent">Comissão (%)</Label>
                 <Input
                   id="finance-percent"
@@ -234,13 +241,14 @@ export default function AdminFinancePage() {
                   min="0"
                   max="100"
                   step="0.5"
-                  className="w-32"
+                  inputMode="decimal"
                   value={percent}
                   onChange={(e) => setPercent(e.target.value)}
                   aria-invalid={percent.trim() !== "" && parsed === null}
                 />
               </div>
               <Button
+                className="flex-1 sm:flex-none"
                 disabled={!dirty || updatePolicy.isPending}
                 onClick={() => {
                   if (parsed === null) {

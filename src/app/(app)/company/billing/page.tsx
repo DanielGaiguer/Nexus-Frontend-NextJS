@@ -19,6 +19,11 @@ import { CardForm } from "@/components/company/card-form";
 import { FiscalProfileCard } from "@/components/company/fiscal-profile-card";
 import { StatCard } from "@/components/dashboard/stat-card";
 import {
+  RecordCard,
+  RecordCardHeader,
+  RecordField,
+} from "@/components/shared/record-card";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -93,6 +98,33 @@ const chargeBadgeClass: Record<string, string> = {
   CANCELED: "bg-muted text-muted-foreground",
 };
 
+type CompanyInvoice = NonNullable<
+  ReturnType<typeof useCompanyInvoices>["data"]
+>[number];
+
+/** Célula "nota fiscal" do extrato: link de PDF, ou o status/erro da emissão. */
+function NfseLinkCell({ n }: { n: CompanyInvoice | undefined }) {
+  if (!n) return <span className="text-muted-foreground">—</span>;
+  if (n.linkPdf) {
+    return (
+      <a
+        href={n.linkPdf}
+        target="_blank"
+        rel="noreferrer"
+        className="text-primary hover:underline"
+      >
+        Baixar PDF{n.numero ? ` · nº ${n.numero}` : ""}
+      </a>
+    );
+  }
+  return (
+    <span className="text-muted-foreground">
+      {nfseInvoiceStatusLabels[n.status]}
+      {n.status === "FAILED" && n.failureReason ? ` — ${n.failureReason}` : ""}
+    </span>
+  );
+}
+
 const invoiceBadgeClass: Record<string, string> = {
   ISSUED: "bg-success/15 text-success",
   FAILED: "bg-destructive/15 text-destructive",
@@ -100,6 +132,37 @@ const invoiceBadgeClass: Record<string, string> = {
   PENDING: "bg-warning/15 text-warning",
   CANCELED: "bg-muted text-muted-foreground",
 };
+
+/** Links de PDF/XML da nota, ou "—" quando ainda não há arquivo. */
+function NfseDownloadLinks({ n }: { n: CompanyInvoice }) {
+  if (!n.linkPdf && !n.linkXml) {
+    return <span className="text-muted-foreground">—</span>;
+  }
+  return (
+    <span className="inline-flex gap-2">
+      {n.linkPdf && (
+        <a
+          href={n.linkPdf}
+          target="_blank"
+          rel="noreferrer"
+          className="text-primary hover:underline"
+        >
+          PDF
+        </a>
+      )}
+      {n.linkXml && (
+        <a
+          href={n.linkXml}
+          target="_blank"
+          rel="noreferrer"
+          className="text-primary hover:underline"
+        >
+          XML
+        </a>
+      )}
+    </span>
+  );
+}
 
 export default function CompanyBillingPage() {
   const { data: config } = useBillingConfig();
@@ -429,7 +492,38 @@ export default function CompanyBillingPage() {
             </p>
           </CardHeader>
           <CardContent className="px-0 pb-0">
-            <div className="overflow-x-auto">
+            {/* Mobile */}
+            <div className="flex flex-col gap-2 p-3 md:hidden">
+              {overview.awaitingConfirmations.map((a) => (
+                <RecordCard key={a.matchId}>
+                  <div className="font-medium break-words">
+                    {a.projectTitle}
+                  </div>
+                  <p className="text-muted-foreground text-xs">
+                    {a.professionalName}
+                  </p>
+                  <RecordField label="Prazo">
+                    até {date(a.deadline)}
+                  </RecordField>
+                  <RecordField label="Comissão estimada">
+                    {a.estimatedCommission != null ? (
+                      <>
+                        <span className="tabular-nums">
+                          ~ {money(a.estimatedCommission)}
+                        </span>
+                        <span className="text-muted-foreground block text-xs">
+                          sobre {money(a.suggestedAmount)}
+                        </span>
+                      </>
+                    ) : (
+                      "—"
+                    )}
+                  </RecordField>
+                </RecordCard>
+              ))}
+            </div>
+            {/* Desktop */}
+            <div className="hidden md:block">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -481,84 +575,102 @@ export default function CompanyBillingPage() {
               Nenhuma comissão cobrada ainda.
             </p>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Contratação</TableHead>
-                    <TableHead>Base</TableHead>
-                    <TableHead>Comissão</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Nota fiscal</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {charges.map((c) => (
-                    <TableRow key={c.id}>
-                      <TableCell>
-                        <div className="font-medium">{c.projectTitle}</div>
-                        <div className="text-muted-foreground text-xs">
-                          {c.professionalName} ·{" "}
-                          {new Date(c.createdAt).toLocaleDateString("pt-BR")}
-                        </div>
-                        {c.failureReason && (
-                          <div className="text-destructive text-xs">
-                            {c.failureReason}
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="tabular-nums">
-                        {money(c.baseAmount)}
-                      </TableCell>
-                      <TableCell className="tabular-nums">
-                        {money(c.amount)}
-                        <span className="text-muted-foreground ml-1 text-xs">
-                          ({c.percentage}%)
-                        </span>
-                      </TableCell>
-                      <TableCell>
+            <>
+              {/* Mobile */}
+              <div className="flex flex-col gap-2 p-3 md:hidden">
+                {charges.map((c) => (
+                  <RecordCard key={c.id}>
+                    <RecordCardHeader
+                      title={c.projectTitle}
+                      aside={
                         <Badge
                           variant="secondary"
                           className={chargeBadgeClass[c.status] ?? ""}
                         >
                           {commissionChargeStatusLabels[c.status]}
                         </Badge>
-                      </TableCell>
-                      <TableCell className="text-xs">
-                        {(() => {
-                          const n = invoiceByMatch.get(c.matchId);
-                          if (!n)
-                            return (
-                              <span className="text-muted-foreground">—</span>
-                            );
-                          if (n.linkPdf) {
-                            return (
-                              <a
-                                href={n.linkPdf}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-primary hover:underline"
-                              >
-                                Baixar PDF
-                                {n.numero ? ` · nº ${n.numero}` : ""}
-                              </a>
-                            );
-                          }
-                          return (
-                            <span className="text-muted-foreground">
-                              {nfseInvoiceStatusLabels[n.status]}
-                              {n.status === "FAILED" && n.failureReason
-                                ? ` — ${n.failureReason}`
-                                : ""}
-                            </span>
-                          );
-                        })()}
-                      </TableCell>
+                      }
+                    />
+                    <p className="text-muted-foreground text-xs">
+                      {c.professionalName} ·{" "}
+                      {new Date(c.createdAt).toLocaleDateString("pt-BR")}
+                    </p>
+                    {c.failureReason && (
+                      <p className="text-destructive text-xs">
+                        {c.failureReason}
+                      </p>
+                    )}
+                    <RecordField label="Base">
+                      <span className="tabular-nums">
+                        {money(c.baseAmount)}
+                      </span>
+                    </RecordField>
+                    <RecordField label="Comissão">
+                      <span className="tabular-nums">{money(c.amount)}</span>
+                      <span className="text-muted-foreground text-xs">
+                        {" "}
+                        ({c.percentage}%)
+                      </span>
+                    </RecordField>
+                    <RecordField label="Nota fiscal">
+                      <NfseLinkCell n={invoiceByMatch.get(c.matchId)} />
+                    </RecordField>
+                  </RecordCard>
+                ))}
+              </div>
+              {/* Desktop */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Contratação</TableHead>
+                      <TableHead>Base</TableHead>
+                      <TableHead>Comissão</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Nota fiscal</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {charges.map((c) => (
+                      <TableRow key={c.id}>
+                        <TableCell>
+                          <div className="font-medium">{c.projectTitle}</div>
+                          <div className="text-muted-foreground text-xs">
+                            {c.professionalName} ·{" "}
+                            {new Date(c.createdAt).toLocaleDateString("pt-BR")}
+                          </div>
+                          {c.failureReason && (
+                            <div className="text-destructive text-xs">
+                              {c.failureReason}
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell className="tabular-nums">
+                          {money(c.baseAmount)}
+                        </TableCell>
+                        <TableCell className="tabular-nums">
+                          {money(c.amount)}
+                          <span className="text-muted-foreground ml-1 text-xs">
+                            ({c.percentage}%)
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="secondary"
+                            className={chargeBadgeClass[c.status] ?? ""}
+                          >
+                            {commissionChargeStatusLabels[c.status]}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          <NfseLinkCell n={invoiceByMatch.get(c.matchId)} />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
@@ -572,7 +684,42 @@ export default function CompanyBillingPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="px-0 pb-0">
-            <div className="overflow-x-auto">
+            {/* Mobile */}
+            <div className="flex flex-col gap-2 p-3 md:hidden">
+              {invoices.map((n) => (
+                <RecordCard key={n.id}>
+                  <RecordCardHeader
+                    title={n.projectTitle}
+                    aside={
+                      <Badge
+                        variant="secondary"
+                        className={invoiceBadgeClass[n.status] ?? ""}
+                      >
+                        {nfseInvoiceStatusLabels[n.status]}
+                      </Badge>
+                    }
+                  />
+                  <p className="text-muted-foreground text-xs">
+                    {n.professionalName ? `${n.professionalName} · ` : ""}
+                    {date(n.createdAt)}
+                    {n.numero ? ` · nº ${n.numero}` : ""}
+                  </p>
+                  {n.status === "FAILED" && n.failureReason && (
+                    <p className="text-destructive text-xs">
+                      {n.failureReason}
+                    </p>
+                  )}
+                  <RecordField label="Valor">
+                    <span className="tabular-nums">{money(n.amount)}</span>
+                  </RecordField>
+                  <RecordField label="Download">
+                    <NfseDownloadLinks n={n} />
+                  </RecordField>
+                </RecordCard>
+              ))}
+            </div>
+            {/* Desktop */}
+            <div className="hidden md:block">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -614,32 +761,7 @@ export default function CompanyBillingPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-xs">
-                        {n.linkPdf || n.linkXml ? (
-                          <div className="flex gap-2">
-                            {n.linkPdf && (
-                              <a
-                                href={n.linkPdf}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-primary hover:underline"
-                              >
-                                PDF
-                              </a>
-                            )}
-                            {n.linkXml && (
-                              <a
-                                href={n.linkXml}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-primary hover:underline"
-                              >
-                                XML
-                              </a>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
+                        <NfseDownloadLinks n={n} />
                       </TableCell>
                     </TableRow>
                   ))}

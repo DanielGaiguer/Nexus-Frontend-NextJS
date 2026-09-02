@@ -174,12 +174,24 @@ function InfoRow({
 export function MatchCompareDialog({
   match,
   viewer = "company",
+  open: openProp,
+  onOpenChange,
+  hideTrigger,
 }: {
   match: MatchResponseDTO;
   viewer?: "company" | "professional";
+  /** Modo controlado (ex.: item de menu). */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [openState, setOpenState] = useState(false);
+  const open = openProp ?? openState;
+  const setOpen = (next: boolean) => {
+    onOpenChange?.(next);
+    setOpenState(next);
+  };
   const companyComparison = useCandidateComparison(
     open && viewer === "company"
       ? { projectId: match.project.id, matchIds: [match.id] }
@@ -226,7 +238,9 @@ export function MatchCompareDialog({
         onSuccess: (result) => {
           if (result.screeningRequired) {
             setOpen(false);
-            router.push(`/pro/screening-invitations/${result.screeningInvitationId}/take`);
+            router.push(
+              `/pro/screening-invitations/${result.screeningInvitationId}/take`
+            );
             return;
           }
           toast.success("Interesse enviado ao contratante!");
@@ -241,12 +255,14 @@ export function MatchCompareDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">
-          <GitCompare className="size-3.5" />
-          Comparar
-        </Button>
-      </DialogTrigger>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button variant="ghost" size="sm">
+            <GitCompare className="size-3.5" />
+            Comparar
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="scrollbar-hide max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Profissional × Vaga</DialogTitle>

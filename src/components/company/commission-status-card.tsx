@@ -27,8 +27,8 @@ export function CommissionStatusCard() {
 
   return (
     <Card className="gap-0 py-0">
-      <CardHeader className="flex flex-row items-center justify-between border-b py-4">
-        <div>
+      <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-2 border-b py-4">
+        <div className="min-w-0">
           <CardTitle className="flex items-center gap-1.5 text-sm">
             <Percent className="text-primary size-4" />
             Contratações e comissão
@@ -39,11 +39,13 @@ export function CommissionStatusCard() {
           </p>
         </div>
         {data?.commissionApplies ? (
-          <Badge className="bg-warning/15 text-warning">
+          <Badge className="bg-warning/15 text-warning shrink-0">
             Comissão de {formatPercent(data.currentPercentage)}
           </Badge>
         ) : (
-          <Badge variant="secondary">Período gratuito</Badge>
+          <Badge variant="secondary" className="shrink-0">
+            Período gratuito
+          </Badge>
         )}
       </CardHeader>
       <CardContent className="py-4">

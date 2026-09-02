@@ -211,7 +211,7 @@ function RecentOpportunitiesCard({
 }) {
   return (
     <Card className="gap-0 py-0">
-      <CardHeader className="flex flex-row items-center justify-between border-b py-4">
+      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 border-b py-4">
         <div>
           <CardTitle className="flex items-center gap-1.5 text-sm">
             <Icon className={`size-4 ${iconClassName}`} />
@@ -244,56 +244,101 @@ function RecentOpportunitiesCard({
             }
           />
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{titleColumnLabel}</TableHead>
-                  <TableHead>{moneyColumnLabel}</TableHead>
-                  <TableHead>Modalidade</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ação</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {items.map((project) => (
-                  <TableRow key={project.id}>
-                    <TableCell>
-                      <div className="font-medium">{project.title}</div>
-                      <div className="text-muted-foreground text-xs">
-                        {formatCreatedAt(project.createdAt)}
-                      </div>
-                    </TableCell>
-                    <TableCell>{renderMoney(project)}</TableCell>
-                    <TableCell>
+          <>
+            {/* Mobile: lista de cards */}
+            <div className="flex flex-col gap-2 p-4 md:hidden">
+              {items.map((project) => (
+                <div
+                  key={project.id}
+                  className="flex flex-col gap-1.5 rounded-lg border p-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 font-medium break-words">
+                      {project.title}
+                    </div>
+                    <Badge
+                      variant="secondary"
+                      className={`shrink-0 ${
+                        statusBadgeClass[project.status] ??
+                        "bg-warning/15 text-warning"
+                      }`}
+                    >
+                      {statusLabels[project.status] ?? project.status}
+                    </Badge>
+                  </div>
+                  <div className="text-muted-foreground text-xs">
+                    {formatCreatedAt(project.createdAt)}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                    {renderMoney(project)}
+                    <span className="text-muted-foreground text-xs">
                       {project.workMode
                         ? modalityLabels[project.workMode]
-                        : "—"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="secondary"
-                        className={
-                          statusBadgeClass[project.status] ??
-                          "bg-warning/15 text-warning"
-                        }
-                      >
-                        {statusLabels[project.status] ?? project.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Link
-                        href={`/company/projects/${project.id}/ranking`}
-                        className="text-primary text-xs font-semibold hover:underline"
-                      >
-                        Ver ranking
-                      </Link>
-                    </TableCell>
+                        : "Modalidade não informada"}
+                    </span>
+                  </div>
+                  <Link
+                    href={`/company/projects/${project.id}/ranking`}
+                    className="text-primary pt-0.5 text-xs font-semibold hover:underline"
+                  >
+                    Ver ranking →
+                  </Link>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop: tabela */}
+            <div className="hidden md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{titleColumnLabel}</TableHead>
+                    <TableHead>{moneyColumnLabel}</TableHead>
+                    <TableHead>Modalidade</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Ação</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {items.map((project) => (
+                    <TableRow key={project.id}>
+                      <TableCell>
+                        <div className="font-medium">{project.title}</div>
+                        <div className="text-muted-foreground text-xs">
+                          {formatCreatedAt(project.createdAt)}
+                        </div>
+                      </TableCell>
+                      <TableCell>{renderMoney(project)}</TableCell>
+                      <TableCell>
+                        {project.workMode
+                          ? modalityLabels[project.workMode]
+                          : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="secondary"
+                          className={
+                            statusBadgeClass[project.status] ??
+                            "bg-warning/15 text-warning"
+                          }
+                        >
+                          {statusLabels[project.status] ?? project.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Link
+                          href={`/company/projects/${project.id}/ranking`}
+                          className="text-primary text-xs font-semibold hover:underline"
+                        >
+                          Ver ranking
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </>
         )}
       </CardContent>
     </Card>

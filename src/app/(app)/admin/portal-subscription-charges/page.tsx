@@ -3,6 +3,12 @@
 import { useState } from "react";
 import { toast } from "sonner";
 
+import {
+  RecordCard,
+  RecordCardActions,
+  RecordCardHeader,
+  RecordField,
+} from "@/components/shared/record-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -31,6 +37,7 @@ import {
 import { ApiError } from "@/lib/api-client";
 import {
   portalSubscriptionChargeStatusLabel,
+  type PortalSubscriptionChargeDTO,
   type PortalSubscriptionChargeStatus,
 } from "@/types/custom-portal";
 
@@ -60,13 +67,66 @@ const badgeClass: Record<string, string> = {
   CANCELED: "bg-muted text-muted-foreground",
 };
 
+type SimulateFn = ReturnType<typeof useSimulatePortalCharge>;
+
+function StatusBadge({ status }: { status: PortalSubscriptionChargeStatus }) {
+  return (
+    <Badge variant="secondary" className={badgeClass[status] ?? ""}>
+      {portalSubscriptionChargeStatusLabel[status]}
+    </Badge>
+  );
+}
+
+function SimulateActions({
+  charge,
+  simulate,
+}: {
+  charge: PortalSubscriptionChargeDTO;
+  simulate: SimulateFn;
+}) {
+  if (charge.status !== "PROCESSING" && charge.status !== "PENDING") return null;
+  const run = (outcome: "approved" | "rejected", okMsg: string) =>
+    simulate.mutate(
+      { chargeId: charge.id, outcome },
+      {
+        onSuccess: () => toast.success(okMsg),
+        onError: (e) =>
+          toast.error(e instanceof ApiError ? e.message : "Falha."),
+      },
+    );
+  return (
+    <>
+      <Button
+        size="sm"
+        variant="outline"
+        disabled={simulate.isPending}
+        onClick={() => run("approved", "Mensalidade aprovada.")}
+      >
+        Aprovar
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        className="text-destructive"
+        disabled={simulate.isPending}
+        onClick={() =>
+          run("rejected", "Mensalidade recusada — carência iniciada.")
+        }
+      >
+        Recusar
+      </Button>
+    </>
+  );
+}
+
 export default function AdminPortalSubscriptionChargesPage() {
   const [status, setStatus] = useState<PortalSubscriptionChargeStatus | "ALL">(
-    "ALL"
+    "ALL",
   );
   const { data: charges, isLoading } = useAdminPortalCharges(status);
   const { data: mode } = useAdminPortalChargeMode();
   const simulate = useSimulatePortalCharge();
+  const canSimulate = !!mode?.simulated;
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
@@ -97,7 +157,7 @@ export default function AdminPortalSubscriptionChargesPage() {
         </Card>
       )}
 
-      <div className="max-w-[200px] space-y-1">
+      <div className="w-full space-y-1 sm:max-w-[220px]">
         <Label className="text-xs">Status</Label>
         <Select
           value={status}
@@ -118,122 +178,100 @@ export default function AdminPortalSubscriptionChargesPage() {
         </Select>
       </div>
 
-      <Card className="p-0">
-        <CardContent className="p-0">
-          {isLoading ? (
-            <Skeleton className="m-4 h-40" />
-          ) : !charges || charges.length === 0 ? (
-            <p className="text-muted-foreground px-4 py-6 text-center text-sm">
-              Nenhuma mensalidade neste filtro.
-            </p>
-          ) : (
-            <Table className="table-fixed text-xs [&_td]:px-2.5 [&_td]:py-2 [&_td]:align-top [&_th]:h-9 [&_th]:px-2.5">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[24%]">Contratante</TableHead>
-                  <TableHead className="w-[22%]">Plataforma</TableHead>
-                  <TableHead className="w-[13%]">Vencimento</TableHead>
-                  <TableHead className="w-[13%]">Valor</TableHead>
-                  <TableHead className="w-[16%]">Status</TableHead>
-                  {mode?.simulated && (
-                    <TableHead className="w-[12%] text-right">
-                      Simular
-                    </TableHead>
+      {isLoading ? (
+        <Skeleton className="h-40" />
+      ) : !charges || charges.length === 0 ? (
+        <Card>
+          <CardContent className="text-muted-foreground py-6 text-center text-sm">
+            Nenhuma mensalidade neste filtro.
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {/* Mobile: lista de cards */}
+          <div className="flex flex-col gap-2 md:hidden">
+            {charges.map((c) => (
+              <RecordCard key={c.id}>
+                <RecordCardHeader
+                  title={c.companyName}
+                  aside={<StatusBadge status={c.status} />}
+                />
+                <RecordField label="Plataforma">
+                  {c.subdomain} · {c.planName}
+                </RecordField>
+                <RecordField label="Vencimento">
+                  <span className="tabular-nums">{dateOnly(c.dueDate)}</span>
+                </RecordField>
+                <RecordField label="Valor">
+                  <span className="tabular-nums">{money(c.amount)}</span>
+                </RecordField>
+                {c.failureReason && (
+                  <p className="text-destructive text-xs">{c.failureReason}</p>
+                )}
+                {canSimulate &&
+                  (c.status === "PROCESSING" || c.status === "PENDING") && (
+                    <RecordCardActions>
+                      <SimulateActions charge={c} simulate={simulate} />
+                    </RecordCardActions>
                   )}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {charges.map((c) => (
-                  <TableRow key={c.id}>
-                    <TableCell className="font-medium break-words whitespace-normal">
-                      {c.companyName}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-[11px] break-words whitespace-normal">
-                      {c.subdomain} · {c.planName}
-                    </TableCell>
-                    <TableCell className="tabular-nums">
-                      {dateOnly(c.dueDate)}
-                    </TableCell>
-                    <TableCell className="tabular-nums">
-                      {money(c.amount)}
-                    </TableCell>
-                    <TableCell className="whitespace-normal">
-                      <Badge
-                        variant="secondary"
-                        className={badgeClass[c.status] ?? ""}
-                      >
-                        {portalSubscriptionChargeStatusLabel[c.status]}
-                      </Badge>
-                      {c.failureReason && (
-                        <div className="text-destructive mt-0.5 text-[11px]">
-                          {c.failureReason}
-                        </div>
-                      )}
-                    </TableCell>
-                    {mode?.simulated && (
-                      <TableCell className="text-right">
-                        {(c.status === "PROCESSING" ||
-                          c.status === "PENDING") && (
-                          <div className="flex flex-wrap justify-end gap-1">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-7 px-2 text-[11px]"
-                              disabled={simulate.isPending}
-                              onClick={() =>
-                                simulate.mutate(
-                                  { chargeId: c.id, outcome: "approved" },
-                                  {
-                                    onSuccess: () =>
-                                      toast.success("Mensalidade aprovada."),
-                                    onError: (e) =>
-                                      toast.error(
-                                        e instanceof ApiError
-                                          ? e.message
-                                          : "Falha."
-                                      ),
-                                  }
-                                )
-                              }
-                            >
-                              Aprovar
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="text-destructive h-7 px-2 text-[11px]"
-                              disabled={simulate.isPending}
-                              onClick={() =>
-                                simulate.mutate(
-                                  { chargeId: c.id, outcome: "rejected" },
-                                  {
-                                    onSuccess: () =>
-                                      toast.success(
-                                        "Mensalidade recusada — carência iniciada."
-                                      ),
-                                    onError: (e) =>
-                                      toast.error(
-                                        e instanceof ApiError
-                                          ? e.message
-                                          : "Falha."
-                                      ),
-                                  }
-                                )
-                              }
-                            >
-                              Recusar
-                            </Button>
+              </RecordCard>
+            ))}
+          </div>
+
+          {/* Desktop: tabela */}
+          <Card className="hidden p-0 md:block">
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Contratante</TableHead>
+                    <TableHead>Plataforma</TableHead>
+                    <TableHead>Vencimento</TableHead>
+                    <TableHead>Valor</TableHead>
+                    <TableHead>Status</TableHead>
+                    {canSimulate && (
+                      <TableHead className="text-right">Simular</TableHead>
+                    )}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {charges.map((c) => (
+                    <TableRow key={c.id}>
+                      <TableCell className="font-medium">
+                        {c.companyName}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-xs">
+                        {c.subdomain} · {c.planName}
+                      </TableCell>
+                      <TableCell className="tabular-nums">
+                        {dateOnly(c.dueDate)}
+                      </TableCell>
+                      <TableCell className="tabular-nums">
+                        {money(c.amount)}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={c.status} />
+                        {c.failureReason && (
+                          <div className="text-destructive mt-0.5 text-xs">
+                            {c.failureReason}
                           </div>
                         )}
                       </TableCell>
-                    )}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                      {canSimulate && (
+                        <TableCell className="text-right">
+                          <div className="flex flex-wrap justify-end gap-1">
+                            <SimulateActions charge={c} simulate={simulate} />
+                          </div>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 }

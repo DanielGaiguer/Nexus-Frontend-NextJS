@@ -3,6 +3,12 @@
 import { useState } from "react";
 import { toast } from "sonner";
 
+import {
+  RecordCard,
+  RecordCardActions,
+  RecordCardHeader,
+  RecordField,
+} from "@/components/shared/record-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,7 +35,11 @@ import {
 } from "@/hooks/mutations/useNfseActions";
 import { useAdminInvoices, useAdminNfseMode } from "@/hooks/queries/useNfse";
 import { ApiError } from "@/lib/api-client";
-import { nfseInvoiceStatusLabels, type NfseInvoiceStatus } from "@/types/nfse";
+import {
+  nfseInvoiceStatusLabels,
+  type NfseInvoiceDTO,
+  type NfseInvoiceStatus,
+} from "@/types/nfse";
 
 const FILTERS: (NfseInvoiceStatus | "ALL")[] = [
   "ALL",
@@ -52,12 +62,103 @@ const badgeClass: Record<string, string> = {
   CANCELED: "bg-muted text-muted-foreground",
 };
 
+type RetryFn = ReturnType<typeof useRetryInvoice>;
+type SimFn = ReturnType<typeof useSimulateInvoice>;
+
+function StatusBadge({ status }: { status: NfseInvoiceStatus }) {
+  return (
+    <Badge variant="secondary" className={badgeClass[status] ?? ""}>
+      {nfseInvoiceStatusLabels[status]}
+    </Badge>
+  );
+}
+
+function InvoiceActions({
+  invoice: n,
+  canSimulate,
+  retry,
+  simulate,
+}: {
+  invoice: NfseInvoiceDTO;
+  canSimulate: boolean;
+  retry: RetryFn;
+  simulate: SimFn;
+}) {
+  const sim = (outcome: "authorized" | "denied", msg: string) =>
+    simulate.mutate(
+      { id: n.id, outcome },
+      {
+        onSuccess: () => toast.success(msg),
+        onError: (e) =>
+          toast.error(e instanceof ApiError ? e.message : "Falha."),
+      },
+    );
+  return (
+    <>
+      {canSimulate && (n.status === "PROCESSING" || n.status === "PENDING") && (
+        <>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={simulate.isPending}
+            onClick={() => sim("authorized", "Nota autorizada.")}
+          >
+            Autorizar
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-destructive"
+            disabled={simulate.isPending}
+            onClick={() => sim("denied", "Nota negada.")}
+          >
+            Negar
+          </Button>
+        </>
+      )}
+      {(n.status === "FAILED" || n.status === "PENDING") && (
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={retry.isPending}
+          onClick={() =>
+            retry.mutate(n.id, {
+              onSuccess: () => toast.success("Emissão reenviada."),
+              onError: (e) =>
+                toast.error(
+                  e instanceof ApiError ? e.message : "Falha ao reenviar.",
+                ),
+            })
+          }
+        >
+          Tentar novamente
+        </Button>
+      )}
+    </>
+  );
+}
+
+function PdfLink({ invoice: n }: { invoice: NfseInvoiceDTO }) {
+  if (!n.linkPdf) return <span className="text-muted-foreground">—</span>;
+  return (
+    <a
+      href={n.linkPdf}
+      target="_blank"
+      rel="noreferrer"
+      className="text-primary hover:underline"
+    >
+      PDF{n.numero ? ` · nº ${n.numero}` : ""}
+    </a>
+  );
+}
+
 export default function AdminInvoicesPage() {
   const [status, setStatus] = useState<NfseInvoiceStatus | "ALL">("ALL");
   const { data: invoices, isLoading } = useAdminInvoices(status);
   const { data: mode } = useAdminNfseMode();
   const retry = useRetryInvoice();
   const simulate = useSimulateInvoice();
+  const canSimulate = !!mode?.simulated;
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-4">
@@ -87,7 +188,7 @@ export default function AdminInvoicesPage() {
         </Card>
       )}
 
-      <div className="max-w-[200px] space-y-1">
+      <div className="w-full space-y-1 sm:max-w-[220px]">
         <Label className="text-xs">Status</Label>
         <Select
           value={status}
@@ -106,16 +207,61 @@ export default function AdminInvoicesPage() {
         </Select>
       </div>
 
-      <Card className="px-0 py-0">
-        <CardContent className="px-0">
-          {isLoading ? (
-            <Skeleton className="m-4 h-40" />
-          ) : !invoices || invoices.length === 0 ? (
-            <p className="text-muted-foreground px-4 py-6 text-center text-sm">
-              Nenhuma nota neste filtro.
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
+      {isLoading ? (
+        <Skeleton className="h-40" />
+      ) : !invoices || invoices.length === 0 ? (
+        <Card>
+          <CardContent className="text-muted-foreground py-6 text-center text-sm">
+            Nenhuma nota neste filtro.
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {/* Mobile: lista de cards */}
+          <div className="flex flex-col gap-2 md:hidden">
+            {invoices.map((n) => (
+              <RecordCard key={n.id}>
+                <RecordCardHeader
+                  title={n.companyName}
+                  aside={<StatusBadge status={n.status} />}
+                />
+                <RecordField label="Contratação">
+                  <span className="block">{n.projectTitle}</span>
+                  {n.professionalName && (
+                    <span className="text-muted-foreground text-xs">
+                      {n.professionalName}
+                    </span>
+                  )}
+                </RecordField>
+                <RecordField label="Valor">
+                  <span className="tabular-nums">{money(n.amount)}</span>
+                </RecordField>
+                <RecordField label="Nota">
+                  <PdfLink invoice={n} />
+                </RecordField>
+                {n.failureReason && (
+                  <p className="text-destructive text-xs">{n.failureReason}</p>
+                )}
+                {n.attempts > 0 && (
+                  <p className="text-muted-foreground text-xs">
+                    {n.attempts} tentativa{n.attempts > 1 ? "s" : ""}
+                  </p>
+                )}
+                <RecordCardActions className="empty:hidden">
+                  <InvoiceActions
+                    invoice={n}
+                    canSimulate={canSimulate}
+                    retry={retry}
+                    simulate={simulate}
+                  />
+                </RecordCardActions>
+              </RecordCard>
+            ))}
+          </div>
+
+          {/* Desktop: tabela */}
+          <Card className="hidden p-0 md:block">
+            <CardContent className="p-0">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -143,12 +289,7 @@ export default function AdminInvoicesPage() {
                         {money(n.amount)}
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          variant="secondary"
-                          className={badgeClass[n.status] ?? ""}
-                        >
-                          {nfseInvoiceStatusLabels[n.status]}
-                        </Badge>
+                        <StatusBadge status={n.status} />
                         {n.failureReason && (
                           <div className="text-destructive mt-0.5 text-xs">
                             {n.failureReason}
@@ -161,104 +302,26 @@ export default function AdminInvoicesPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-xs">
-                        {n.linkPdf ? (
-                          <a
-                            href={n.linkPdf}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-primary hover:underline"
-                          >
-                            PDF{n.numero ? ` · nº ${n.numero}` : ""}
-                          </a>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
+                        <PdfLink invoice={n} />
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          {mode?.simulated &&
-                            (n.status === "PROCESSING" ||
-                              n.status === "PENDING") && (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  disabled={simulate.isPending}
-                                  onClick={() =>
-                                    simulate.mutate(
-                                      { id: n.id, outcome: "authorized" },
-                                      {
-                                        onSuccess: () =>
-                                          toast.success("Nota autorizada."),
-                                        onError: (e) =>
-                                          toast.error(
-                                            e instanceof ApiError
-                                              ? e.message
-                                              : "Falha."
-                                          ),
-                                      }
-                                    )
-                                  }
-                                >
-                                  Autorizar
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="text-destructive"
-                                  disabled={simulate.isPending}
-                                  onClick={() =>
-                                    simulate.mutate(
-                                      { id: n.id, outcome: "denied" },
-                                      {
-                                        onSuccess: () =>
-                                          toast.success("Nota negada."),
-                                        onError: (e) =>
-                                          toast.error(
-                                            e instanceof ApiError
-                                              ? e.message
-                                              : "Falha."
-                                          ),
-                                      }
-                                    )
-                                  }
-                                >
-                                  Negar
-                                </Button>
-                              </>
-                            )}
-                          {(n.status === "FAILED" ||
-                            n.status === "PENDING") && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              disabled={retry.isPending}
-                              onClick={() =>
-                                retry.mutate(n.id, {
-                                  onSuccess: () =>
-                                    toast.success("Emissão reenviada."),
-                                  onError: (e) =>
-                                    toast.error(
-                                      e instanceof ApiError
-                                        ? e.message
-                                        : "Falha ao reenviar."
-                                    ),
-                                })
-                              }
-                            >
-                              Tentar novamente
-                            </Button>
-                          )}
+                        <div className="flex flex-wrap justify-end gap-1">
+                          <InvoiceActions
+                            invoice={n}
+                            canSimulate={canSimulate}
+                            retry={retry}
+                            simulate={simulate}
+                          />
                         </div>
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 }

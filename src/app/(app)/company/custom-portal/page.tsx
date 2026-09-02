@@ -394,7 +394,7 @@ function PortalCard({
     <div className="flex flex-col gap-4">
       {/* Status e endereço */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
           <CardTitle className="flex items-center gap-2">
             <Store className="text-primary size-5" />
             Sua plataforma

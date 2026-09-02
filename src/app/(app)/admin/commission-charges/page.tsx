@@ -3,6 +3,12 @@
 import { useState } from "react";
 import { toast } from "sonner";
 
+import {
+  RecordCard,
+  RecordCardActions,
+  RecordCardHeader,
+  RecordField,
+} from "@/components/shared/record-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -31,6 +37,7 @@ import {
 import { ApiError } from "@/lib/api-client";
 import {
   commissionChargeStatusLabels,
+  type CommissionChargeDTO,
   type CommissionChargeStatus,
 } from "@/types/billing";
 
@@ -55,11 +62,64 @@ const badgeClass: Record<string, string> = {
   CANCELED: "bg-muted text-muted-foreground",
 };
 
+type SimulateFn = ReturnType<typeof useSimulateCharge>;
+
+function StatusBadge({ status }: { status: CommissionChargeStatus }) {
+  return (
+    <Badge variant="secondary" className={badgeClass[status] ?? ""}>
+      {commissionChargeStatusLabels[status]}
+    </Badge>
+  );
+}
+
+function SimulateActions({
+  charge,
+  simulate,
+}: {
+  charge: CommissionChargeDTO;
+  simulate: SimulateFn;
+}) {
+  if (charge.status !== "PROCESSING" && charge.status !== "PENDING") return null;
+  const run = (outcome: "approved" | "rejected", okMsg: string) =>
+    simulate.mutate(
+      { chargeId: charge.id, outcome },
+      {
+        onSuccess: () => toast.success(okMsg),
+        onError: (e) =>
+          toast.error(e instanceof ApiError ? e.message : "Falha."),
+      },
+    );
+  return (
+    <>
+      <Button
+        size="sm"
+        variant="outline"
+        disabled={simulate.isPending}
+        onClick={() => run("approved", "Cobrança aprovada.")}
+      >
+        Aprovar
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        className="text-destructive"
+        disabled={simulate.isPending}
+        onClick={() =>
+          run("rejected", "Cobrança recusada — contratante bloqueado.")
+        }
+      >
+        Recusar
+      </Button>
+    </>
+  );
+}
+
 export default function AdminCommissionChargesPage() {
   const [status, setStatus] = useState<CommissionChargeStatus | "ALL">("ALL");
   const { data: charges, isLoading } = useAdminCommissionCharges(status);
   const { data: mode } = useAdminBillingMode();
   const simulate = useSimulateCharge();
+  const canSimulate = !!mode?.simulated;
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-4">
@@ -91,13 +151,11 @@ export default function AdminCommissionChargesPage() {
         </Card>
       )}
 
-      <div className="max-w-[200px] space-y-1">
+      <div className="w-full space-y-1 sm:max-w-[220px]">
         <Label className="text-xs">Status</Label>
         <Select
           value={status}
-          onValueChange={(v) =>
-            setStatus(v as CommissionChargeStatus | "ALL")
-          }
+          onValueChange={(v) => setStatus(v as CommissionChargeStatus | "ALL")}
         >
           <SelectTrigger>
             <SelectValue />
@@ -112,16 +170,58 @@ export default function AdminCommissionChargesPage() {
         </Select>
       </div>
 
-      <Card className="px-0 py-0">
-        <CardContent className="px-0">
-          {isLoading ? (
-            <Skeleton className="m-4 h-40" />
-          ) : !charges || charges.length === 0 ? (
-            <p className="text-muted-foreground px-4 py-6 text-center text-sm">
-              Nenhuma cobrança neste filtro.
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
+      {isLoading ? (
+        <Skeleton className="h-40" />
+      ) : !charges || charges.length === 0 ? (
+        <Card>
+          <CardContent className="text-muted-foreground py-6 text-center text-sm">
+            Nenhuma cobrança neste filtro.
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {/* Mobile: lista de cards */}
+          <div className="flex flex-col gap-2 md:hidden">
+            {charges.map((c) => (
+              <RecordCard key={c.id}>
+                <RecordCardHeader
+                  title={c.companyName}
+                  aside={<StatusBadge status={c.status} />}
+                />
+                <RecordField label="Contratação">
+                  <span className="block">{c.projectTitle}</span>
+                  <span className="text-muted-foreground text-xs">
+                    {c.professionalName}
+                  </span>
+                </RecordField>
+                <RecordField label="Comissão">
+                  <span className="tabular-nums">{money(c.amount)}</span>
+                  <span className="text-muted-foreground block text-xs">
+                    {c.percentage}% de {money(c.baseAmount)}
+                  </span>
+                </RecordField>
+                <RecordField label="Mercado Pago">
+                  <span className="text-xs break-all">
+                    {c.mpPaymentId ?? "—"}
+                    {c.attempts > 0 && ` · ${c.attempts}x`}
+                  </span>
+                </RecordField>
+                {c.failureReason && (
+                  <p className="text-destructive text-xs">{c.failureReason}</p>
+                )}
+                {canSimulate &&
+                  (c.status === "PROCESSING" || c.status === "PENDING") && (
+                    <RecordCardActions>
+                      <SimulateActions charge={c} simulate={simulate} />
+                    </RecordCardActions>
+                  )}
+              </RecordCard>
+            ))}
+          </div>
+
+          {/* Desktop: tabela */}
+          <Card className="hidden p-0 md:block">
+            <CardContent className="p-0">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -130,7 +230,7 @@ export default function AdminCommissionChargesPage() {
                     <TableHead>Comissão</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>MP</TableHead>
-                    {mode?.simulated && (
+                    {canSimulate && (
                       <TableHead className="text-right">Simular</TableHead>
                     )}
                   </TableRow>
@@ -154,12 +254,7 @@ export default function AdminCommissionChargesPage() {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          variant="secondary"
-                          className={badgeClass[c.status] ?? ""}
-                        >
-                          {commissionChargeStatusLabels[c.status]}
-                        </Badge>
+                        <StatusBadge status={c.status} />
                         {c.failureReason && (
                           <div className="text-destructive mt-0.5 text-xs">
                             {c.failureReason}
@@ -170,70 +265,21 @@ export default function AdminCommissionChargesPage() {
                         {c.mpPaymentId ?? "—"}
                         {c.attempts > 0 && ` · ${c.attempts}x`}
                       </TableCell>
-                      {mode?.simulated && (
+                      {canSimulate && (
                         <TableCell className="text-right">
-                          {(c.status === "PROCESSING" ||
-                            c.status === "PENDING") && (
-                            <div className="flex justify-end gap-1">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                disabled={simulate.isPending}
-                                onClick={() =>
-                                  simulate.mutate(
-                                    { chargeId: c.id, outcome: "approved" },
-                                    {
-                                      onSuccess: () =>
-                                        toast.success("Cobrança aprovada."),
-                                      onError: (e) =>
-                                        toast.error(
-                                          e instanceof ApiError
-                                            ? e.message
-                                            : "Falha."
-                                        ),
-                                    }
-                                  )
-                                }
-                              >
-                                Aprovar
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="text-destructive"
-                                disabled={simulate.isPending}
-                                onClick={() =>
-                                  simulate.mutate(
-                                    { chargeId: c.id, outcome: "rejected" },
-                                    {
-                                      onSuccess: () =>
-                                        toast.success(
-                                          "Cobrança recusada — contratante bloqueado."
-                                        ),
-                                      onError: (e) =>
-                                        toast.error(
-                                          e instanceof ApiError
-                                            ? e.message
-                                            : "Falha."
-                                        ),
-                                    }
-                                  )
-                                }
-                              >
-                                Recusar
-                              </Button>
-                            </div>
-                          )}
+                          <div className="flex flex-wrap justify-end gap-1">
+                            <SimulateActions charge={c} simulate={simulate} />
+                          </div>
                         </TableCell>
                       )}
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 }

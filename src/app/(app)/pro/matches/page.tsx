@@ -13,10 +13,10 @@ import {
   MessageCircle,
   Search,
   Send,
+  Star,
   ThumbsDown,
   X,
 } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { useState } from "react";
@@ -29,6 +29,7 @@ import { MatchReviewDialog } from "@/components/matches/match-review-dialog";
 import { MatchCard } from "@/components/professional/match-card";
 import { RejectMatchDialog } from "@/components/professional/reject-match-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
+import type { RowActionItem } from "@/components/shared/row-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -94,38 +95,42 @@ function filterMatches<T extends MatchResponseDTO>(
   });
 }
 
-function ChatAndReviewActions({
-  matchId,
-  projectTitle,
-  reviewedMatchIds,
-}: {
-  matchId: number;
-  projectTitle: string;
-  reviewedMatchIds: number[] | undefined;
-}) {
+/** Itens de menu "Chat" + "Avaliar" (ou "Avaliado" desabilitado) compartilhados pelas listas de match confirmado/anterior. */
+function chatAndReviewItems(
+  matchId: number,
+  projectTitle: string,
+  reviewedMatchIds: number[] | undefined
+): RowActionItem[] {
   const reviewed = reviewedMatchIds?.includes(matchId) ?? false;
-  return (
-    <>
-      <Button size="sm" variant="outline" asChild>
-        <Link href={`/chat/${matchId}`}>
-          <MessageCircle className="size-4" />
-          Chat
-        </Link>
-      </Button>
-      {reviewed ? (
-        <Button size="sm" variant="ghost" disabled>
-          <CircleCheck className="size-4" />
-          Avaliado
-        </Button>
-      ) : (
-        <MatchReviewDialog
-          matchId={matchId}
-          authorType="PROFESSIONAL"
-          projectTitle={projectTitle}
-        />
-      )}
-    </>
-  );
+  return [
+    {
+      key: "chat",
+      label: "Chat",
+      icon: MessageCircle,
+      href: `/chat/${matchId}`,
+    },
+    reviewed
+      ? {
+          key: "review",
+          label: "Avaliado",
+          icon: CircleCheck,
+          disabled: true,
+        }
+      : {
+          key: "review",
+          label: "Avaliar",
+          icon: Star,
+          dialog: (p) => (
+            <MatchReviewDialog
+              matchId={matchId}
+              authorType="PROFESSIONAL"
+              projectTitle={projectTitle}
+              hideTrigger
+              {...p}
+            />
+          ),
+        },
+  ];
 }
 
 export default function MatchesPage() {
@@ -382,25 +387,8 @@ function InvitesList({
       key={match.id}
       match={match}
       mySkills={mySkills}
-      actions={
+      primaryActions={
         <>
-          <Button size="sm" variant="ghost" asChild>
-            <Link
-              href={`/public/opportunity/${match.project.id}`}
-              target="_blank"
-            >
-              <Eye className="size-4" />
-              Ver oportunidade
-            </Link>
-          </Button>
-          {match.project.companyId != null && (
-            <Button size="sm" variant="ghost" asChild>
-              <Link href={`/pro/companies/${match.project.companyId}`}>
-                <Building2 className="size-4" />
-                Ver contratante
-              </Link>
-            </Button>
-          )}
           <RejectMatchDialog matchId={match.id} />
           <Button
             size="sm"
@@ -430,6 +418,22 @@ function InvitesList({
           </Button>
         </>
       }
+      menuItems={[
+        {
+          key: "opp",
+          label: "Ver oportunidade",
+          icon: Eye,
+          href: `/public/opportunity/${match.project.id}`,
+          target: "_blank",
+        },
+        {
+          key: "company",
+          label: "Ver contratante",
+          icon: Building2,
+          href: `/pro/companies/${match.project.companyId}`,
+          hidden: match.project.companyId == null,
+        },
+      ]}
     />
   ));
 }
@@ -461,50 +465,51 @@ function SentList({
       key={match.id}
       match={match}
       mySkills={mySkills}
-      actions={
-        <>
-          <Badge
-            variant="outline"
-            className="border-warning/30 text-warning mr-auto"
-          >
-            <Clock className="size-3" />
-            Aguardando resposta do contratante
-          </Badge>
-          <Button size="sm" variant="ghost" asChild>
-            <Link href={`/public/opportunity/${match.project.id}`}>
-              <Eye className="size-4" />
-              Ver oportunidade
-            </Link>
-          </Button>
-          {match.project.companyId != null && (
-            <Button size="sm" variant="ghost" asChild>
-              <Link href={`/pro/companies/${match.project.companyId}`}>
-                <Building2 className="size-4" />
-                Ver contratante
-              </Link>
-            </Button>
-          )}
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={cancelMatch.isPending}
-            onClick={() =>
-              cancelMatch.mutate(match.id, {
-                onSuccess: () => toast.success("Interesse retirado."),
-                onError: (error) =>
-                  toast.error(
-                    error instanceof ApiError
-                      ? error.message
-                      : "Não foi possível retirar."
-                  ),
-              })
-            }
-          >
-            <X className="size-4" />
-            Cancelar interesse
-          </Button>
-        </>
+      badge={
+        <Badge
+          variant="outline"
+          className="border-warning/30 text-warning w-fit"
+        >
+          <Clock className="size-3" />
+          Aguardando resposta do contratante
+        </Badge>
       }
+      primaryActions={
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={cancelMatch.isPending}
+          onClick={() =>
+            cancelMatch.mutate(match.id, {
+              onSuccess: () => toast.success("Interesse retirado."),
+              onError: (error) =>
+                toast.error(
+                  error instanceof ApiError
+                    ? error.message
+                    : "Não foi possível retirar."
+                ),
+            })
+          }
+        >
+          <X className="size-4" />
+          Cancelar interesse
+        </Button>
+      }
+      menuItems={[
+        {
+          key: "opp",
+          label: "Ver oportunidade",
+          icon: Eye,
+          href: `/public/opportunity/${match.project.id}`,
+        },
+        {
+          key: "company",
+          label: "Ver contratante",
+          icon: Building2,
+          href: `/pro/companies/${match.project.companyId}`,
+          hidden: match.project.companyId == null,
+        },
+      ]}
     />
   ));
 }
@@ -547,24 +552,21 @@ function InScreeningList({
           Em processo seletivo
         </Badge>
       }
-      actions={
-        <>
-          <Button size="sm" variant="ghost" asChild>
-            <Link href={`/public/opportunity/${match.project.id}`}>
-              <Eye className="size-4" />
-              Ver oportunidade
-            </Link>
-          </Button>
-          {match.project.companyId != null && (
-            <Button size="sm" variant="ghost" asChild>
-              <Link href={`/pro/companies/${match.project.companyId}`}>
-                <Building2 className="size-4" />
-                Ver contratante
-              </Link>
-            </Button>
-          )}
-        </>
-      }
+      menuItems={[
+        {
+          key: "opp",
+          label: "Ver oportunidade",
+          icon: Eye,
+          href: `/public/opportunity/${match.project.id}`,
+        },
+        {
+          key: "company",
+          label: "Ver contratante",
+          icon: Building2,
+          href: `/pro/companies/${match.project.companyId}`,
+          hidden: match.project.companyId == null,
+        },
+      ]}
     />
   ));
 }
@@ -650,62 +652,71 @@ function ConfirmedMatchCard({
             )}
           </div>
         }
-        actions={
-          <>
+        primaryActions={
+          match.active !== false ? (
             <Button
               size="sm"
               variant="outline"
-              onClick={() => setRevealed(true)}
+              className="text-destructive"
+              disabled={cancelMatch.isPending}
+              onClick={() =>
+                cancelMatch.mutate(match.id, {
+                  onSuccess: () => toast.success("Match cancelado."),
+                  onError: (error) =>
+                    toast.error(
+                      error instanceof ApiError
+                        ? error.message
+                        : "Não foi possível cancelar."
+                    ),
+                })
+              }
             >
-              <Mail className="size-4" />
-              Entrar em contato
+              <X className="size-4" />
+              Cancelar Match
             </Button>
-            <ContactDialog
-              open={revealed}
-              onOpenChange={setRevealed}
-              isLoading={contact.isLoading}
-              isError={contact.isError}
-              email={contact.data?.email}
-              phone={contact.data?.phone}
-            />
-            {match.project.companyId != null && (
-              <Button size="sm" variant="ghost" asChild>
-                <Link href={`/pro/companies/${match.project.companyId}`}>
-                  <Building2 className="size-4" />
-                  Ver perfil do contratante
-                </Link>
-              </Button>
-            )}
-            <MatchHistoryDialog matchId={match.id} />
-            <ChatAndReviewActions
-              matchId={match.id}
-              projectTitle={match.project.title}
-              reviewedMatchIds={reviewedMatchIds}
-            />
-            {match.active !== false && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-destructive"
-                disabled={cancelMatch.isPending}
-                onClick={() =>
-                  cancelMatch.mutate(match.id, {
-                    onSuccess: () => toast.success("Match cancelado."),
-                    onError: (error) =>
-                      toast.error(
-                        error instanceof ApiError
-                          ? error.message
-                          : "Não foi possível cancelar."
-                      ),
-                  })
-                }
-              >
-                <X className="size-4" />
-                Cancelar Match
-              </Button>
-            )}
-          </>
+          ) : undefined
         }
+        menuItems={[
+          {
+            key: "contact",
+            label: "Entrar em contato",
+            icon: Mail,
+            onSelect: () => setRevealed(true),
+            dialog: ({ open, onOpenChange }) => (
+              <ContactDialog
+                open={open}
+                onOpenChange={(o) => {
+                  onOpenChange(o);
+                  if (!o) setRevealed(false);
+                }}
+                isLoading={contact.isLoading}
+                isError={contact.isError}
+                email={contact.data?.email}
+                phone={contact.data?.phone}
+              />
+            ),
+          },
+          {
+            key: "profile",
+            label: "Ver perfil do contratante",
+            icon: Building2,
+            href: `/pro/companies/${match.project.companyId}`,
+            hidden: match.project.companyId == null,
+          },
+          {
+            key: "history",
+            label: "Histórico",
+            icon: History,
+            dialog: (p) => (
+              <MatchHistoryDialog matchId={match.id} hideTrigger {...p} />
+            ),
+          },
+          ...chatAndReviewItems(
+            match.id,
+            match.project.title,
+            reviewedMatchIds
+          ),
+        ]}
       />
       {match.acceptedProposal && (
         <AcceptedProposalPanel proposal={match.acceptedProposal} />
@@ -751,26 +762,26 @@ function PlainList({
       match={match}
       mySkills={mySkills}
       badge={renderBadge?.(match)}
-      actions={
-        <>
-          {match.project.companyId != null && (
-            <Button size="sm" variant="ghost" asChild>
-              <Link href={`/pro/companies/${match.project.companyId}`}>
-                <Building2 className="size-4" />
-                Ver contratante
-              </Link>
-            </Button>
-          )}
-          <MatchHistoryDialog matchId={match.id} />
-          {reviewedMatchIds !== undefined && (
-            <ChatAndReviewActions
-              matchId={match.id}
-              projectTitle={match.project.title}
-              reviewedMatchIds={reviewedMatchIds}
-            />
-          )}
-        </>
-      }
+      menuItems={[
+        {
+          key: "company",
+          label: "Ver contratante",
+          icon: Building2,
+          href: `/pro/companies/${match.project.companyId}`,
+          hidden: match.project.companyId == null,
+        },
+        {
+          key: "history",
+          label: "Histórico",
+          icon: History,
+          dialog: (p) => (
+            <MatchHistoryDialog matchId={match.id} hideTrigger {...p} />
+          ),
+        },
+        ...(reviewedMatchIds !== undefined
+          ? chatAndReviewItems(match.id, match.project.title, reviewedMatchIds)
+          : []),
+      ]}
     />
   ));
 }

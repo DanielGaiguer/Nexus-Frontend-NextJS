@@ -126,7 +126,7 @@ export default function AdminMapPage() {
   }));
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-6rem)] max-w-6xl flex-col gap-4 sm:flex-row">
+    <div className="mx-auto flex h-[calc(100dvh-6rem)] max-w-6xl flex-col gap-4 sm:flex-row">
       <aside className="scrollbar-hide flex w-full shrink-0 flex-col gap-4 overflow-y-auto sm:w-72">
         <div>
           <h1 className="text-lg font-bold tracking-tight">Mapa de Talentos</h1>

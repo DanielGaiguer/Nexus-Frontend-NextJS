@@ -106,7 +106,7 @@ function ReconciliationCard({ c }: { c: AdminMatchConfirmationDTO }) {
     <Card>
       <CardHeader className="gap-1">
         <div className="flex flex-wrap items-start justify-between gap-2">
-          <CardTitle className="text-sm">
+          <CardTitle className="min-w-0 text-sm break-words">
             <Link
               href={`/admin/company/${c.companyId}`}
               className="hover:underline"
@@ -118,7 +118,7 @@ function ReconciliationCard({ c }: { c: AdminMatchConfirmationDTO }) {
               · {c.professionalName} · {c.projectTitle}
             </span>
           </CardTitle>
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5">
             {c.pendingReason && (
               <Badge className="bg-destructive/15 text-destructive">
                 <ShieldAlert className="size-3" />
@@ -157,7 +157,7 @@ function ReconciliationCard({ c }: { c: AdminMatchConfirmationDTO }) {
           </p>
         )}
 
-        <div className="flex flex-wrap justify-end gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
           <MarkUnconfirmableDialog c={c} />
           <ResolveDialog c={c} />
         </div>
@@ -225,7 +225,7 @@ function ResolveDialog({ c }: { c: AdminMatchConfirmationDTO }) {
 
   return (
     <>
-      <Button size="sm" onClick={openDialog}>
+      <Button size="sm" className="w-full sm:w-auto" onClick={openDialog}>
         Definir valor final
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
@@ -306,7 +306,12 @@ function MarkUnconfirmableDialog({ c }: { c: AdminMatchConfirmationDTO }) {
 
   return (
     <>
-      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
+      <Button
+        size="sm"
+        variant="outline"
+        className="w-full sm:w-auto"
+        onClick={() => setOpen(true)}
+      >
         Não foi possível confirmar
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>

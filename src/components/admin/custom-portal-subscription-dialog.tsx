@@ -33,10 +33,23 @@ import {
 
 export function CustomPortalSubscriptionDialog({
   portal,
+  open: openProp,
+  onOpenChange,
+  hideTrigger,
 }: {
   portal: CustomPortalDTO;
+  /** Modo controlado: quando definido, o estado de abertura vem do pai. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  /** Esconde o botão-gatilho padrão (usar quando o gatilho é externo). */
+  hideTrigger?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [openState, setOpenState] = useState(false);
+  const open = openProp ?? openState;
+  const setOpen = (next: boolean) => {
+    onOpenChange?.(next);
+    setOpenState(next);
+  };
   const [planName, setPlanName] = useState(portal.planName);
   const [planPrice, setPlanPrice] = useState(String(portal.planPrice));
   const [nextDueDate, setNextDueDate] = useState(portal.nextDueDate);
@@ -46,12 +59,12 @@ export function CustomPortalSubscriptionDialog({
   const update = useUpdateCustomPortalSubscription();
 
   function handleOpenChange(next: boolean) {
-    if (next) {
-      setPlanName(portal.planName);
-      setPlanPrice(String(portal.planPrice));
-      setNextDueDate(portal.nextDueDate);
-      setPaymentStatus(portal.paymentStatus);
-    }
+    // Re-seed com os valores atuais do portal ao abrir E ao fechar, para que
+    // o modo controlado (gatilho externo) nunca reabra com dados obsoletos.
+    setPlanName(portal.planName);
+    setPlanPrice(String(portal.planPrice));
+    setNextDueDate(portal.nextDueDate);
+    setPaymentStatus(portal.paymentStatus);
     setOpen(next);
   }
 
@@ -88,12 +101,14 @@ export function CustomPortalSubscriptionDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Pencil className="size-4" />
-          Editar assinatura
-        </Button>
-      </DialogTrigger>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm">
+            <Pencil className="size-4" />
+            Editar assinatura
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Editar assinatura</DialogTitle>

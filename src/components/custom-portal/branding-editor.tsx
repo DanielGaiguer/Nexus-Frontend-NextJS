@@ -337,7 +337,7 @@ export function BrandingEditor({
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
               <CardTitle className="text-sm">Seções extras</CardTitle>
               <Button
                 type="button"
@@ -361,7 +361,7 @@ export function BrandingEditor({
               )}
               {sections.map((section, index) => (
                 <div key={index} className="space-y-2 rounded-md border p-3">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                     <Input
                       placeholder="Título da seção"
                       maxLength={150}
@@ -373,40 +373,42 @@ export function BrandingEditor({
                         !section.title.trim() && !!section.content.trim()
                       }
                     />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      disabled={index === 0}
-                      onClick={() => moveSection(index, -1)}
-                      aria-label="Mover para cima"
-                    >
-                      <ArrowUp className="size-4" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      disabled={index === sections.length - 1}
-                      onClick={() => moveSection(index, 1)}
-                      aria-label="Mover para baixo"
-                    >
-                      <ArrowDown className="size-4" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive"
-                      onClick={() =>
-                        setSections((prev) =>
-                          prev.filter((_, i) => i !== index)
-                        )
-                      }
-                      aria-label="Remover seção"
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
+                    <div className="flex shrink-0 justify-end gap-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        disabled={index === 0}
+                        onClick={() => moveSection(index, -1)}
+                        aria-label="Mover para cima"
+                      >
+                        <ArrowUp className="size-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        disabled={index === sections.length - 1}
+                        onClick={() => moveSection(index, 1)}
+                        aria-label="Mover para baixo"
+                      >
+                        <ArrowDown className="size-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive"
+                        onClick={() =>
+                          setSections((prev) =>
+                            prev.filter((_, i) => i !== index)
+                          )
+                        }
+                        aria-label="Remover seção"
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
                   </div>
                   <Textarea
                     rows={3}

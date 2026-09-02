@@ -88,7 +88,7 @@ export default function ChatWindowPage() {
   }, [messages]);
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-6rem)] max-w-[848px] flex-col overflow-hidden rounded-lg border">
+    <div className="mx-auto flex h-[calc(100dvh-6rem)] max-w-4xl flex-col overflow-hidden rounded-lg border">
       <div className="flex shrink-0 items-center gap-3 border-b p-3">
         <button
           type="button"
@@ -188,13 +188,14 @@ export default function ChatWindowPage() {
         ) : (
           <Skeleton className="h-9 w-40" />
         )}
-        {matchActive && !isConnected && (
-          <span className="text-warning flex shrink-0 items-center gap-1 text-xs">
-            <WifiOff className="size-3.5" />
-            Conectando…
-          </span>
-        )}
       </div>
+
+      {matchActive && !isConnected && (
+        <div className="text-warning bg-warning/10 flex shrink-0 items-center gap-2 px-4 py-2 text-xs">
+          <WifiOff className="size-3.5 shrink-0" />
+          Conectando…
+        </div>
+      )}
 
       {matchActive &&
         summary?.daysUntilExpiration != null &&

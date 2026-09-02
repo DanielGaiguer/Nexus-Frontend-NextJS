@@ -97,8 +97,8 @@ export function FiscalProfileCard({ enabled }: { enabled: boolean }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-sm">
-          <FileText className="text-primary size-4" />
+        <CardTitle className="flex flex-wrap items-center gap-2 text-sm">
+          <FileText className="text-primary size-4 shrink-0" />
           Dados fiscais (nota fiscal da comissão)
           {profile &&
             (profile.complete ? (
