@@ -72,7 +72,9 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
       className={cn(
         // Espelha .nexus-table th (padding: 0.5rem 1rem) do app antigo — o
         // px-2 padrão do shadcn ficava apertado demais comparado ao original.
-        "text-foreground h-11 px-4 text-left align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        // Sem `whitespace-nowrap`: cabeçalho longo quebra em 2 linhas em vez
+        // de esticar a tabela; cabeçalhos curtos ficam numa linha só naturalmente.
+        "text-foreground h-11 px-4 text-left align-middle font-medium [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
         className
       )}
       {...props}
@@ -86,7 +88,11 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
       data-slot="table-cell"
       className={cn(
         // Espelha .nexus-table td (padding: 0.85rem 1rem) do app antigo.
-        "px-4 py-3 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        // Sem `whitespace-nowrap`: conteúdo longo (título, nome, id de
+        // pagamento) quebra a linha em vez de esticar a tabela e forçar
+        // rolagem horizontal. Colunas que precisam de linha única (número,
+        // data, status) usam `whitespace-nowrap` via className própria.
+        "px-4 py-3 align-middle [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
         className
       )}
       {...props}

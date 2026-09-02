@@ -91,7 +91,7 @@ function InvoiceActions({
         onSuccess: () => toast.success(msg),
         onError: (e) =>
           toast.error(e instanceof ApiError ? e.message : "Falha."),
-      },
+      }
     );
   return (
     <>
@@ -126,7 +126,7 @@ function InvoiceActions({
               onSuccess: () => toast.success("Emissão reenviada."),
               onError: (e) =>
                 toast.error(
-                  e instanceof ApiError ? e.message : "Falha ao reenviar.",
+                  e instanceof ApiError ? e.message : "Falha ao reenviar."
                 ),
             })
           }
@@ -285,13 +285,13 @@ export default function AdminInvoicesPage() {
                           {n.professionalName}
                         </div>
                       </TableCell>
-                      <TableCell className="tabular-nums">
+                      <TableCell className="whitespace-nowrap tabular-nums">
                         {money(n.amount)}
                       </TableCell>
                       <TableCell>
                         <StatusBadge status={n.status} />
                         {n.failureReason && (
-                          <div className="text-destructive mt-0.5 text-xs">
+                          <div className="text-destructive mt-0.5 text-xs break-words">
                             {n.failureReason}
                           </div>
                         )}

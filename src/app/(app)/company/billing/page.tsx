@@ -620,7 +620,7 @@ export default function CompanyBillingPage() {
               </div>
               {/* Desktop */}
               <div className="hidden md:block">
-                <Table>
+                <Table className="[&_td]:px-3 [&_th]:px-3">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Contratação</TableHead>
@@ -640,16 +640,18 @@ export default function CompanyBillingPage() {
                             {new Date(c.createdAt).toLocaleDateString("pt-BR")}
                           </div>
                           {c.failureReason && (
-                            <div className="text-destructive text-xs">
+                            <div className="text-destructive text-xs break-words">
                               {c.failureReason}
                             </div>
                           )}
                         </TableCell>
-                        <TableCell className="tabular-nums">
+                        <TableCell className="whitespace-nowrap tabular-nums">
                           {money(c.baseAmount)}
                         </TableCell>
                         <TableCell className="tabular-nums">
-                          {money(c.amount)}
+                          <span className="whitespace-nowrap">
+                            {money(c.amount)}
+                          </span>
                           <span className="text-muted-foreground ml-1 text-xs">
                             ({c.percentage}%)
                           </span>
@@ -662,7 +664,7 @@ export default function CompanyBillingPage() {
                             {commissionChargeStatusLabels[c.status]}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-xs">
+                        <TableCell className="text-xs break-words">
                           <NfseLinkCell n={invoiceByMatch.get(c.matchId)} />
                         </TableCell>
                       </TableRow>
@@ -720,7 +722,7 @@ export default function CompanyBillingPage() {
             </div>
             {/* Desktop */}
             <div className="hidden md:block">
-              <Table>
+              <Table className="[&_td]:px-3 [&_th]:px-3">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Contratação</TableHead>
@@ -739,12 +741,12 @@ export default function CompanyBillingPage() {
                           {date(n.createdAt)}
                         </div>
                         {n.status === "FAILED" && n.failureReason && (
-                          <div className="text-destructive text-xs">
+                          <div className="text-destructive text-xs break-words">
                             {n.failureReason}
                           </div>
                         )}
                       </TableCell>
-                      <TableCell className="tabular-nums">
+                      <TableCell className="whitespace-nowrap tabular-nums">
                         {money(n.amount)}
                       </TableCell>
                       <TableCell>

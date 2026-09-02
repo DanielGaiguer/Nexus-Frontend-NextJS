@@ -79,7 +79,8 @@ function SimulateActions({
   charge: CommissionChargeDTO;
   simulate: SimulateFn;
 }) {
-  if (charge.status !== "PROCESSING" && charge.status !== "PENDING") return null;
+  if (charge.status !== "PROCESSING" && charge.status !== "PENDING")
+    return null;
   const run = (outcome: "approved" | "rejected", okMsg: string) =>
     simulate.mutate(
       { chargeId: charge.id, outcome },
@@ -87,7 +88,7 @@ function SimulateActions({
         onSuccess: () => toast.success(okMsg),
         onError: (e) =>
           toast.error(e instanceof ApiError ? e.message : "Falha."),
-      },
+      }
     );
   return (
     <>
@@ -248,20 +249,22 @@ export default function AdminCommissionChargesPage() {
                         </div>
                       </TableCell>
                       <TableCell className="tabular-nums">
-                        {money(c.amount)}
-                        <span className="text-muted-foreground ml-1 text-xs">
-                          ({c.percentage}% de {money(c.baseAmount)})
+                        <span className="whitespace-nowrap">
+                          {money(c.amount)}
+                        </span>
+                        <span className="text-muted-foreground block text-xs">
+                          {c.percentage}% de {money(c.baseAmount)}
                         </span>
                       </TableCell>
                       <TableCell>
                         <StatusBadge status={c.status} />
                         {c.failureReason && (
-                          <div className="text-destructive mt-0.5 text-xs">
+                          <div className="text-destructive mt-0.5 text-xs break-words">
                             {c.failureReason}
                           </div>
                         )}
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-xs">
+                      <TableCell className="text-muted-foreground text-xs break-all">
                         {c.mpPaymentId ?? "—"}
                         {c.attempts > 0 && ` · ${c.attempts}x`}
                       </TableCell>

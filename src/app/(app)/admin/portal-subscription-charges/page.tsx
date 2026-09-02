@@ -84,7 +84,8 @@ function SimulateActions({
   charge: PortalSubscriptionChargeDTO;
   simulate: SimulateFn;
 }) {
-  if (charge.status !== "PROCESSING" && charge.status !== "PENDING") return null;
+  if (charge.status !== "PROCESSING" && charge.status !== "PENDING")
+    return null;
   const run = (outcome: "approved" | "rejected", okMsg: string) =>
     simulate.mutate(
       { chargeId: charge.id, outcome },
@@ -92,7 +93,7 @@ function SimulateActions({
         onSuccess: () => toast.success(okMsg),
         onError: (e) =>
           toast.error(e instanceof ApiError ? e.message : "Falha."),
-      },
+      }
     );
   return (
     <>
@@ -121,7 +122,7 @@ function SimulateActions({
 
 export default function AdminPortalSubscriptionChargesPage() {
   const [status, setStatus] = useState<PortalSubscriptionChargeStatus | "ALL">(
-    "ALL",
+    "ALL"
   );
   const { data: charges, isLoading } = useAdminPortalCharges(status);
   const { data: mode } = useAdminPortalChargeMode();
@@ -243,16 +244,16 @@ export default function AdminPortalSubscriptionChargesPage() {
                       <TableCell className="text-muted-foreground text-xs">
                         {c.subdomain} · {c.planName}
                       </TableCell>
-                      <TableCell className="tabular-nums">
+                      <TableCell className="whitespace-nowrap tabular-nums">
                         {dateOnly(c.dueDate)}
                       </TableCell>
-                      <TableCell className="tabular-nums">
+                      <TableCell className="whitespace-nowrap tabular-nums">
                         {money(c.amount)}
                       </TableCell>
                       <TableCell>
                         <StatusBadge status={c.status} />
                         {c.failureReason && (
-                          <div className="text-destructive mt-0.5 text-xs">
+                          <div className="text-destructive mt-0.5 text-xs break-words">
                             {c.failureReason}
                           </div>
                         )}
