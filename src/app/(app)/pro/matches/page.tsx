@@ -47,6 +47,7 @@ import {
   useAcceptMatch,
   useCancelMatch,
 } from "@/hooks/mutations/useMatchActions";
+import { useMarkSectionSeenOnMount } from "@/hooks/mutations/useMarkSectionSeen";
 import { useCompanyContact } from "@/hooks/queries/useCompanyContact";
 import {
   useInScreeningMatches,
@@ -134,6 +135,10 @@ function chatAndReviewItems(
 }
 
 export default function MatchesPage() {
+  // Abrir Matches zera a parte "Padrão B" do badge da sidebar (um interesse que
+  // você enviou e o outro lado já respondeu). A parte "Padrão A" (convites
+  // aguardando resposta) zera sozinha quando você responde.
+  useMarkSectionSeenOnMount("PRO_MATCHES");
   const { data: profile } = useProfessionalProfile();
   const invites = useMatchInvites();
   const sent = useSentInterests();

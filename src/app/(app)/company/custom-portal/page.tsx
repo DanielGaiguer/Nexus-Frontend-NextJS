@@ -31,6 +31,7 @@ import {
   useUploadCustomPortalImage,
 } from "@/hooks/mutations/useCustomPortalBranding";
 import { useRequestCustomPortal } from "@/hooks/mutations/useCustomPortalRequest";
+import { useMarkSectionSeenOnMount } from "@/hooks/mutations/useMarkSectionSeen";
 import { useMyCustomPortal } from "@/hooks/queries/useCustomPortal";
 import {
   useCustomPortalAnalytics,
@@ -56,6 +57,9 @@ function formatDateTime(iso: string) {
 }
 
 export default function CompanyCustomPortalPage() {
+  // Abrir Minha Plataforma zera o badge "Padrão B" da sidebar (mudança de
+  // status da solicitação de portal ou aviso de assinatura).
+  useMarkSectionSeenOnMount("COMPANY_CUSTOM_PORTAL");
   const { data, isLoading } = useMyCustomPortal();
   const [tab, setTab] = useState<"overview" | "appearance" | "analytics">(
     "overview"

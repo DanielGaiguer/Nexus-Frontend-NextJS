@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { pendingStatusCheckKey } from "@/hooks/queries/useReviews";
+import { sidebarBadgesKey } from "@/hooks/queries/useSidebarBadges";
 import { apiFetch } from "@/lib/api-client";
 import type { MatchConfirmationDTO } from "@/types/match";
 import type { MatchOutcome } from "@/types/review";
@@ -27,6 +28,8 @@ export function useAnswerStatusCheck() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: pendingStatusCheckKey() });
+      // Badge do "Dashboard" (janela de confirmação aguardando resposta).
+      queryClient.invalidateQueries({ queryKey: sidebarBadgesKey() });
       // Os cards de match carregam o bloco `confirmation` — atualiza as listas
       // (prefixos cobrem todas as abas: confirmados, anteriores, detalhe, etc.).
       queryClient.invalidateQueries({ queryKey: ["professional", "matches"] });

@@ -18,6 +18,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useChatUnreadTotal } from "@/hooks/queries/useChat";
+import { useSidebarBadges } from "@/hooks/queries/useSidebarBadges";
 import { useSupportUnreadTotal } from "@/hooks/queries/useSupport";
 import {
   useDisplayName,
@@ -34,13 +35,17 @@ export function AppSidebar({ session }: { session: SessionClaims }) {
   const unreadChat = useChatUnreadTotal();
   const supportSide = session.role === "ADMIN" ? "admin" : "user";
   const unreadSupport = useSupportUnreadTotal(supportSide);
+  // Demais seções (Matches, Propostas, Processos Seletivos, Financeiro, Minha
+  // Plataforma, filas do Admin) — um GET só, recalculado a cada carga da
+  // sidebar. "Conversas" e "Suporte" seguem no seu próprio contador (tempo real).
+  const otherBadges = useSidebarBadges();
 
   // Contador do badge por item de menu (0 = sem badge).
   const badgeFor = (href: string) => {
     if (href === "/chat") return unreadChat.data ?? 0;
     if (href === "/support" || href === "/admin/support")
       return unreadSupport.data ?? 0;
-    return 0;
+    return otherBadges.data?.[href] ?? 0;
   };
 
   return (

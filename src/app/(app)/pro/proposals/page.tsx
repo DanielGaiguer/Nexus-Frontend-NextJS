@@ -39,6 +39,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useMarkSectionSeenOnMount } from "@/hooks/mutations/useMarkSectionSeen";
 import { useWithdrawProposal } from "@/hooks/mutations/useProposalMutations";
 import { useMatches } from "@/hooks/queries/useMatches";
 import { useProfessionalProfile } from "@/hooks/queries/useProfessionalProfile";
@@ -295,6 +296,9 @@ function ProposalList({
 }
 
 export default function ProposalsPage() {
+  // Abrir Propostas zera o badge "Padrão B" da sidebar (proposta que você
+  // enviou e teve o status alterado pelo contratante).
+  useMarkSectionSeenOnMount("PRO_PROPOSALS");
   const { data: profile } = useProfessionalProfile();
   const proposalsQuery = useMyProposals();
   const matchesQuery = useMatches();
