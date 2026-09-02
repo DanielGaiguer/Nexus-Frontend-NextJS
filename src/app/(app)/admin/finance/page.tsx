@@ -27,8 +27,18 @@ import { useCommissionPolicy } from "@/hooks/queries/useCommissionPolicy";
 import { useAdminFinanceOverview } from "@/hooks/queries/useFinance";
 import { ApiError } from "@/lib/api-client";
 
-function brl(v: number) {
-  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+// Curta para os cards de resumo. Abaixo de mil fica cheio ("R$ 940,00"); de mil
+// pra cima abrevia ("R$ 1,8 mil" · "R$ 2,4 mi").
+function brlShort(v: number) {
+  if (Math.abs(v) < 1000) {
+    return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  }
+  return v.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    notation: "compact",
+    maximumFractionDigits: 1,
+  });
 }
 
 function parsePercent(raw: string): number | null {
@@ -95,13 +105,13 @@ export default function AdminFinancePage() {
             <StatCard
               icon={Wallet}
               label="Receita arrecadada"
-              value={brl(data.grossRevenue)}
+              value={brlShort(data.grossRevenue)}
               accent="success"
             />
             <StatCard
               icon={TrendingUp}
               label="Comissão em aberto"
-              value={brl(data.pendingRevenue)}
+              value={brlShort(data.pendingRevenue)}
               accent={data.pendingRevenue > 0 ? "warning" : "primary"}
             />
             <StatCard
@@ -157,7 +167,7 @@ export default function AdminFinancePage() {
               <div>
                 <div className="text-muted-foreground text-xs">Arrecadado</div>
                 <div className="text-success text-xl font-bold tabular-nums">
-                  {brl(data.portalGrossRevenue)}
+                  {brlShort(data.portalGrossRevenue)}
                 </div>
                 <div className="text-muted-foreground text-xs">
                   {data.portalPaidCount} mensalidade(s) paga(s)
@@ -166,7 +176,7 @@ export default function AdminFinancePage() {
               <div>
                 <div className="text-muted-foreground text-xs">Em aberto</div>
                 <div className="text-xl font-bold tabular-nums">
-                  {brl(data.portalPendingRevenue)}
+                  {brlShort(data.portalPendingRevenue)}
                 </div>
                 <div className="text-muted-foreground text-xs">
                   {data.portalPendingCount} em aberto

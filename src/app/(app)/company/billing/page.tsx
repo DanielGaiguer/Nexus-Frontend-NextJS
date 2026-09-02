@@ -2,6 +2,7 @@
 
 import {
   AlertTriangle,
+  BadgeCheck,
   Clock,
   CreditCard,
   FileText,
@@ -62,6 +63,24 @@ function money(value: number | null) {
     : value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+// Versão curta para os StatCards de resumo (evita "R$ 1.800,00" quebrando o card).
+// Abaixo de mil fica cheio ("R$ 940,00"); de mil pra cima abrevia ("R$ 1,8 mil").
+function moneyShort(value: number | null) {
+  if (value == null) return "—";
+  if (Math.abs(value) < 1000) {
+    return value.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+  }
+  return value.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    notation: "compact",
+    maximumFractionDigits: 1,
+  });
+}
+
 function date(iso: string) {
   return new Date(iso).toLocaleDateString("pt-BR");
 }
@@ -100,7 +119,7 @@ export default function CompanyBillingPage() {
   const [replacing, setReplacing] = useState(false);
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-4">
+    <div className="mx-auto flex max-w-4xl flex-col gap-4">
       <div>
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold tracking-tight">
@@ -127,31 +146,46 @@ export default function CompanyBillingPage() {
         </Card>
       )}
 
+      {enabled && overview && overview.freeHiresRemaining > 0 && (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardContent className="flex items-start gap-2.5 text-sm">
+            <Gift className="text-primary mt-0.5 size-4 shrink-0" />
+            <p>
+              <strong>{overview.freeHiresRemaining}</strong> de{" "}
+              {overview.freeHiresLimit} contratações{" "}
+              <strong>sem comissão</strong> ainda disponíveis. A partir da{" "}
+              {overview.freeHiresLimit + 1}ª, aplica-se{" "}
+              {overview.commissionPercentage}% sobre o valor fechado.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       {enabled && overview && (
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard
             icon={Wallet}
             label="Comissão paga"
-            value={money(overview.totalPaid)}
+            value={moneyShort(overview.totalPaid)}
             accent="success"
           />
           <StatCard
             icon={TrendingUp}
             label="A cobrar"
-            value={money(overview.totalPending)}
+            value={moneyShort(overview.totalPending)}
             accent={overview.totalPending > 0 ? "warning" : "primary"}
           />
           <StatCard
             icon={Clock}
             label="Aguardando confirmação"
-            value={money(overview.awaitingConfirmationEstimated)}
+            value={moneyShort(overview.awaitingConfirmationEstimated)}
             accent="primary"
           />
           <StatCard
-            icon={Gift}
-            label="Contratações grátis restantes"
-            value={String(overview.freeHiresRemaining)}
-            accent={overview.freeHiresRemaining > 0 ? "success" : "primary"}
+            icon={BadgeCheck}
+            label="Contratações realizadas"
+            value={String(overview.usedFreeHires)}
+            accent="primary"
           />
         </div>
       )}
@@ -171,7 +205,7 @@ export default function CompanyBillingPage() {
             <div>
               <div className="text-muted-foreground text-xs">Pago</div>
               <div className="text-success text-lg font-bold tabular-nums">
-                {money(overview.portalTotalPaid)}
+                {moneyShort(overview.portalTotalPaid)}
               </div>
               <div className="text-muted-foreground text-xs">
                 {overview.portalPaidCount} mensalidade(s)
@@ -180,7 +214,7 @@ export default function CompanyBillingPage() {
             <div>
               <div className="text-muted-foreground text-xs">A cobrar</div>
               <div className="text-lg font-bold tabular-nums">
-                {money(overview.portalTotalPending)}
+                {moneyShort(overview.portalTotalPending)}
               </div>
               <div className="text-muted-foreground text-xs">
                 {overview.portalPendingCount} em aberto
@@ -200,8 +234,9 @@ export default function CompanyBillingPage() {
                   Fechamento de novas contratações bloqueado
                 </div>
                 <p className="text-muted-foreground text-sm">
-                  {status.blockMessage} Atualize o cartão abaixo e tente a
-                  cobrança novamente.
+                  {status.blockMessage}
+                  {status.pendingChargeStatus !== "PROCESSING" &&
+                    " Atualize o cartão abaixo e tente a cobrança novamente."}
                   {status.pendingChargeAmount != null && (
                     <>
                       {" "}
@@ -211,28 +246,49 @@ export default function CompanyBillingPage() {
                 </p>
               </div>
             </div>
-            <Button
-              size="sm"
-              className="self-start"
-              disabled={!status.hasCard || retryCharge.isPending}
-              onClick={() =>
-                retryCharge.mutate(undefined, {
-                  onSuccess: (s) =>
-                    toast[s.blocked ? "error" : "success"](
-                      s.blocked
-                        ? "A cobrança ainda não passou."
-                        : "Cobrança regularizada."
-                    ),
-                  onError: (e) =>
-                    toast.error(
-                      e instanceof ApiError ? e.message : "Falha ao tentar."
-                    ),
-                })
-              }
-            >
-              <RefreshCw className="size-4" />
-              Tentar cobrança novamente
-            </Button>
+
+            {status.pendingChargeStatus === "PROCESSING" ? (
+              <div className="border-warning/40 bg-warning/10 flex items-start gap-2 self-start rounded-md border px-3 py-2 text-sm">
+                <Clock className="text-warning mt-0.5 size-4 shrink-0" />
+                <span>
+                  {simulated
+                    ? "Cobrança reenviada — aguardando a análise do administrador. Você será avisado quando for concluída."
+                    : "Cobrança reenviada e em processamento. Avisaremos assim que o pagamento for concluído."}
+                </span>
+              </div>
+            ) : (
+              <Button
+                size="sm"
+                className="self-start"
+                disabled={!status.hasCard || retryCharge.isPending}
+                onClick={() =>
+                  retryCharge.mutate(undefined, {
+                    onSuccess: (s) => {
+                      if (!s.blocked) {
+                        toast.success("Cobrança regularizada.");
+                      } else if (s.pendingChargeStatus === "PROCESSING") {
+                        toast.success(
+                          simulated
+                            ? "Cobrança reenviada para análise do administrador."
+                            : "Cobrança reenviada — em processamento."
+                        );
+                      } else {
+                        toast.error(
+                          "A cobrança não passou. Verifique o cartão."
+                        );
+                      }
+                    },
+                    onError: (e) =>
+                      toast.error(
+                        e instanceof ApiError ? e.message : "Falha ao tentar."
+                      ),
+                  })
+                }
+              >
+                <RefreshCw className="size-4" />
+                Tentar cobrança novamente
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}

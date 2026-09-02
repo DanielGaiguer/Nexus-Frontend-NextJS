@@ -69,7 +69,7 @@ export default function AdminPortalSubscriptionChargesPage() {
   const simulate = useSimulatePortalCharge();
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-4">
+    <div className="mx-auto flex max-w-6xl flex-col gap-4">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
           Mensalidades de plataforma
@@ -118,8 +118,8 @@ export default function AdminPortalSubscriptionChargesPage() {
         </Select>
       </div>
 
-      <Card className="px-0 py-0">
-        <CardContent className="px-0">
+      <Card className="p-0">
+        <CardContent className="p-0">
           {isLoading ? (
             <Skeleton className="m-4 h-40" />
           ) : !charges || charges.length === 0 ? (
@@ -127,107 +127,110 @@ export default function AdminPortalSubscriptionChargesPage() {
               Nenhuma mensalidade neste filtro.
             </p>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Contratante</TableHead>
-                    <TableHead>Plataforma</TableHead>
-                    <TableHead>Vencimento</TableHead>
-                    <TableHead>Valor</TableHead>
-                    <TableHead>Status</TableHead>
+            <Table className="table-fixed text-xs [&_td]:px-2.5 [&_td]:py-2 [&_td]:align-top [&_th]:h-9 [&_th]:px-2.5">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[24%]">Contratante</TableHead>
+                  <TableHead className="w-[22%]">Plataforma</TableHead>
+                  <TableHead className="w-[13%]">Vencimento</TableHead>
+                  <TableHead className="w-[13%]">Valor</TableHead>
+                  <TableHead className="w-[16%]">Status</TableHead>
+                  {mode?.simulated && (
+                    <TableHead className="w-[12%] text-right">
+                      Simular
+                    </TableHead>
+                  )}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {charges.map((c) => (
+                  <TableRow key={c.id}>
+                    <TableCell className="font-medium break-words whitespace-normal">
+                      {c.companyName}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-[11px] break-words whitespace-normal">
+                      {c.subdomain} · {c.planName}
+                    </TableCell>
+                    <TableCell className="tabular-nums">
+                      {dateOnly(c.dueDate)}
+                    </TableCell>
+                    <TableCell className="tabular-nums">
+                      {money(c.amount)}
+                    </TableCell>
+                    <TableCell className="whitespace-normal">
+                      <Badge
+                        variant="secondary"
+                        className={badgeClass[c.status] ?? ""}
+                      >
+                        {portalSubscriptionChargeStatusLabel[c.status]}
+                      </Badge>
+                      {c.failureReason && (
+                        <div className="text-destructive mt-0.5 text-[11px]">
+                          {c.failureReason}
+                        </div>
+                      )}
+                    </TableCell>
                     {mode?.simulated && (
-                      <TableHead className="text-right">Simular</TableHead>
-                    )}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {charges.map((c) => (
-                    <TableRow key={c.id}>
-                      <TableCell className="font-medium">
-                        {c.companyName}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-xs">
-                        {c.subdomain} · {c.planName}
-                      </TableCell>
-                      <TableCell>{dateOnly(c.dueDate)}</TableCell>
-                      <TableCell className="tabular-nums">
-                        {money(c.amount)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="secondary"
-                          className={badgeClass[c.status] ?? ""}
-                        >
-                          {portalSubscriptionChargeStatusLabel[c.status]}
-                        </Badge>
-                        {c.failureReason && (
-                          <div className="text-destructive mt-0.5 text-xs">
-                            {c.failureReason}
+                      <TableCell className="text-right">
+                        {(c.status === "PROCESSING" ||
+                          c.status === "PENDING") && (
+                          <div className="flex flex-wrap justify-end gap-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 px-2 text-[11px]"
+                              disabled={simulate.isPending}
+                              onClick={() =>
+                                simulate.mutate(
+                                  { chargeId: c.id, outcome: "approved" },
+                                  {
+                                    onSuccess: () =>
+                                      toast.success("Mensalidade aprovada."),
+                                    onError: (e) =>
+                                      toast.error(
+                                        e instanceof ApiError
+                                          ? e.message
+                                          : "Falha."
+                                      ),
+                                  }
+                                )
+                              }
+                            >
+                              Aprovar
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-destructive h-7 px-2 text-[11px]"
+                              disabled={simulate.isPending}
+                              onClick={() =>
+                                simulate.mutate(
+                                  { chargeId: c.id, outcome: "rejected" },
+                                  {
+                                    onSuccess: () =>
+                                      toast.success(
+                                        "Mensalidade recusada — carência iniciada."
+                                      ),
+                                    onError: (e) =>
+                                      toast.error(
+                                        e instanceof ApiError
+                                          ? e.message
+                                          : "Falha."
+                                      ),
+                                  }
+                                )
+                              }
+                            >
+                              Recusar
+                            </Button>
                           </div>
                         )}
                       </TableCell>
-                      {mode?.simulated && (
-                        <TableCell className="text-right">
-                          {(c.status === "PROCESSING" ||
-                            c.status === "PENDING") && (
-                            <div className="flex justify-end gap-1">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                disabled={simulate.isPending}
-                                onClick={() =>
-                                  simulate.mutate(
-                                    { chargeId: c.id, outcome: "approved" },
-                                    {
-                                      onSuccess: () =>
-                                        toast.success("Mensalidade aprovada."),
-                                      onError: (e) =>
-                                        toast.error(
-                                          e instanceof ApiError
-                                            ? e.message
-                                            : "Falha."
-                                        ),
-                                    }
-                                  )
-                                }
-                              >
-                                Aprovar
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="text-destructive"
-                                disabled={simulate.isPending}
-                                onClick={() =>
-                                  simulate.mutate(
-                                    { chargeId: c.id, outcome: "rejected" },
-                                    {
-                                      onSuccess: () =>
-                                        toast.success(
-                                          "Mensalidade recusada — carência iniciada."
-                                        ),
-                                      onError: (e) =>
-                                        toast.error(
-                                          e instanceof ApiError
-                                            ? e.message
-                                            : "Falha."
-                                        ),
-                                    }
-                                  )
-                                }
-                              >
-                                Recusar
-                              </Button>
-                            </div>
-                          )}
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>

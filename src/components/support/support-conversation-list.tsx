@@ -27,9 +27,15 @@ function formatTime(iso: string | null) {
 export function SupportConversationList({
   side,
   status = "ALL",
+  search = "",
+  role = "ALL",
 }: {
   side: "admin" | "user";
   status?: SupportConversationStatus | "ALL";
+  /** Busca por nome do usuário, assunto ou última mensagem (só faz sentido no lado admin). */
+  search?: string;
+  /** Filtro por tipo de usuário. */
+  role?: "ALL" | "COMPANY" | "PROFESSIONAL";
 }) {
   const { data: conversations, isLoading } = useSupportConversations(
     side,
@@ -61,9 +67,30 @@ export function SupportConversationList({
     );
   }
 
+  const q = search.trim().toLowerCase();
+  const filtered = conversations.filter((c) => {
+    if (role !== "ALL" && c.userRole !== role) return false;
+    if (!q) return true;
+    return (
+      c.userName.toLowerCase().includes(q) ||
+      (c.subject?.toLowerCase().includes(q) ?? false) ||
+      (c.lastMessage?.toLowerCase().includes(q) ?? false)
+    );
+  });
+
+  if (filtered.length === 0) {
+    return (
+      <EmptyState
+        icon={LifeBuoy}
+        title="Nenhuma conversa com esses filtros"
+        description="Ajuste a busca, o status ou o tipo de usuário."
+      />
+    );
+  }
+
   return (
     <div className="flex flex-col divide-y rounded-lg border">
-      {conversations.map((c) => {
+      {filtered.map((c) => {
         const isClosed = c.status === "CLOSED";
         const heading = side === "admin" ? c.userName : "Suporte Nexus";
         return (
