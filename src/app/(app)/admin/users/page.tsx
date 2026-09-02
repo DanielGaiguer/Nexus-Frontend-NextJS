@@ -23,12 +23,12 @@ const typeBadge: Record<
   { label: string; icon: typeof User; className: string }
 > = {
   PROFESSIONAL: {
-    label: "Professional",
+    label: "Profissional",
     icon: User,
     className: "bg-secondary/15 text-secondary",
   },
   COMPANY: {
-    label: "Company",
+    label: "Contratante",
     icon: Building2,
     className: "bg-nexus-accent/15 text-nexus-accent",
   },
@@ -150,9 +150,9 @@ export default function AdminUsersPage() {
         <div className="overflow-x-auto">
           <TabsList>
             <TabsTrigger value="all">Todos</TabsTrigger>
-            <TabsTrigger value="PROFESSIONAL">Professional</TabsTrigger>
-            <TabsTrigger value="COMPANY">Company</TabsTrigger>
-            <TabsTrigger value="ADMIN">Admin</TabsTrigger>
+            <TabsTrigger value="PROFESSIONAL">Profissionais</TabsTrigger>
+            <TabsTrigger value="COMPANY">Contratantes</TabsTrigger>
+            <TabsTrigger value="ADMIN">Admins</TabsTrigger>
           </TabsList>
         </div>
       </Tabs>

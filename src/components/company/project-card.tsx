@@ -83,8 +83,8 @@ const contractTypeLabels: Record<string, string> = {
 };
 
 function money(value: number) {
-  // Espelha #numbers.formatDecimal(x,1,'COMMA',0,'POINT') do template original.
-  return value.toLocaleString("en-US", { maximumFractionDigits: 0 });
+  // Separador de milhar pt-BR, sem casas decimais (o "R$" é prefixado no JSX).
+  return value.toLocaleString("pt-BR", { maximumFractionDigits: 0 });
 }
 
 function formatDate(iso: string) {

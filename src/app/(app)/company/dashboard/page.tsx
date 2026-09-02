@@ -53,9 +53,9 @@ const statusLabels: Record<string, string> = {
 };
 
 function formatMoney(value: number) {
-  // Espelha #numbers.formatDecimal(x,1,'COMMA',0,'POINT') do template
-  // original: separador de milhar vírgula, sem casas decimais.
-  return value.toLocaleString("en-US", { maximumFractionDigits: 0 });
+  // Separador de milhar pt-BR ("1.800"), sem casas decimais — consistente com
+  // o resto do sistema (o "R$" é prefixado no JSX).
+  return value.toLocaleString("pt-BR", { maximumFractionDigits: 0 });
 }
 
 function formatCreatedAt(iso: string) {

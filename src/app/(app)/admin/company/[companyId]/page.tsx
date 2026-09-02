@@ -68,7 +68,8 @@ const projectStatusLabels: Record<
 };
 
 function formatMoney(value: number) {
-  return value.toLocaleString("en-US", { maximumFractionDigits: 0 });
+  // Separador de milhar pt-BR, sem casas decimais (o "R$" é prefixado no JSX).
+  return value.toLocaleString("pt-BR", { maximumFractionDigits: 0 });
 }
 
 export default function AdminCompanyViewPage() {
