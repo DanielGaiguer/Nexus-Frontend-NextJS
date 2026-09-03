@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { ApiError, backendFetch } from "@/lib/api-client";
+import { rateLimitAware } from "@/lib/route-handlers";
 import { getSessionToken } from "@/lib/session";
 import type {
   CompanyDashboardBundleDTO,
@@ -90,9 +91,11 @@ export async function GET() {
     return NextResponse.json(bundle);
   } catch (error) {
     if (error instanceof ApiError) {
-      return NextResponse.json(
+      // Mesmo tratamento de 429 (Retry-After + campos) do proxyToBackend, caso
+      // um dos endpoints "duros" (profile/summary) passe a ser rate-limited.
+      return rateLimitAware(
         { message: error.message, reason: error.reason },
-        { status: error.status }
+        error
       );
     }
     return NextResponse.json(

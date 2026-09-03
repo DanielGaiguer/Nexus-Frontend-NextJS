@@ -556,6 +556,9 @@ function genericMessageForStatus(status: number): string {
     case 422:
       return "Não foi possível processar os dados enviados.";
     case 429:
+      // Fallback: o caminho normal de 429 nem chega aqui -- translateApiError
+      // trata 429 antes, montando a mensagem com o Retry-After real e a
+      // distinção login-bloqueado.
       return "Muitas tentativas em pouco tempo. Aguarde um instante e tente novamente.";
     default:
       return status >= 500
@@ -568,8 +571,29 @@ function genericMessageForStatus(status: number): string {
  * Traduz a mensagem crua que o backend mandou (`reason`, quase sempre em
  * inglês) pro texto em português mostrado ao usuário. Nunca retorna vazio —
  * na ausência de uma regra específica, cai no genérico por status.
+ *
+ * `rateLimit` só é passado nos 429 (por `parseResponse`): aí a mensagem é
+ * montada a partir dos campos estruturados (segundos de espera + tipo), não
+ * do texto — inclui o valor real do `Retry-After` e distingue "muitas
+ * requisições" de "login bloqueado".
  */
-export function translateApiError(status: number, reason: string): string {
+export function translateApiError(
+  status: number,
+  reason: string,
+  rateLimit?: {
+    retryAfter?: number;
+    rateLimitKind?: "REQUESTS" | "LOGIN_LOCKED";
+  }
+): string {
+  if (status === 429) {
+    if (rateLimit?.rateLimitKind === "LOGIN_LOCKED") {
+      return "Muitas tentativas de login incorretas. Tente novamente em 15 minutos.";
+    }
+    const secs = rateLimit?.retryAfter;
+    return secs && secs > 0
+      ? `Você fez muitas requisições. Tente novamente em ${secs} segundo${secs === 1 ? "" : "s"}.`
+      : "Você fez muitas requisições. Aguarde um instante e tente novamente.";
+  }
   const rule = MESSAGE_RULES.find((r) => reason.includes(r.includes));
   return rule ? rule.pt : genericMessageForStatus(status);
 }

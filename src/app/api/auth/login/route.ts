@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { ApiError, backendFetch } from "@/lib/api-client";
+import { rateLimitAware } from "@/lib/route-handlers";
 import { SESSION_COOKIE_NAME, sessionCookieOptions } from "@/lib/session";
 import type { LoginRequestDTO, LoginResponseDTO } from "@/types/auth";
 
@@ -35,9 +36,11 @@ export async function POST(request: Request) {
     return response;
   } catch (error) {
     if (error instanceof ApiError) {
-      return NextResponse.json(
+      // 429 aqui = bloqueio por tentativas de login (LOGIN_TEMPORARILY_BLOCKED)
+      // ou o teto de 10/h por IP. rateLimitAware repassa Retry-After + campos.
+      return rateLimitAware(
         { message: error.message, reason: error.reason },
-        { status: error.status }
+        error
       );
     }
     return NextResponse.json(

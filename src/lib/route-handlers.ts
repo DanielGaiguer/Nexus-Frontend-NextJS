@@ -104,9 +104,9 @@ export async function proxyToBackend<T, R = T>(
       // `reason` viaja junto (não traduzido) pra quem no client precisa
       // decidir um fluxo com base no motivo exato que o backend mandou —
       // ver ApiError/parseResponse em api-client.ts.
-      return NextResponse.json(
+      return rateLimitAware(
         { message: error.message, reason: error.reason },
-        { status: error.status }
+        error
       );
     }
     return NextResponse.json(
@@ -114,4 +114,33 @@ export async function proxyToBackend<T, R = T>(
       { status: 502 }
     );
   }
+}
+
+/**
+ * Monta a resposta do Route Handler preservando, nos 429, o que o BFF senão
+ * descartaria: o header `Retry-After` e os campos `error`/`retryAfter` do
+ * corpo. Sem isso o hop client (`apiFetch` -> `parseResponse`) não teria como
+ * montar "tente de novo em N segundos" nem distinguir login bloqueado.
+ * Usado aqui e no route.ts de login (que não passa por proxyToBackend).
+ */
+export function rateLimitAware(
+  body: Record<string, unknown>,
+  error: ApiError
+): NextResponse {
+  if (error.status !== 429) {
+    return NextResponse.json(body, { status: error.status });
+  }
+  const headers: Record<string, string> = {};
+  const enriched = {
+    ...body,
+    error:
+      error.rateLimitKind === "LOGIN_LOCKED"
+        ? "LOGIN_TEMPORARILY_BLOCKED"
+        : "RATE_LIMIT_EXCEEDED",
+    ...(error.retryAfter != null ? { retryAfter: error.retryAfter } : {}),
+  };
+  if (error.retryAfter != null) {
+    headers["Retry-After"] = String(error.retryAfter);
+  }
+  return NextResponse.json(enriched, { status: 429, headers });
 }

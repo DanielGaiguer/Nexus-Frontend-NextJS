@@ -13,6 +13,14 @@
 
 import { translateApiError } from "@/lib/api-error-messages";
 
+/**
+ * `REQUESTS` = estourou o teto de requisições de alguma política de rate
+ * limit; `LOGIN_LOCKED` = conta temporariamente bloqueada por tentativas de
+ * login malsucedidas. Vem do campo `error` do corpo 429 do backend
+ * (`RATE_LIMIT_EXCEEDED` / `LOGIN_TEMPORARILY_BLOCKED`).
+ */
+export type RateLimitKind = "REQUESTS" | "LOGIN_LOCKED";
+
 export class ApiError extends Error {
   readonly status: number;
   /**
@@ -23,12 +31,23 @@ export class ApiError extends Error {
    * vem traduzido.
    */
   readonly reason: string;
+  /** Só em 429: segundos até poder tentar de novo (header `Retry-After`). */
+  readonly retryAfter?: number;
+  /** Só em 429: distingue "muitas requisições" de "login bloqueado". */
+  readonly rateLimitKind?: RateLimitKind;
 
-  constructor(status: number, reason: string, message: string = reason) {
+  constructor(
+    status: number,
+    reason: string,
+    message: string = reason,
+    extra?: { retryAfter?: number; rateLimitKind?: RateLimitKind }
+  ) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.reason = reason;
+    this.retryAfter = extra?.retryAfter;
+    this.rateLimitKind = extra?.rateLimitKind;
   }
 }
 
@@ -96,6 +115,37 @@ async function parseResponse<T>(
       isJson && payload && typeof payload === "object" && "reason" in payload
         ? String((payload as { reason?: unknown }).reason)
         : text;
+
+    if (response.status === 429) {
+      // 429 se compõe a partir de campos estruturados (header Retry-After +
+      // `error`/`retryAfter` do corpo), não de tradução de texto — então roda
+      // igual nos dois hops (backendFetch e apiFetch), independente de
+      // `translate`. Os campos sobrevivem ao BFF porque proxyToBackend e o
+      // route.ts de login repassam header e corpo (ver route-handlers.ts).
+      const body =
+        isJson && payload && typeof payload === "object"
+          ? (payload as Record<string, unknown>)
+          : {};
+      const headerRetry = Number(response.headers.get("retry-after"));
+      const bodyRetry = Number(body.retryAfter);
+      const retryAfter =
+        Number.isFinite(headerRetry) && headerRetry > 0
+          ? headerRetry
+          : Number.isFinite(bodyRetry) && bodyRetry > 0
+            ? bodyRetry
+            : undefined;
+      const rateLimitKind: RateLimitKind =
+        body.error === "LOGIN_TEMPORARILY_BLOCKED"
+          ? "LOGIN_LOCKED"
+          : "REQUESTS";
+      throw new ApiError(
+        429,
+        reason,
+        translateApiError(429, text, { retryAfter, rateLimitKind }),
+        { retryAfter, rateLimitKind }
+      );
+    }
+
     const message = translate ? translateApiError(response.status, text) : text;
     throw new ApiError(response.status, reason, message);
   }
@@ -125,11 +175,30 @@ export async function backendFetch<T>(
   // boundary — jamais sobrescrever, e nunca JSON.stringify um FormData.
   const isFormData = body instanceof FormData;
 
+  // O backend fala server-to-server a partir daqui (127.0.0.1), então
+  // `getRemoteAddr()` lá seria sempre o IP do próprio Next. Repassa o IP real
+  // do cliente para as políticas de rate limit por IP (ver ClientIpResolver no
+  // backend). Import dinâmico: `next/headers` é server-only e este módulo
+  // também roda no client (apiFetch). try/catch: fora de um escopo de request
+  // (build/prerender) não há o que repassar.
+  let forwardedFor: string | undefined;
+  try {
+    const { headers: incomingHeaders } = await import("next/headers");
+    const incoming = await incomingHeaders();
+    // `||` (não `??`): um proxy pode mandar o header presente porém vazio.
+    const raw =
+      incoming.get("x-forwarded-for") || incoming.get("x-real-ip") || "";
+    forwardedFor = raw.trim() || undefined;
+  } catch {
+    forwardedFor = undefined;
+  }
+
   const response = await fetch(`${backendUrl}${path}`, {
     ...init,
     headers: {
       ...(isFormData ? {} : { "Content-Type": "application/json" }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(forwardedFor ? { "X-Forwarded-For": forwardedFor } : {}),
       ...headers,
     },
     body: isFormData
