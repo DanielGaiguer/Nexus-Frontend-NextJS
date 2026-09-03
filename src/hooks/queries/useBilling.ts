@@ -30,8 +30,10 @@ export function useBillingStatus(enabled = true) {
     queryKey: billingStatusKey(),
     queryFn: () => apiFetch<BillingStatusDTO>("/api/company/billing/status"),
     enabled,
-    // O bloqueio/desbloqueio pode mudar por webhook/job -- revalida de vez em quando.
-    refetchInterval: 60 * 1000,
+    // O bloqueio/desbloqueio pode mudar por webhook/job -- revalida de vez em
+    // quando. Fica montado em toda tela de empresa (BillingBlockBanner), então
+    // 5min em vez de 1min corta ruído sem atrasar nada que o usuário perceba.
+    refetchInterval: 5 * 60 * 1000,
   });
 }
 

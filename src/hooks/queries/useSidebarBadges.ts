@@ -16,6 +16,10 @@ export function useSidebarBadges() {
   return useQuery({
     queryKey: sidebarBadgesKey(),
     queryFn: () => apiFetch<Record<string, number>>("/api/sidebar/badges"),
-    refetchInterval: 60 * 1000,
+    // Badge não é tempo real (regra: "recalculada quando a sidebar
+    // carrega/atualiza"). Abrir/sair de uma seção já invalida esta chave na
+    // hora (useMarkSectionSeenOnMount) e as mutations de match/proposta também
+    // — o polling é só a rede de segurança, 5min basta.
+    refetchInterval: 5 * 60 * 1000,
   });
 }

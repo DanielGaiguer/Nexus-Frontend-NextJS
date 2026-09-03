@@ -11,5 +11,8 @@ export function useCompanyProfile(enabled = true) {
     queryKey: companyProfileKey(),
     queryFn: () => apiFetch<CompanyProfileDTO>("/api/company/profile"),
     enabled,
+    // Mesma razão de useProfessionalProfile: dado estável na sessão, header e
+    // sidebar sempre montados; a edição de perfil invalida esta chave.
+    staleTime: 5 * 60 * 1000,
   });
 }

@@ -13,5 +13,9 @@ export function useProfessionalProfile(enabled = true) {
     queryFn: () =>
       apiFetch<ProfessionalProfileDTO>("/api/professional/profile"),
     enabled,
+    // Nome/foto/skills não mudam na sessão; a edição de perfil invalida esta
+    // chave. Sem isto, o header e a sidebar (sempre montados) revalidavam o
+    // perfil a cada navegação depois de 2min.
+    staleTime: 5 * 60 * 1000,
   });
 }

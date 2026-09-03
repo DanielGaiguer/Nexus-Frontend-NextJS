@@ -13,9 +13,16 @@ function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        // Evita refetch agressivo em cada foco de janela; cada hook de
-        // query pode sobrescrever isso por entidade quando fizer sentido.
-        staleTime: 30 * 1000,
+        // Dado deste app não é tempo real e toda mutation invalida as chaves
+        // que altera -- então a revalidação passiva pode ser folgada:
+        //  - staleTime 2min: navegar entre telas que compartilham uma query
+        //    (perfil, matches, propostas) não redispara a chamada a cada clique.
+        //  - refetchOnWindowFocus off: voltar o foco pro navegador (comum numa
+        //    apresentação) não revalida tudo que está montado de uma vez.
+        // Hooks individuais sobem/descem isso quando faz sentido (catálogos 5min,
+        // contadores com refetchInterval próprio, etc).
+        staleTime: 2 * 60 * 1000,
+        refetchOnWindowFocus: false,
         retry: 1,
       },
       mutations: {

@@ -34,6 +34,9 @@ export function useChatUnreadTotal() {
   return useQuery({
     queryKey: chatUnreadTotalKey(),
     queryFn: () => apiFetch<number>("/api/chat/unread-total"),
-    refetchInterval: 60 * 1000,
+    // O conector STOMP global (useChatNotifications) mantém esta chave ao vivo
+    // via setQueryData. Este polling é só o fallback pra quando o socket não
+    // conecta — 5min basta nesse papel.
+    refetchInterval: 5 * 60 * 1000,
   });
 }

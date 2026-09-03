@@ -10,6 +10,8 @@ export function useNotifications() {
   return useQuery({
     queryKey: notificationsKey(),
     queryFn: () => apiFetch<NotificationSummaryDTO>("/api/notifications"),
-    refetchInterval: 60 * 1000,
+    // Feed de eventos, não tempo real: marcar como lida/lida-todas já invalida
+    // esta chave. 5min de polling cobre o resto sem 1 request/min por aba.
+    refetchInterval: 5 * 60 * 1000,
   });
 }

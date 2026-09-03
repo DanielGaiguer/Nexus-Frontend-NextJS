@@ -66,6 +66,9 @@ export function useSupportUnreadTotal(side: Side) {
   return useQuery({
     queryKey: supportUnreadTotalKey(side),
     queryFn: () => apiFetch<number>(`${base(side)}/unread-total`),
-    refetchInterval: 45 * 1000,
+    // Contador de sidebar, não tempo real. Abrir a conversa de suporte
+    // (useSupportMessages marca como lida) e as mutations já atualizam; 5min
+    // de polling cobre o resto.
+    refetchInterval: 5 * 60 * 1000,
   });
 }
