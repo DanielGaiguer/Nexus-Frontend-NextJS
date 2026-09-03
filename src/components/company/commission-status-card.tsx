@@ -5,7 +5,6 @@ import { Percent } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useCommissionStatus } from "@/hooks/queries/useCommissionStatus";
 
 function formatPercent(value: number) {
@@ -14,16 +13,22 @@ function formatPercent(value: number) {
 
 /**
  * Indicador de comissão na área do contratante (dashboard): quantas das
- * contratações gratuitas já foram usadas e se já entrou na faixa com comissão.
+ * contratações gratuitas já foram usadas e quantas ainda restam.
  *
- * Camada financeira, Prompt 1 — puramente informativo, nada é cobrado. O
- * contador vem do backend e hoje fica em 0 para todos; o Prompt 2 liga o
- * incremento ao evento da janela de confirmação.
+ * Só aparece enquanto o contratante ainda tem contratação gratuita
+ * (`freeHiresRemaining > 0`). Quando todas foram usadas — ou seja, já entrou
+ * na faixa com comissão —, o card some do dashboard. Enquanto a consulta
+ * carrega, `data` é indefinido e o card também não aparece.
  */
 export function CommissionStatusCard() {
-  const { data, isLoading } = useCommissionStatus();
-  const limit = data?.freeHiresLimit ?? 3;
-  const used = data ? Math.min(data.usedFreeHires, data.freeHiresLimit) : 0;
+  const { data } = useCommissionStatus();
+
+  if (!data || data.freeHiresRemaining <= 0) {
+    return null;
+  }
+
+  const limit = data.freeHiresLimit;
+  const used = Math.min(data.usedFreeHires, data.freeHiresLimit);
 
   return (
     <Card className="gap-0 py-0">
@@ -38,44 +43,28 @@ export function CommissionStatusCard() {
             gratuitas
           </p>
         </div>
-        {data?.commissionApplies ? (
-          <Badge className="bg-warning/15 text-warning shrink-0">
-            Comissão de {formatPercent(data.currentPercentage)}
-          </Badge>
-        ) : (
-          <Badge variant="secondary" className="shrink-0">
-            Período gratuito
-          </Badge>
-        )}
+        <Badge variant="secondary" className="shrink-0">
+          Período gratuito
+        </Badge>
       </CardHeader>
       <CardContent className="py-4">
-        {isLoading || !data ? (
-          <Skeleton className="h-16" />
-        ) : (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="font-medium">
-                {used} de {limit} contratações gratuitas usadas
-              </span>
-              <span className="text-muted-foreground tabular-nums">
-                {data.freeHiresRemaining} restante
-                {data.freeHiresRemaining === 1 ? "" : "s"}
-              </span>
-            </div>
-            <Progress value={(used / limit) * 100} />
-            <p className="text-muted-foreground text-xs">
-              {data.commissionApplies
-                ? `Você já usou as contratações gratuitas. Novas contratações fechadas com sucesso entram na faixa com comissão de ${formatPercent(
-                    data.currentPercentage
-                  )} sobre o valor fechado. A cobrança ainda não está ativa.`
-                : `A partir da ${
-                    limit + 1
-                  }ª contratação, passa a valer a comissão de ${formatPercent(
-                    data.currentPercentage
-                  )} sobre o valor fechado. Publicar oportunidade é sempre gratuito.`}
-            </p>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-medium">
+              {used} de {limit} contratações gratuitas usadas
+            </span>
+            <span className="text-muted-foreground tabular-nums">
+              {data.freeHiresRemaining} restante
+              {data.freeHiresRemaining === 1 ? "" : "s"}
+            </span>
           </div>
-        )}
+          <Progress value={(used / limit) * 100} />
+          <p className="text-muted-foreground text-xs">
+            A partir da {limit + 1}ª contratação, passa a valer a comissão de{" "}
+            {formatPercent(data.currentPercentage)} sobre o valor fechado.
+            Publicar oportunidade é sempre gratuito.
+          </p>
+        </div>
       </CardContent>
     </Card>
   );
