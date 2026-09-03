@@ -59,6 +59,11 @@ export interface RegisterProfessionalRequestDTO {
   expectedSalaryPJ: number | null;
   freelanceMinExpectation: number | null;
   freelanceMaxExpectation: number | null;
+  // Consentimento LGPD. acceptedTermsOfUse é obrigatório (true) — o backend
+  // rejeita o cadastro com 400 sem ele. Os outros dois são opcionais.
+  acceptedTermsOfUse: boolean;
+  acceptedMarketingCommunications: boolean;
+  acceptedAlgorithmImprovement: boolean;
 }
 
 /**
@@ -74,6 +79,10 @@ export interface RegisterCompanyRequestDTO {
   cep: string | null;
   description: string | null;
   type: CompanyType;
+  // Consentimento LGPD (ver RegisterProfessionalRequestDTO).
+  acceptedTermsOfUse: boolean;
+  acceptedMarketingCommunications: boolean;
+  acceptedAlgorithmImprovement: boolean;
 }
 
 /** Espelha com.main.nexus.dto.RegisterCompanyLinkedInRequestDTO. */
@@ -85,4 +94,8 @@ export interface RegisterCompanyLinkedInRequestDTO {
   cep: string | null;
   description: string | null;
   type: CompanyType;
+  // Consentimento LGPD (ver RegisterProfessionalRequestDTO).
+  acceptedTermsOfUse: boolean;
+  acceptedMarketingCommunications: boolean;
+  acceptedAlgorithmImprovement: boolean;
 }

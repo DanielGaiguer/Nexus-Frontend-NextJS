@@ -89,15 +89,18 @@ export const loginSchema = z.object({
 
 export type LoginFormValues = z.infer<typeof loginSchema>;
 
-// Espelha o checkbox obrigatório "allowCepUsage" dos templates
-// register-professional.html/register-company.html: o nexus-frontend
-// antigo trava o submit via JS se não estiver marcado, embora o campo não
-// exista em nenhum *RequestDTO do backend real (nunca foi conectado a
-// nada — é só um gate de UX). Fidelidade de conteúdo/comportamento com o
-// original, então continua travando o submit aqui também.
-const allowCepUsageField = z.boolean().refine((value) => value === true, {
-  message: "É necessário marcar esta opção para continuar.",
-});
+// Consentimento LGPD no cadastro (substitui o antigo checkbox fantasma
+// "allowCepUsage", que travava o submit mas não persistia em lugar nenhum).
+// acceptedTermsOfUse é obrigatório — o backend rejeita o cadastro com 400 sem
+// ele; os outros dois são opcionais e não bloqueiam. Espalhado nos 3 schemas
+// de cadastro (profissional, empresa, empresa via LinkedIn).
+const legalConsentShape = {
+  acceptedTermsOfUse: z.boolean().refine((value) => value === true, {
+    message: "É necessário aceitar os Termos de Uso para continuar.",
+  }),
+  acceptedMarketingCommunications: z.boolean(),
+  acceptedAlgorithmImprovement: z.boolean(),
+};
 
 export const registerProfessionalSchema = z.object({
   name: z.string().trim().min(1, "Informe seu nome completo."),
@@ -113,7 +116,7 @@ export const registerProfessionalSchema = z.object({
   expectedSalaryPJ: moneyField,
   freelanceMinExpectation: moneyField,
   freelanceMaxExpectation: moneyField,
-  allowCepUsage: allowCepUsageField,
+  ...legalConsentShape,
 });
 
 export type RegisterProfessionalFormValues = z.infer<
@@ -154,7 +157,7 @@ export const registerCompanySchema = z
     phone: phoneField,
     cep: cepField,
     description: z.string(),
-    allowCepUsage: allowCepUsageField,
+    ...legalConsentShape,
   })
   .superRefine(refineTaxIdByType);
 
@@ -168,6 +171,7 @@ export const registerCompanyLinkedInSchema = z
     phone: phoneField,
     cep: cepField,
     description: z.string(),
+    ...legalConsentShape,
   })
   .superRefine(refineTaxIdByType);
 
@@ -530,4 +534,6 @@ export const reviewFormSchema = z.object({
 export type ReviewFormValues = z.infer<typeof reviewFormSchema>;
 
 export type ScreeningStageFormValues = z.infer<typeof screeningStageSchema>;
-export type ScreeningQuestionFormValues = z.infer<typeof screeningQuestionSchema>;
+export type ScreeningQuestionFormValues = z.infer<
+  typeof screeningQuestionSchema
+>;

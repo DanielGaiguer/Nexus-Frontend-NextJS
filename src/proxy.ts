@@ -31,7 +31,21 @@ const roleHome: Record<UserRole, string> = {
 // `/auth/**` são os Route Handlers de conclusão do OAuth (linkedin/github
 // "complete") — chegam aqui SEM sessão ainda (é o próprio passo que planta
 // o cookie), então precisam ficar públicos.
-const PUBLIC_PATHS = ["/", "/login", "/register", "/theme-test", "/auth"];
+const PUBLIC_PATHS = [
+  "/",
+  "/login",
+  "/register",
+  "/theme-test",
+  "/auth",
+  // Documentos legais (LGPD) — grupo de rotas (legal). Públicos e sem
+  // redirecionar usuário logado: ele precisa poder abri-los a qualquer
+  // momento, inclusive a partir da tela de re-aceite.
+  "/terms",
+  "/privacy",
+  // Confirmação de exclusão de conta (LGPD): o link vem do e-mail e pode ser
+  // aberto num dispositivo sem sessão. O token na URL é a credencial.
+  "/account/delete",
+];
 
 // `/public/**` no app antigo era servido fora do shell autenticado, sem
 // exigir login (link compartilhável). Este projeto ainda não tem site

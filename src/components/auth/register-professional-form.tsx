@@ -9,8 +9,8 @@ import { toast } from "sonner";
 
 import { AuthCard } from "@/components/auth/auth-card";
 import { GitHubIcon, LinkedInIcon } from "@/components/auth/brand-icons";
+import { LegalConsentFields } from "@/components/auth/legal-consent-fields";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -46,7 +46,9 @@ export function RegisterProfessionalForm() {
       expectedSalaryPJ: "",
       freelanceMinExpectation: "",
       freelanceMaxExpectation: "",
-      allowCepUsage: false,
+      acceptedTermsOfUse: false,
+      acceptedMarketingCommunications: false,
+      acceptedAlgorithmImprovement: false,
     },
     mode: "onChange",
   });
@@ -64,6 +66,9 @@ export function RegisterProfessionalForm() {
         expectedSalaryPJ: toNumberOrNull(values.expectedSalaryPJ),
         freelanceMinExpectation: toNumberOrNull(values.freelanceMinExpectation),
         freelanceMaxExpectation: toNumberOrNull(values.freelanceMaxExpectation),
+        acceptedTermsOfUse: values.acceptedTermsOfUse,
+        acceptedMarketingCommunications: values.acceptedMarketingCommunications,
+        acceptedAlgorithmImprovement: values.acceptedAlgorithmImprovement,
       },
       {
         onSuccess: () => {
@@ -276,35 +281,14 @@ export function RegisterProfessionalForm() {
             </div>
           </div>
 
-          <FormField
-            control={form.control}
-            name="allowCepUsage"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-start gap-2 space-y-0">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel className="text-muted-foreground font-normal">
-                    Permitir o uso da minha localização para encontrar
-                    oportunidades mais próximas e melhorar a relevância dos
-                    resultados.
-                  </FormLabel>
-                  <FormMessage />
-                </div>
-              </FormItem>
-            )}
-          />
+          <Separator />
+
+          <LegalConsentFields />
 
           <Button
             type="submit"
             className="w-full"
-            disabled={
-              registerProfessional.isPending || !form.formState.isValid
-            }
+            disabled={registerProfessional.isPending || !form.formState.isValid}
           >
             <UserPlus className="size-4" />
             {registerProfessional.isPending ? "Criando conta…" : "Criar conta"}

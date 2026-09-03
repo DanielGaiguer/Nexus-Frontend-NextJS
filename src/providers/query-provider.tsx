@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  MutationCache,
   QueryClient,
   QueryClientProvider,
   isServer,
@@ -8,9 +9,34 @@ import {
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import type { ReactNode } from "react";
 import { useState } from "react";
+import { toast } from "sonner";
+
+import { ApiError } from "@/lib/api-client";
+
+// 428 CONSENT_REQUIRED: o usuário tinha o app aberto quando uma nova versão dos
+// Termos foi publicada. O ConsentGateFilter do backend bloqueia a mutation;
+// aqui a gente leva o usuário pra tela de re-aceite recarregando (o layout
+// autenticado re-renderiza e mostra o <ReacceptTermsGate>). Guard evita
+// múltiplos reloads se várias mutations falharem juntas.
+let consentReloadTriggered = false;
+function handleConsentRequired(error: unknown) {
+  if (
+    error instanceof ApiError &&
+    error.status === 428 &&
+    !consentReloadTriggered &&
+    typeof window !== "undefined"
+  ) {
+    consentReloadTriggered = true;
+    toast.error(
+      "Os Termos de Uso foram atualizados. Você precisa aceitá-los para continuar."
+    );
+    window.location.reload();
+  }
+}
 
 function makeQueryClient() {
   return new QueryClient({
+    mutationCache: new MutationCache({ onError: handleConsentRequired }),
     defaultOptions: {
       queries: {
         // Dado deste app não é tempo real e toda mutation invalida as chaves
@@ -23,7 +49,13 @@ function makeQueryClient() {
         // contadores com refetchInterval próprio, etc).
         staleTime: 2 * 60 * 1000,
         refetchOnWindowFocus: false,
-        retry: 1,
+        // 1 tentativa extra, exceto em 429: repetir logo consome outro token e
+        // atrasa a recuperação. O 429 vira estado de erro do hook (mensagem
+        // amigável no ponto de uso), nunca tela fatal.
+        retry: (failureCount, error) =>
+          error instanceof ApiError && error.status === 429
+            ? false
+            : failureCount < 1,
       },
       mutations: {
         retry: 0,

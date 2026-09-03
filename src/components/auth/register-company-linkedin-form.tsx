@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { AuthCard } from "@/components/auth/auth-card";
+import { LegalConsentFields } from "@/components/auth/legal-consent-fields";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -19,6 +20,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useRegisterCompanyLinkedin } from "@/hooks/mutations/useRegisterCompanyLinkedin";
@@ -46,6 +48,9 @@ export function RegisterCompanyLinkedinForm() {
       phone: "",
       cep: "",
       description: "",
+      acceptedTermsOfUse: false,
+      acceptedMarketingCommunications: false,
+      acceptedAlgorithmImprovement: false,
     },
     mode: "onChange",
   });
@@ -69,6 +74,9 @@ export function RegisterCompanyLinkedinForm() {
         phone: toNullable(values.phone),
         cep: toNullable(values.cep),
         description: toNullable(values.description),
+        acceptedTermsOfUse: values.acceptedTermsOfUse,
+        acceptedMarketingCommunications: values.acceptedMarketingCommunications,
+        acceptedAlgorithmImprovement: values.acceptedAlgorithmImprovement,
       },
       {
         onSuccess: () => router.push("/register/success"),
@@ -221,6 +229,10 @@ export function RegisterCompanyLinkedinForm() {
               )}
             />
           </div>
+
+          <Separator />
+
+          <LegalConsentFields />
 
           <Button
             type="submit"

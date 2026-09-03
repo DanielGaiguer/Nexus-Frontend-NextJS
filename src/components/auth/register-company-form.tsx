@@ -9,8 +9,8 @@ import { toast } from "sonner";
 
 import { AuthCard } from "@/components/auth/auth-card";
 import { LinkedInIcon } from "@/components/auth/brand-icons";
+import { LegalConsentFields } from "@/components/auth/legal-consent-fields";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -20,6 +20,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useRegisterCompany } from "@/hooks/mutations/useRegisterCompany";
@@ -45,7 +46,9 @@ export function RegisterCompanyForm() {
       phone: "",
       cep: "",
       description: "",
-      allowCepUsage: false,
+      acceptedTermsOfUse: false,
+      acceptedMarketingCommunications: false,
+      acceptedAlgorithmImprovement: false,
     },
     mode: "onChange",
   });
@@ -64,6 +67,9 @@ export function RegisterCompanyForm() {
         phone: toNullable(values.phone),
         cep: toNullable(values.cep),
         description: toNullable(values.description),
+        acceptedTermsOfUse: values.acceptedTermsOfUse,
+        acceptedMarketingCommunications: values.acceptedMarketingCommunications,
+        acceptedAlgorithmImprovement: values.acceptedAlgorithmImprovement,
       },
       {
         onSuccess: () => {
@@ -252,28 +258,9 @@ export function RegisterCompanyForm() {
             />
           </div>
 
-          <FormField
-            control={form.control}
-            name="allowCepUsage"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-start gap-2 space-y-0">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel className="text-muted-foreground font-normal">
-                    Permitir o uso da minha localização para encontrar
-                    oportunidades mais próximas e melhorar a relevância dos
-                    resultados.
-                  </FormLabel>
-                  <FormMessage />
-                </div>
-              </FormItem>
-            )}
-          />
+          <Separator />
+
+          <LegalConsentFields />
 
           <Button
             type="submit"

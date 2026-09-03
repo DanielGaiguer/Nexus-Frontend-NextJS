@@ -19,6 +19,8 @@ import { ReputationCard } from "@/components/professional/reputation-card";
 import { ResumeCard } from "@/components/professional/resume-card";
 import { SkillsEditorDialog } from "@/components/professional/skills-editor-dialog";
 import { ReviewsPreviewCard } from "@/components/reviews/reviews-preview-card";
+import { DeleteAccountCard } from "@/components/shared/delete-account-card";
+import { ExportDataCard } from "@/components/shared/export-data-card";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -320,6 +322,9 @@ export default function ProProfilePage() {
           )}
         </div>
       </div>
+
+      <ExportDataCard />
+      <DeleteAccountCard />
     </div>
   );
 }

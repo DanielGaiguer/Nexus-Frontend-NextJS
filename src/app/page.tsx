@@ -392,8 +392,16 @@ export default async function Home() {
           <div>
             <h4 className="text-sm font-semibold">Legal</h4>
             <ul className="text-muted-foreground mt-3 space-y-1.5 text-sm">
-              <li>Termos de uso</li>
-              <li>Privacidade</li>
+              <li>
+                <Link href="/terms" className="hover:text-foreground">
+                  Termos de uso
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacy" className="hover:text-foreground">
+                  Privacidade
+                </Link>
+              </li>
               <li>Cookies</li>
             </ul>
           </div>
