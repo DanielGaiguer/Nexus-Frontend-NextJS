@@ -1,4 +1,14 @@
-import { Building2, Cpu, Handshake, Star, User, UserPlus } from "lucide-react";
+import {
+  Building2,
+  ClipboardCheck,
+  Cpu,
+  Globe,
+  Handshake,
+  Receipt,
+  Star,
+  User,
+  UserPlus,
+} from "lucide-react";
 import Link from "next/link";
 
 import { AnimatedCounter } from "@/components/marketing/animated-counter";
@@ -37,6 +47,24 @@ const steps = [
     icon: Handshake,
     title: "Conecte-se",
     text: "Match confirmado, contatos liberados, chat desbloqueado por 30 dias.",
+  },
+];
+
+const features = [
+  {
+    icon: Globe,
+    title: "Portal personalizado",
+    text: "Sua empresa ganha um portal de vagas com a própria marca e cores, em subdomínio próprio dentro do Nexus.",
+  },
+  {
+    icon: ClipboardCheck,
+    title: "Processo seletivo com teste técnico",
+    text: "Monte questionários de triagem por etapas; candidatos respondem direto na plataforma antes de avançar no processo.",
+  },
+  {
+    icon: Receipt,
+    title: "Financeiro integrado",
+    text: "Cobrança de comissão e emissão de nota fiscal de serviço automatizadas, sem sair do Nexus.",
   },
 ];
 
@@ -210,6 +238,36 @@ export default async function Home() {
           </div>
         </section>
 
+        {/* Recursos */}
+        <section
+          id="recursos"
+          className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24"
+        >
+          <div className="max-w-xl">
+            <p className="text-primary text-sm font-semibold tracking-wide uppercase">
+              Plataforma completa
+            </p>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+              Muito além do match.
+            </h2>
+          </div>
+          <div className="mt-10 grid gap-6 sm:grid-cols-3">
+            {features.map((feature) => (
+              <Card key={feature.title}>
+                <CardContent>
+                  <div className="bg-primary/10 text-primary flex size-11 items-center justify-center rounded-xl">
+                    <feature.icon className="size-5" />
+                  </div>
+                  <h3 className="mt-4 font-semibold">{feature.title}</h3>
+                  <p className="text-muted-foreground mt-1.5 text-sm">
+                    {feature.text}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
         {/* Métricas */}
         <section id="metricas" className="bg-muted/30 border-y py-16 sm:py-20">
           <div className="mx-auto grid max-w-6xl grid-cols-2 gap-8 px-4 sm:px-6 lg:grid-cols-4">
@@ -367,6 +425,11 @@ export default async function Home() {
               <li>
                 <a href="#como-funciona" className="hover:text-foreground">
                   Como funciona
+                </a>
+              </li>
+              <li>
+                <a href="#recursos" className="hover:text-foreground">
+                  Recursos
                 </a>
               </li>
               <li>
