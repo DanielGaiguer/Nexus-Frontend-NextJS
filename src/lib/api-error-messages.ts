@@ -537,6 +537,104 @@ const MESSAGE_RULES: MessageRule[] = [
     includes: "must be at most 120 characters.",
     pt: "O nome de exibição é longo demais (máx. 120 caracteres).",
   },
+
+  // ── Membros da empresa (CompanyMemberService / CompanyAccessService) ───
+  {
+    includes:
+      "This email already belongs to a Nexus account. Only people without an account can be invited.",
+    pt: "Este e-mail já pertence a uma conta do Nexus. Só é possível convidar quem ainda não tem conta.",
+  },
+  {
+    includes: "There is already a pending invitation for this email.",
+    pt: "Já existe um convite pendente para este e-mail.",
+  },
+  {
+    includes:
+      "You cannot remove the only owner. Transfer ownership to another member first.",
+    pt: "Você não pode remover o único proprietário. Transfira a titularidade para outro membro primeiro.",
+  },
+  {
+    // Barreira otimista da invariante de 1 dono — só aparece numa corrida rara
+    // (remover membro + transferir titularidade ao mesmo tempo, em duas abas).
+    includes: "This account must have exactly one owner. Refresh and try again.",
+    pt: "Esta conta precisa ter exatamente um proprietário. Atualize a página e tente de novo.",
+  },
+  {
+    includes:
+      "Transfer account ownership to another member before deleting your account.",
+    pt: "Transfira a titularidade da conta para outro membro antes de excluir a sua conta.",
+  },
+  {
+    includes: "Only the current owner can transfer ownership.",
+    pt: "Somente o proprietário atual pode transferir a titularidade.",
+  },
+  {
+    includes: "This action is restricted to the account owner.",
+    pt: "Esta ação é exclusiva do proprietário da conta.",
+  },
+  {
+    includes: "This action requires an active company membership.",
+    pt: "Esta ação exige um vínculo ativo com a empresa.",
+  },
+  {
+    includes: "Ownership can only be transferred to an active member.",
+    pt: "A titularidade só pode ser transferida para um membro ativo.",
+  },
+  {
+    includes: "You are already the owner.",
+    pt: "Você já é o proprietário da conta.",
+  },
+  {
+    includes: "You are not an active member of this company.",
+    pt: "Você não é um membro ativo desta empresa.",
+  },
+  {
+    includes: "This member does not belong to your company.",
+    pt: "Este membro não pertence à sua empresa.",
+  },
+  {
+    includes: "This invitation does not belong to your company.",
+    pt: "Este convite não pertence à sua empresa.",
+  },
+  {
+    includes: "Only a pending invitation can be revoked.",
+    pt: "Só é possível revogar um convite pendente.",
+  },
+  {
+    includes:
+      "This invitation link is invalid or has expired. Ask the account owner for a new one.",
+    pt: "Este link de convite é inválido ou expirou. Peça um novo ao proprietário da conta.",
+  },
+  {
+    includes:
+      "This invitation has expired. Ask the account owner for a new one.",
+    pt: "Este convite expirou. Peça um novo ao proprietário da conta.",
+  },
+  {
+    includes: "This invitation is no longer valid.",
+    pt: "Este convite não é mais válido (já foi aceito ou revogado).",
+  },
+  {
+    includes:
+      "An account with this email already exists. Ask the account owner to invite a different address.",
+    pt: "Já existe uma conta com este e-mail. Peça ao proprietário para convidar outro endereço.",
+  },
+  {
+    includes: "You must accept the Terms of Use to continue.",
+    pt: "É necessário aceitar os Termos de Uso para continuar.",
+  },
+  {
+    includes: "Invitation token is required.",
+    pt: "O token do convite é obrigatório.",
+  },
+  { includes: "Invitation not found.", pt: "Convite não encontrado." },
+  { includes: "Member not found.", pt: "Membro não encontrado." },
+  { includes: "A password is required.", pt: "A senha é obrigatória." },
+  {
+    includes: "Provide a valid email address.",
+    pt: "Informe um endereço de e-mail válido.",
+  },
+  { includes: "An email is required.", pt: "Informe um e-mail." },
 ].sort((a, b) => b.includes.length - a.includes.length);
 
 function genericMessageForStatus(status: number): string {

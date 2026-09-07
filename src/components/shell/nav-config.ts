@@ -117,6 +117,11 @@ export const navByRole: Record<UserRole, NavSection[]> = {
           icon: Store,
         },
         { title: "Financeiro", href: "/company/billing", icon: Wallet },
+        {
+          title: "Membros",
+          href: "/company/settings/members",
+          icon: Users,
+        },
         { title: "Suporte", href: "/support", icon: LifeBuoy },
         { title: "Perfil", href: "/company/profile", icon: Building2 },
       ],

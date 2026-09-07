@@ -29,19 +29,25 @@ import { ApiError } from "@/lib/api-client";
 export function DeleteAccountCard() {
   const requestDeletion = useRequestAccountDeletion();
   const [emailSent, setEmailSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function handleConfirm() {
+    setError(null);
     requestDeletion.mutate(undefined, {
       onSuccess: (res) => {
         setEmailSent(true);
         toast.success(res.message);
       },
-      onError: (error) => {
-        toast.error(
-          error instanceof ApiError
-            ? error.message
-            : "Não foi possível iniciar a exclusão. Tente novamente."
-        );
+      onError: (err) => {
+        // Ex.: OWNER de empresa com outros membros -> 409 pedindo transferir a
+        // titularidade antes. A mensagem já vem traduzida pelo api-client;
+        // mostra na própria tela, não só num toast que passa.
+        const msg =
+          err instanceof ApiError
+            ? err.message
+            : "Não foi possível iniciar a exclusão. Tente novamente.";
+        setError(msg);
+        toast.error(msg);
       },
     });
   }
@@ -73,6 +79,12 @@ export function DeleteAccountCard() {
               financeiros já emitidos são mantidos pelo prazo exigido por lei.
               Esta ação é irreversível.
             </p>
+            {error ? (
+              <div className="border-destructive/40 bg-destructive/10 text-destructive flex items-start gap-2 rounded-md border p-3">
+                <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+                <p>{error}</p>
+              </div>
+            ) : null}
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" size="sm">

@@ -163,6 +163,17 @@ export const registerCompanySchema = z
 
 export type RegisterCompanyFormValues = z.infer<typeof registerCompanySchema>;
 
+// ── /join — aceite de convite de membro de empresa ─────────────────────
+// O convidado escolhe a senha (é a criação da conta dele) e aceita os Termos
+// no mesmo request — mesmos 3 checkboxes do cadastro normal (LegalConsentFields
+// espera exatamente estes nomes de campo).
+export const joinInvitationSchema = z.object({
+  password: z.string().min(6, "Mínimo de 6 caracteres."),
+  ...legalConsentShape,
+});
+
+export type JoinInvitationFormValues = z.infer<typeof joinInvitationSchema>;
+
 export const registerCompanyLinkedInSchema = z
   .object({
     type: z.enum(["LEGAL_ENTITY", "INDIVIDUAL"]),

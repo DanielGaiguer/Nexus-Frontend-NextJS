@@ -45,6 +45,9 @@ const PUBLIC_PATHS = [
   // Confirmação de exclusão de conta (LGPD): o link vem do e-mail e pode ser
   // aberto num dispositivo sem sessão. O token na URL é a credencial.
   "/account/delete",
+  // Aceite de convite de membro de empresa: o link vem do e-mail, o token na
+  // URL é a credencial e a conta ainda nem existe. Mesmo padrão de /account/delete.
+  "/join",
 ];
 
 // `/public/**` no app antigo era servido fora do shell autenticado, sem
