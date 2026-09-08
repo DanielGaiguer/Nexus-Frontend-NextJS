@@ -13,6 +13,7 @@ import {
   EyeOff,
   FileEdit,
   FileText,
+  KanbanSquare,
   MapPin,
   Pencil,
   PlayCircle,
@@ -265,6 +266,12 @@ export function ProjectCard({ project }: { project: ProjectResponseDTO }) {
                 label: "Ranking",
                 icon: Users,
                 href: `/company/projects/${project.id}/ranking`,
+              },
+              {
+                key: "pipeline",
+                label: "Pipeline",
+                icon: KanbanSquare,
+                href: `/company/projects/${project.id}/pipeline`,
               },
               {
                 key: "proposals",

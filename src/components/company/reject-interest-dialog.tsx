@@ -25,9 +25,29 @@ import {
   type CompanyRejectionReason,
 } from "@/types/match";
 
-/** Espelha RejectMatchDialog (professional) — motivo obrigatório, sempre AlertDialog. */
-export function RejectInterestDialog({ matchId }: { matchId: number }) {
-  const [open, setOpen] = useState(false);
+/**
+ * Espelha RejectMatchDialog (professional) — motivo obrigatório, sempre AlertDialog.
+ *
+ * Modo não-controlado (uso original, tela de matches): renderiza o próprio gatilho "Recusar".
+ * Modo controlado (Kanban — soltar um card em "Reprovado"): passe `open`/`onOpenChange`/`hideTrigger`
+ * e uma `key` estável (ex.: matchId) pra o formulário sempre começar limpo. `onRejected` dispara
+ * após a recusa dar certo (o board usa pra invalidar o pipeline).
+ */
+export function RejectInterestDialog({
+  matchId,
+  open: openProp,
+  onOpenChange,
+  hideTrigger,
+  onRejected,
+}: {
+  matchId: number;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
+  onRejected?: () => void;
+}) {
+  const [openState, setOpenState] = useState(false);
+  const open = openProp ?? openState;
   const [reasons, setReasons] = useState<CompanyRejectionReason[]>([]);
   const [description, setDescription] = useState("");
   const rejectMatch = useCompanyRejectMatch();
@@ -40,12 +60,14 @@ export function RejectInterestDialog({ matchId }: { matchId: number }) {
     );
   }
 
-  function handleOpenChange(next: boolean) {
-    if (next) {
+  function setOpen(next: boolean) {
+    // Só reseta no modo não-controlado; no controlado o pai remonta via `key`.
+    if (next && openProp === undefined) {
       setReasons([]);
       setDescription("");
     }
-    setOpen(next);
+    onOpenChange?.(next);
+    setOpenState(next);
   }
 
   function handleConfirm(event: React.MouseEvent) {
@@ -57,6 +79,7 @@ export function RejectInterestDialog({ matchId }: { matchId: number }) {
         onSuccess: () => {
           toast.success("Interesse recusado.");
           setOpen(false);
+          onRejected?.();
         },
         onError: (error) => {
           toast.error(
@@ -70,13 +93,15 @@ export function RejectInterestDialog({ matchId }: { matchId: number }) {
   }
 
   return (
-    <AlertDialog open={open} onOpenChange={handleOpenChange}>
-      <AlertDialogTrigger asChild>
-        <Button variant="outline" className="text-destructive" size="sm">
-          <X className="size-4" />
-          Recusar
-        </Button>
-      </AlertDialogTrigger>
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      {!hideTrigger && (
+        <AlertDialogTrigger asChild>
+          <Button variant="outline" className="text-destructive" size="sm">
+            <X className="size-4" />
+            Recusar
+          </Button>
+        </AlertDialogTrigger>
+      )}
       <AlertDialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <AlertDialogHeader>
           <AlertDialogTitle>Recusar interesse</AlertDialogTitle>

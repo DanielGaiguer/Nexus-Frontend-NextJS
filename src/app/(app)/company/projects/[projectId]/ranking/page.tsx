@@ -6,6 +6,7 @@ import {
   FileText,
   GitCompare,
   Handshake,
+  KanbanSquare,
   MapPin,
   Search,
   User,
@@ -155,7 +156,17 @@ export default function ProjectRankingPage() {
         <p className="text-primary text-xs font-bold tracking-widest uppercase">
           Ranking de Profissionais
         </p>
-        <h1 className="text-2xl font-bold tracking-tight">{project?.title}</h1>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h1 className="text-2xl font-bold tracking-tight">
+            {project?.title}
+          </h1>
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/company/projects/${id}/pipeline`}>
+              <KanbanSquare className="size-4" />
+              Ver pipeline
+            </Link>
+          </Button>
+        </div>
         {ranking && project && (
           <div className="text-muted-foreground mt-1 flex flex-wrap gap-3 text-sm">
             <span className="flex items-center gap-1">
