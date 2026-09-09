@@ -1,6 +1,14 @@
 "use client";
 
-import { ArrowLeft, CheckCircle2, Clock, Eye, XCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  Brain,
+  CheckCircle2,
+  Clock,
+  Eye,
+  Video,
+  XCircle,
+} from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -12,6 +20,8 @@ import {
   ScreeningStageFlow,
 } from "@/components/matches/screening-stage-flow";
 import { ProposalDetails } from "@/components/matches/proposal-details";
+import { BehavioralProfileChart } from "@/components/screening/behavioral-profile-chart";
+import { VideoAnswerPlayer } from "@/components/screening/video-answer-player";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -115,7 +125,14 @@ function CompanyStageSection({
   const approve = useApproveScreeningInvitation(invitation.id);
   const reprove = useReproveScreeningInvitation(invitation.id);
   const [comment, setComment] = useState("");
-  const needsDecision = invitation.status === "SUBMITTED";
+  const isBehavioral = invitation.stageKind === "BEHAVIORAL";
+  // ETAPA COMPORTAMENTAL NUNCA PEDE DECISÃO. Na prática ela nem chega a SUBMITTED -- aprova-se
+  // sozinha no envio (ScreeningInvitationService.submit) --, então a checagem de status abaixo já
+  // bastaria; o `&& !isBehavioral` é explícito de propósito, pra a regra não depender de um
+  // efeito colateral do estado. Aprovar/reprovar aqui também é 400 no backend
+  // (assertDecidable), então não existe caminho pra reprovar alguém por traço de personalidade
+  // nem pela UI nem pela API.
+  const needsDecision = invitation.status === "SUBMITTED" && !isBehavioral;
   const isPending = approve.isPending || reprove.isPending;
   const isLastStage = invitation.stageOrderIndex === invitation.totalStages;
   const timestamps: { label: string; value: string | null }[] = [
@@ -175,7 +192,11 @@ function CompanyStageSection({
     <Card>
       <CardContent className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="font-semibold">
+          <p className="flex items-center gap-2 font-semibold">
+            {isBehavioral && <Brain className="text-muted-foreground size-4" />}
+            {invitation.stageKind === "VIDEO" && (
+              <Video className="text-muted-foreground size-4" />
+            )}
             {index + 1}. {invitation.stageTitle}
           </p>
           <div className="flex flex-wrap items-center gap-2">
@@ -216,6 +237,26 @@ function CompanyStageSection({
           </p>
         )}
 
+        {isBehavioral && (
+          <div className="space-y-3 border-t pt-3">
+            <p className="text-muted-foreground text-sm">
+              Etapa informativa: ela não aprova nem reprova ninguém, e o
+              candidato avançou automaticamente ao responder. As respostas item
+              a item não são exibidas — o que informa uma contratação é o perfil
+              agregado.
+            </p>
+            {invitation.traitProfile ? (
+              <BehavioralProfileChart profile={invitation.traitProfile} />
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                O perfil aparece aqui assim que o candidato responder.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Numa etapa comportamental o backend devolve a lista VAZIA para a empresa (só o
+            agregado) -- a condição abaixo já cobre isso sozinha, sem precisar de um branch. */}
         {invitation.answers.length > 0 && (
           <div className="flex flex-col gap-2 border-t pt-3">
             {invitation.answers.map((answer, answerIndex) => (
@@ -239,7 +280,14 @@ function CompanyStageSection({
                       ))}
                   </div>
                 </div>
-                {answer.type === "MULTIPLE_CHOICE" ? (
+                {answer.type === "VIDEO_RESPONSE" ? (
+                  <VideoAnswerPlayer
+                    invitationId={invitation.id}
+                    questionId={answer.questionId}
+                    hasVideo={answer.hasVideo}
+                    durationSeconds={answer.videoDurationSeconds}
+                  />
+                ) : answer.type === "MULTIPLE_CHOICE" ? (
                   <ul className="space-y-1 text-sm">
                     {answer.options.map((option, optionIndex) => (
                       <li

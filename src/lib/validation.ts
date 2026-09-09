@@ -284,7 +284,9 @@ export type CompanyProfileEditFormValues = z.infer<
 export const screeningQuestionSchema = z
   .object({
     id: z.number().nullable(),
-    type: z.enum(["MULTIPLE_CHOICE", "ESSAY"]),
+    // LIKERT_SCALE não entra: item comportamental vem do banco fixo de plataforma e nunca passa
+    // por este formulário (o editor não oferece a opção, e o backend recusa).
+    type: z.enum(["MULTIPLE_CHOICE", "ESSAY", "VIDEO_RESPONSE"]),
     prompt: z.string().trim().min(1, "Enunciado obrigatório."),
     // useFieldArray exige array de objetos -- mesmo padrão de executionSteps
     // em proposalFormSchema. Sem min(1) aqui de propósito -- ESSAY nunca usa
@@ -324,17 +326,119 @@ export const screeningQuestionSchema = z
     }
   });
 
-export const screeningStageSchema = z.object({
-  id: z.number().nullable(),
-  title: z.string().trim().min(1, "Título da etapa obrigatório."),
+export const screeningStageSchema = z
+  .object({
+    id: z.number().nullable(),
+    kind: z.enum(["QUESTIONS", "BEHAVIORAL", "VIDEO"]),
+    sourceTemplateId: z.number().nullable(),
+    // Só pra exibição no editor da etapa comportamental ("aplica os N itens do inventário").
+    // Não vai no payload -- quem monta o inventário é o backend.
+    behavioralItemCount: z.number().nullable(),
+    title: z.string().trim().min(1, "Título da etapa obrigatório."),
+    instructions: z.string(),
+    responseDeadlineDays: z
+      .string()
+      .trim()
+      .refine((v) => Number(v) >= 1, { message: "Informe ao menos 1 dia." }),
+    // Sem .min(1) aqui: etapa BEHAVIORAL tem ZERO questões neste formulário -- os 50 itens do
+    // inventário vêm do banco de plataforma no backend e não trafegam por aqui. A exigência de
+    // "ao menos uma questão" passa a valer condicionalmente, no superRefine abaixo.
+    questions: z.array(screeningQuestionSchema),
+  })
+  .superRefine((stage, ctx) => {
+    if (stage.kind === "BEHAVIORAL") {
+      // Mandar questão numa etapa comportamental é 400 no backend. A UI nem oferece o editor,
+      // então cair aqui significaria estado corrompido -- vale a rede.
+      if (stage.questions.length > 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "A etapa comportamental usa o inventário fixo da plataforma e não aceita perguntas.",
+          path: ["questions"],
+        });
+      }
+      return;
+    }
+
+    if (stage.questions.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Adicione ao menos uma questão nesta etapa.",
+        path: ["questions"],
+      });
+    }
+
+    // Etapa homogênea, espelhando assertTypeMatchesStage no backend: VIDEO_RESPONSE só em etapa
+    // VIDEO, e etapa VIDEO só aceita VIDEO_RESPONSE.
+    stage.questions.forEach((question, index) => {
+      const isVideoQuestion = question.type === "VIDEO_RESPONSE";
+      if (stage.kind === "VIDEO" && !isVideoQuestion) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "Uma etapa de vídeo só aceita perguntas respondidas em vídeo.",
+          path: ["questions", index, "type"],
+        });
+      }
+      if (stage.kind !== "VIDEO" && isVideoQuestion) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Pergunta de vídeo só pode ser usada numa etapa de vídeo.",
+          path: ["questions", index, "type"],
+        });
+      }
+    });
+  });
+
+// ── Moldes reutilizáveis (AssessmentTemplate) ──────────────────────
+// Mesmas regras da questão de triagem, sem `id` (editar um molde substitui a lista inteira) e
+// sem VIDEO_RESPONSE (um molde é conteúdo genérico reaplicável; vídeo é pergunta sobre uma vaga
+// concreta).
+
+export const assessmentTemplateQuestionSchema = z
+  .object({
+    type: z.enum(["MULTIPLE_CHOICE", "ESSAY"]),
+    prompt: z.string().trim().min(1, "Enunciado obrigatório."),
+    options: z.array(z.object({ value: z.string() })),
+    correctOptionIndex: z.string(),
+  })
+  .superRefine((question, ctx) => {
+    if (question.type !== "MULTIPLE_CHOICE") return;
+    if (question.options.length < 2) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Adicione ao menos 2 alternativas.",
+        path: ["options"],
+      });
+    }
+    question.options.forEach((option, index) => {
+      if (!option.value.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Alternativa não pode ficar vazia.",
+          path: ["options", index, "value"],
+        });
+      }
+    });
+    if (question.correctOptionIndex === "") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Selecione a alternativa correta.",
+        path: ["correctOptionIndex"],
+      });
+    }
+  });
+
+export const assessmentTemplateFormSchema = z.object({
+  title: z.string().trim().min(1, "Nome do teste obrigatório."),
   instructions: z.string(),
   responseDeadlineDays: z
     .string()
     .trim()
     .refine((v) => Number(v) >= 1, { message: "Informe ao menos 1 dia." }),
   questions: z
-    .array(screeningQuestionSchema)
-    .min(1, "Adicione ao menos uma questão nesta etapa."),
+    .array(assessmentTemplateQuestionSchema)
+    .min(1, "Adicione ao menos uma questão."),
 });
 
 // ── company-project-form.html — validação condicional PROJECT vs JOB,
@@ -545,6 +649,12 @@ export const reviewFormSchema = z.object({
 export type ReviewFormValues = z.infer<typeof reviewFormSchema>;
 
 export type ScreeningStageFormValues = z.infer<typeof screeningStageSchema>;
+export type AssessmentTemplateFormValues = z.infer<
+  typeof assessmentTemplateFormSchema
+>;
+export type AssessmentTemplateQuestionFormValues = z.infer<
+  typeof assessmentTemplateQuestionSchema
+>;
 export type ScreeningQuestionFormValues = z.infer<
   typeof screeningQuestionSchema
 >;

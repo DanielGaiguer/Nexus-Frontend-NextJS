@@ -52,6 +52,8 @@ import type { ProjectResponseDTO } from "@/types/project";
 import type {
   ScreeningQuestionnaireRequestDTO,
   ScreeningQuestionnaireResponseDTO,
+  ScreeningQuestionResponseDTO,
+  ScreeningQuestionType,
 } from "@/types/screening";
 
 const workModeOptions = [
@@ -122,17 +124,36 @@ function toFormDefaults(
       .filter((stage) => stage.active)
       .map((stage) => ({
         id: stage.id,
+        kind: stage.kind,
+        // Procedência é imutável depois de criada -- o backend só lê este campo em etapa nova.
+        // Reenviar o que veio mantém o histórico intacto num save de edição.
+        sourceTemplateId: null,
+        behavioralItemCount: stage.behavioralItemCount,
         title: stage.title,
         instructions: stage.instructions ?? "",
         responseDeadlineDays: stage.responseDeadlineDays.toString(),
-        questions: stage.questions.map((q) => ({
-          id: q.id,
-          type: q.type,
-          prompt: q.prompt,
-          options: q.options.map((value) => ({ value })),
-          correctOptionIndex:
-            q.correctOptionIndex != null ? q.correctOptionIndex.toString() : "",
-        })),
+        // Etapa comportamental volta do backend com a lista vazia de propósito (os itens do
+        // inventário não são editáveis e não fazem round-trip pelo formulário). O filtro é
+        // defesa: um LIKERT_SCALE aqui viraria uma questão que o editor não sabe renderizar e
+        // que o backend recusaria no save seguinte.
+        questions: stage.questions
+          .filter(
+            (
+              q
+            ): q is ScreeningQuestionResponseDTO & {
+              type: Exclude<ScreeningQuestionType, "LIKERT_SCALE">;
+            } => q.type !== "LIKERT_SCALE"
+          )
+          .map((q) => ({
+            id: q.id,
+            type: q.type,
+            prompt: q.prompt,
+            options: q.options.map((value) => ({ value })),
+            correctOptionIndex:
+              q.correctOptionIndex != null
+                ? q.correctOptionIndex.toString()
+                : "",
+          })),
       })),
   };
 }
@@ -230,9 +251,13 @@ export function ProjectForm({
         instructions: toNullable(values.screeningInstructions),
         stages: values.screeningStages.map((stage) => ({
           id: stage.id,
+          kind: stage.kind,
+          sourceTemplateId: stage.sourceTemplateId,
           title: stage.title,
           instructions: toNullable(stage.instructions),
           responseDeadlineDays: Number(stage.responseDeadlineDays),
+          // Comportamental manda [] -- o backend monta o inventário a partir do banco fixo de
+          // plataforma, e mandar qualquer pergunta aqui é 400.
           questions: stage.questions.map((q) => ({
             id: q.id,
             type: q.type,

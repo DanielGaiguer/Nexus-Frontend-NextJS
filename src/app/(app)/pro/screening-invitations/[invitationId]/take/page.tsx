@@ -1,10 +1,13 @@
 "use client";
 
-import { AlertTriangle, Send, XCircle } from "lucide-react";
+import { AlertTriangle, Brain, Send, XCircle } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { LikertScaleField } from "@/components/screening/likert-scale-field";
+import { VideoAnswerRecorder } from "@/components/screening/video-answer-recorder";
+import { VideoConsentGate } from "@/components/screening/video-consent-gate";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,7 +21,10 @@ import {
 } from "@/hooks/mutations/useScreeningInvitationMutations";
 import { useScreeningAttempt } from "@/hooks/queries/useScreeningInvitations";
 import { ApiError } from "@/lib/api-client";
-import type { ScreeningAnswerSubmitDTO } from "@/types/screening";
+import {
+  BEHAVIORAL_DISCLAIMER,
+  type ScreeningAnswerSubmitDTO,
+} from "@/types/screening";
 
 interface LocalAnswer {
   selectedOptionIndex: number | null;
@@ -40,6 +46,13 @@ export default function TakeScreeningInvitationPage() {
   const declineInvitation = useDeclineScreeningInvitation(id);
 
   const [answers, setAnswers] = useState<Record<number, LocalAnswer>>({});
+  // Vídeos confirmados nesta sessão. O servidor é a fonte da verdade
+  // (ScreeningAttemptQuestionDTO.videoUploaded), mas a invalidação da query é assíncrona -- sem
+  // este espelho local o botão de enviar piscaria como desabilitado logo após um upload
+  // bem-sucedido.
+  const [uploadedVideos, setUploadedVideos] = useState<Record<number, boolean>>(
+    {}
+  );
   // Overwritten with Date.now() by the mount effect below -- 0 is just a pure placeholder so the
   // ref initializer itself doesn't call an impure function during render.
   const startedAtRef = useRef<number>(0);
@@ -57,6 +70,10 @@ export default function TakeScreeningInvitationPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Instrumentação inalterada -- continua capturando em TODA etapa, comportamental incluída. O
+  // que muda é do outro lado: numa etapa comportamental o backend nunca serializa este número
+  // para a empresa (ver ScreeningInvitationService.toDetailDTO), porque "trocou de aba" não
+  // significa nada num teste sem resposta certa.
   useEffect(() => {
     function handleVisibilityChange() {
       if (document.hidden) tabSwitchCountRef.current += 1;
@@ -163,12 +180,20 @@ export default function TakeScreeningInvitationPage() {
     return null;
   }
 
+  const isBehavioral = attempt.stageKind === "BEHAVIORAL";
+  const isVideo = attempt.stageKind === "VIDEO";
+
+  function hasVideo(questionId: number, serverSideUploaded: boolean) {
+    return uploadedVideos[questionId] ?? serverSideUploaded;
+  }
+
   const allAnswered = attempt.questions.every((q) => {
+    if (q.type === "VIDEO_RESPONSE") return hasVideo(q.id, q.videoUploaded);
     const answer = answers[q.id];
     if (!answer) return false;
-    return q.type === "MULTIPLE_CHOICE"
-      ? answer.selectedOptionIndex != null
-      : answer.essayText.trim() !== "";
+    return q.type === "ESSAY"
+      ? answer.essayText.trim() !== ""
+      : answer.selectedOptionIndex != null;
   });
 
   function handleSubmit() {
@@ -179,7 +204,13 @@ export default function TakeScreeningInvitationPage() {
         const touched = touchedRef.current[q.id];
         return {
           questionId: q.id,
-          selectedOptionIndex: answer?.selectedOptionIndex ?? null,
+          // VIDEO_RESPONSE não manda conteúdo nenhum: a resposta já existe no servidor desde a
+          // confirmação do upload, e o submit só a encontra pronta. É por isso que um upload que
+          // falha não derruba as outras respostas da etapa.
+          selectedOptionIndex:
+            q.type === "VIDEO_RESPONSE"
+              ? null
+              : (answer?.selectedOptionIndex ?? null),
           essayText: q.type === "ESSAY" ? (answer?.essayText ?? "") : null,
           timeSpentSeconds: touched
             ? Math.max(1, Math.round((touched.last - touched.first) / 1000))
@@ -196,7 +227,9 @@ export default function TakeScreeningInvitationPage() {
     submitAnswers.mutate(payload, {
       onSuccess: () => {
         toast.success(
-          "Resposta enviada! Aguardando a decisão da empresa sobre esta etapa."
+          isBehavioral
+            ? "Perfil enviado! Esta etapa é informativa — você já pode seguir no processo."
+            : "Resposta enviada! Aguardando a decisão da empresa sobre esta etapa."
         );
         router.push("/pro/matches");
       },
@@ -257,6 +290,38 @@ export default function TakeScreeningInvitationPage() {
         </p>
       </div>
 
+      {/* O aviso aparece ANTES do primeiro item, não junto do resultado: quem responde precisa
+          saber o que está respondendo enquanto responde. */}
+      {isBehavioral && (
+        <Card>
+          <CardContent className="space-y-2">
+            <p className="flex items-center gap-2 font-medium">
+              <Brain className="size-4" />
+              Sobre este questionário
+            </p>
+            <p className="text-muted-foreground text-sm">
+              Não há resposta certa nem errada, e você não é aprovado ou
+              reprovado por ele — esta etapa é informativa e nunca bloqueia seu
+              avanço no processo. Responda com o que descreve você de verdade,
+              no primeiro impulso; pensar demais em cada frase costuma piorar o
+              retrato.
+            </p>
+            <p className="border-warning/40 bg-warning/10 text-foreground rounded-md border p-3 text-xs">
+              {BEHAVIORAL_DISCLAIMER}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Consentimento primeiro: enquanto ele não estiver registrado o gravador nem é montado,
+          então a câmera nunca chega a ser pedida. */}
+      {isVideo && !attempt.videoConsentAccepted && (
+        <VideoConsentGate
+          invitationId={id}
+          consentText={attempt.videoConsentText}
+        />
+      )}
+
       <div className="flex flex-col gap-4">
         {attempt.questions.map((question, index) => (
           <Card key={question.id}>
@@ -264,7 +329,37 @@ export default function TakeScreeningInvitationPage() {
               <p className="font-medium">
                 {index + 1}. {question.prompt}
               </p>
-              {question.type === "MULTIPLE_CHOICE" ? (
+
+              {question.type === "LIKERT_SCALE" ? (
+                <LikertScaleField
+                  questionId={question.id}
+                  value={answers[question.id]?.selectedOptionIndex ?? null}
+                  onChange={(value) => setSelectedOption(question.id, value)}
+                />
+              ) : question.type === "VIDEO_RESPONSE" ? (
+                attempt.videoConsentAccepted ? (
+                  <VideoAnswerRecorder
+                    invitationId={id}
+                    questionId={question.id}
+                    alreadyUploaded={hasVideo(
+                      question.id,
+                      question.videoUploaded
+                    )}
+                    maxSizeBytes={attempt.videoMaxSizeBytes}
+                    onUploaded={() => {
+                      touchQuestion(question.id);
+                      setUploadedVideos((current) => ({
+                        ...current,
+                        [question.id]: true,
+                      }));
+                    }}
+                  />
+                ) : (
+                  <p className="text-muted-foreground text-sm">
+                    Autorize a gravação acima para liberar a câmera.
+                  </p>
+                )
+              ) : question.type === "MULTIPLE_CHOICE" ? (
                 <RadioGroup
                   value={
                     answers[question.id]?.selectedOptionIndex?.toString() ?? ""

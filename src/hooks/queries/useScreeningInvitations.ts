@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { apiFetch } from "@/lib/api-client";
+import type { ScreeningVideoPlaybackDTO } from "@/types/screening-video";
 import type {
   ScreeningAttemptDTO,
   ScreeningInvitationDetailDTO,
@@ -74,5 +75,36 @@ export function useCompanyScreeningProcesses() {
       apiFetch<ScreeningProcessSummaryDTO[]>(
         "/api/screening-invitations/company/mine"
       ),
+  });
+}
+
+/** Link de reprodução assinado de uma resposta em vídeo. Guard no backend: dono da tentativa OU
+ * empresa dona da vaga.
+ *
+ * `enabled` é controlado por quem chama (só busca quando alguém realmente vai assistir) porque a
+ * URL vale ~5 minutos: pedi-la para toda resposta de vídeo ao carregar a tela queimaria links que
+ * ninguém abriu e ainda expirariam antes do clique. `staleTime` fica abaixo do TTL pra o player
+ * nunca receber uma URL já vencida do cache. */
+export function useScreeningVideoPlayback(
+  invitationId: number,
+  questionId: number,
+  enabled: boolean
+) {
+  return useQuery({
+    queryKey: [
+      "screening-invitations",
+      invitationId,
+      "video",
+      questionId,
+      "playback",
+    ] as const,
+    queryFn: () =>
+      apiFetch<ScreeningVideoPlaybackDTO>(
+        `/api/screening-invitations/${invitationId}/video/${questionId}/playback`
+      ),
+    enabled:
+      enabled && Number.isFinite(invitationId) && Number.isFinite(questionId),
+    staleTime: 4 * 60 * 1000,
+    gcTime: 4 * 60 * 1000,
   });
 }

@@ -7,12 +7,15 @@ import {
   buildProcessFlowNodes,
   ScreeningStageFlow,
 } from "@/components/matches/screening-stage-flow";
+import { BehavioralProfileChart } from "@/components/screening/behavioral-profile-chart";
+import { VideoAnswerPlayer } from "@/components/screening/video-answer-player";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useScreeningProcessDetail } from "@/hooks/queries/useScreeningInvitations";
 import {
+  LIKERT_LABELS,
   screeningInvitationStatusLabels,
   type ScreeningInvitationDetailDTO,
   type ScreeningStageStatusDTO,
@@ -109,6 +112,14 @@ function ReachedStageCard({
           </div>
         )}
 
+        {/* O perfil é dado do próprio titular: diferente da empresa, que recebe só o agregado,
+            aqui ele vê o perfil E as próprias respostas item a item. */}
+        {invitation.traitProfile && (
+          <div className="border-t pt-3">
+            <BehavioralProfileChart profile={invitation.traitProfile} />
+          </div>
+        )}
+
         {invitation.answers.length > 0 && (
           <div className="flex flex-col gap-2 border-t pt-3">
             {invitation.answers.map((answer, answerIndex) => (
@@ -132,7 +143,22 @@ function ReachedStageCard({
                       ))}
                   </div>
                 </div>
-                {answer.type === "MULTIPLE_CHOICE" ? (
+                {answer.type === "VIDEO_RESPONSE" ? (
+                  <VideoAnswerPlayer
+                    invitationId={invitation.id}
+                    questionId={answer.questionId}
+                    hasVideo={answer.hasVideo}
+                    durationSeconds={answer.videoDurationSeconds}
+                  />
+                ) : answer.type === "LIKERT_SCALE" ? (
+                  // Sem o rótulo, a resposta apareceria vazia: um item Likert grava só o índice
+                  // (selectedOptionIndex), e não texto nenhum.
+                  <p className="text-muted-foreground text-sm">
+                    {answer.selectedOptionIndex != null
+                      ? LIKERT_LABELS[answer.selectedOptionIndex]
+                      : "Sem resposta"}
+                  </p>
+                ) : answer.type === "MULTIPLE_CHOICE" ? (
                   <ul className="space-y-1 text-sm">
                     {answer.options.map((option, optionIndex) => (
                       <li
